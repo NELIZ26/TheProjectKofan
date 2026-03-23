@@ -1,43 +1,12 @@
 <script setup>
 import { useReservaStore } from "@/stores/reserva";
-import Swal from 'sweetalert2';
 
 const store = useReservaStore();
 
+// Ahora simplemente llamamos a la función del store que ya hace todo el trabajo pesado,
+// sin meter lógica de WhatsApp aquí.
 const handleConfirmarReserva = async () => {
-  const isValid = store.handleSubmit(); 
-  
-  if (isValid) {
-    const f = store.form;
-    const telefonoHotel = "+573224225925";
-    
-    const mensajeWA = `¡Hola Ecohotel Kofán! 🌿%0A` +
-                      `Me gustaría confirmar mi solicitud de reserva:%0A%0A` +
-                      `*Nombre:* ${f.nombres}%0A` +
-                      `*Documento:* ${f.numDocumento}%0A` +
-                      `*Alojamiento:* ${f.habitacion}%0A` +
-                      `*Huéspedes:* ${f.cantidadPersonas}%0A` +
-                      `*Check-In:* ${f.fechaReserva}%0A%0A` +
-                      `Quedo atento a las instrucciones para el pago. ¡Muchas gracias!`;
-
-    await Swal.fire({
-      title: "¡Solicitud Registrada!",
-      text: "Para garantizar tu cupo, ahora te redirigiremos a WhatsApp para coordinar el pago.",
-      icon: "success",
-      confirmButtonColor: "#0f3b2a",
-      confirmButtonText: "Ir a WhatsApp",
-      allowOutsideClick: false
-    });
-
-    // 1. Abrimos WhatsApp
-    window.open(`https://wa.me/${telefonoHotel}?text=${mensajeWA}`, '_blank');
-
-    // 2. LIMPIAMOS EL FORMULARIO (Llamando a la función del store)
-    store.resetForm();
-
-    // 3. Cerramos el modal
-    store.closeModal();
-  }
+  await store.handleSubmit(); 
 };
 </script>
 
@@ -47,8 +16,7 @@ const handleConfirmarReserva = async () => {
     :class="{ active: store.isModalOpen }"
     @click.self="store.closeModal"
   >
-    <div class="modal-card">
-      <button class="btn-close-custom" @click="store.closeModal">
+    <div class="modal-card modal-lg"> <button class="btn-close-custom" @click="store.closeModal">
         <font-awesome-icon icon="fa-solid fa-plus" style="transform: rotate(45deg)" />
       </button>
 
@@ -56,7 +24,15 @@ const handleConfirmarReserva = async () => {
         <div class="text-center mb-4">
           <font-awesome-icon icon="fa-solid fa-leaf" class="verde-kofan mb-2 fs-4" />
           <h2 class="fw-bold verde-kofan">Reserva tu Experiencia</h2>
-          <p class="text-muted small">
+          
+          <p v-if="store.habitacionSeleccionada" class="text-muted small mb-0">
+            Estás reservando: <strong>{{ store.habitacionSeleccionada.name }}</strong>
+          </p>
+          <p v-if="store.habitacionSeleccionada" class="text-success fw-bold mt-1">
+            Valor por noche: ${{ store.habitacionSeleccionada.price.toLocaleString("es-CO") }} COP
+          </p>
+          
+          <p v-else class="text-muted small">
             Completa tus datos para vivir la magia del Putumayo
           </p>
         </div>
@@ -152,15 +128,18 @@ const handleConfirmarReserva = async () => {
 
             <div class="col-md-4">
               <label class="form-label-kofan">Alojamiento</label>
-              <select class="input-kofan" v-model="store.form.habitacion">
-                <option value="Cabaña Individual">Cabaña Individual</option>
-                <option value="Cabaña Familiar">Cabaña Familiar</option>
-                <option value="Zona Camping">Zona Camping</option>
-              </select>
+              <input
+                type="text"
+                class="input-kofan bg-light text-muted"
+                v-model="store.form.habitacion"
+                readonly
+                :class="{ 'is-invalid': store.errors.habitacion }"
+                title="Alojamiento seleccionado en el catálogo"
+              />
             </div>
 
-            <div class="col-md-12">
-              <label class="form-label-kofan">Fecha de Ingreso (Check-In)</label>
+            <div class="col-md-6">
+              <label class="form-label-kofan">Ingreso (Check-In)</label>
               <input
                 type="date"
                 class="input-kofan"
@@ -169,20 +148,64 @@ const handleConfirmarReserva = async () => {
                 :class="{ 'is-invalid': store.errors.fechaReserva }"
               />
             </div>
+
+            <div class="col-md-6">
+              <label class="form-label-kofan">Salida (Check-Out)</label>
+              <input
+                type="date"
+                class="input-kofan"
+                v-model="store.form.fechaSalida"
+                :min="store.form.fechaReserva || store.minDate"
+                :class="{ 'is-invalid': store.errors.fechaSalida }"
+              />
+            </div>
+
+            <div class="col-12 mt-4" v-if="store.form.cantidadPersonas > 1 || store.form.cantidadPersonas === '5+'">
+              <div class="p-3 bg-light rounded border border-light">
+                <div class="form-check form-switch d-flex align-items-center mb-0">
+                  <input 
+                    class="form-check-input me-3" 
+                    type="checkbox" 
+                    id="switchAcompanantes" 
+                    v-model="store.form.registrarAcompanantesAhora"
+                    style="transform: scale(1.3); cursor: pointer;"
+                  >
+                  <label class="form-check-label text-muted small" for="switchAcompanantes" style="cursor: pointer;">
+                    <strong style="color: #0f3b2a;">¿Registrar acompañantes ahora?</strong> <br>
+                    Puedes hacerlo ahora o dejarnos estos datos en recepción el día de tu llegada.
+                  </label>
+                </div>
+
+                <div v-if="store.form.registrarAcompanantesAhora" class="mt-4">
+                  <div v-for="(acomp, index) in store.form.acompanantes" :key="index" class="row g-2 mb-3 pb-3 border-bottom">
+                    <div class="col-12"><strong class="small" style="color: #0f3b2a;">Acompañante {{ index + 1 }}</strong></div>
+                    <div class="col-md-4">
+                      <input type="text" class="form-control form-control-sm" placeholder="Nombre completo" v-model="acomp.nombre_completo">
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="form-control form-control-sm" placeholder="N° Documento" v-model="acomp.numero_documento">
+                    </div>
+                    <div class="col-md-4">
+                      <input type="text" class="form-control form-control-sm" placeholder="Parentesco (Ej: Hijo)" v-model="acomp.parentesco">
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           <div class="text-center mt-5">
-            <button type="submit" class="btn-kofan-confirm">
-              <font-awesome-icon icon="fa-solid fa-paper-plane" class="me-2" />
-              Confirmar por WhatsApp
-            </button>
+            <button type="submit" class="btn-kofan-confirm" :disabled="store.isSubmitting">
+            <font-awesome-icon icon="fa-solid fa-check" class="me-2" />
+            {{ store.isSubmitting ? 'Procesando...' : 'Confirmar Reserva' }}
+          </button>
           </div>
         </form>
       </div>
     </div>
   </div>
 </template>
-
 
 <style scoped>
 /* Contenedor principal del modal */

@@ -24,7 +24,7 @@ watch(() => route.path, () => { if (bsCollapse) bsCollapse.hide(); });
 
 const logout = () => {
   auth.logout();
-  router.push({ name: 'home' });
+  router.push({ name: 'landing-portal' });
 };
 
 const navbarSolid = computed(() => {
@@ -40,7 +40,7 @@ const navbarSolid = computed(() => {
     :class="navbarSolid ? 'navbar-dark bg-kofan shadow-sm' : 'navbar-dark bg-transparent'"
   >
     <div class="container-fluid px-lg-5">
-      <router-link :to="{ name: 'home' }" class="navbar-brand">
+      <router-link :to="{ name: 'landing-portal' }" class="navbar-brand">
         <img src="../img/Kofan.png" width="80" alt="Logo Kofán" />
       </router-link>
 
@@ -51,7 +51,7 @@ const navbarSolid = computed(() => {
       <div class="collapse navbar-collapse" id="navbarKofan">
         <ul class="navbar-nav mx-auto mb-2 mb-lg-0 fw-medium">
           <li class="nav-item">
-            <router-link :to="{ name: 'home' }" class="nav-link" exact-active-class="active-link">Inicio</router-link>
+            <router-link :to="{ name: 'hospedaje-home' }" class="nav-link" exact-active-class="active-link">Inicio</router-link>
           </li>
           <li class="nav-item">
             <router-link :to="{ name: 'about' }" class="nav-link" active-class="active-link">Nosotros</router-link>

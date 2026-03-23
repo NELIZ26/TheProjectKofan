@@ -1,6 +1,7 @@
 import os
 import uuid
 import shutil
+from pathlib import Path
 from backend.core.config import UPLOAD_DIR, ALLOWED_TYPES
 from fastapi import UploadFile, HTTPException
 
@@ -39,10 +40,30 @@ def save_multiple(files: list[UploadFile]) -> list[str]:
 
     return urls
 
-def delete_image(url: str):
-    path = url.replace("/static/", "static/")
-    if os.path.exists(path):
-        os.remove(path)
-        return {"message": "Imagen eliminada."}
 
-    return {"message": "La imagen no existe."}
+
+def delete_image(image_url: str):
+    """
+    Toma la URL de la base de datos (/static/images/archivo.png)
+    y elimina el archivo físico del disco duro.
+    """
+    if not image_url:
+        return
+
+    try:
+        # 1. Extraemos solo el nombre del archivo de la URL
+        # Ejemplo: de "/static/images/1234_foto.png" sacamos "1234_foto.png"
+        filename = image_url.split("/")[-1]
+        
+        # 2. Construimos la ruta física real usando tu UPLOAD_DIR
+        file_path = Path(UPLOAD_DIR) / filename
+        
+        # 3. Verificamos si el archivo existe antes de intentar borrarlo
+        if file_path.exists():
+            file_path.unlink() # Este es el comando que elimina físicamente el archivo
+            print(f"✅ Imagen eliminada del disco: {filename}")
+        else:
+            print(f"⚠️ El archivo no existe en el disco: {file_path}")
+            
+    except Exception as e:
+        print(f"❌ Error al intentar eliminar el archivo físico {image_url}: {e}")

@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { ref, reactive, computed } from "vue";
+import { ref, reactive, computed, watch } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
 
@@ -8,27 +8,31 @@ export const useReservaStore = defineStore("reserva", () => {
   const isModalOpen = ref(false);
   const personType = ref("natural");
   const isSubmitting = ref(false);
+  const habitacionSeleccionada = ref(null);
 
   const form = reactive({
     nombres: "",
     tipoDocumento: "",
     correo: "",
-    fechaNacimiento: "",
     numDocumento: "",
     telefono: "",
     cantidadPersonas: "2",
-    habitacion: "Cabana2",
-    fechaReserva: "",
+    habitacion: "",
+    fechaReserva: "", // Check-In
+    fechaSalida: "",  // Check-Out
+    registrarAcompanantesAhora: false, // Switch (Toggle)
+    acompanantes: [] // Array dinámico
   });
 
   const errors = reactive({
     nombres: false,
     tipoDocumento: false,
     correo: false,
-    fechaNacimiento: false,
     numDocumento: false,
     telefono: false,
     fechaReserva: false,
+    fechaSalida: false, 
+    habitacion: false,
   });
 
   // --- COMPUTADOS ---
@@ -46,10 +50,37 @@ export const useReservaStore = defineStore("reserva", () => {
     personType.value === "juridica" ? "NIT" : "Número de Documento",
   );
 
+  // --- VIGILANTE (WATCHER) PARA LOS ACOMPAÑANTES ---
+  watch(() => form.cantidadPersonas, (nuevoValor) => {
+    let numAcompanantes = 0;
+    
+    if (nuevoValor === "5+") {
+      numAcompanantes = 4;
+    } else {
+      numAcompanantes = parseInt(nuevoValor) - 1;
+    }
+
+    if (numAcompanantes > 0) {
+      while (form.acompanantes.length < numAcompanantes) {
+        form.acompanantes.push({ nombre_completo: "", numero_documento: "", parentesco: "" });
+      }
+      if (form.acompanantes.length > numAcompanantes) {
+        form.acompanantes = form.acompanantes.slice(0, numAcompanantes);
+      }
+    } else {
+      form.acompanantes = [];
+    }
+  }, { immediate: true });
+
+
   // --- ACCIONES ---
-  const openModal = () => {
+  const openModal = (habitacion = null) => {
     isModalOpen.value = true;
     clearErrors();
+    if (habitacion) {
+      habitacionSeleccionada.value = habitacion;
+      form.habitacion = habitacion.name;
+    }
   };
 
   const closeModal = () => {
@@ -68,12 +99,15 @@ export const useReservaStore = defineStore("reserva", () => {
     form.nombres = "";
     form.tipoDocumento = "";
     form.correo = "";
-    form.fechaNacimiento = "";
     form.numDocumento = "";
     form.telefono = "";
     form.fechaReserva = "";
+    form.fechaSalida = "";
     form.cantidadPersonas = "2";
-    form.habitacion = "Cabana2";
+    form.habitacion = "";
+    form.registrarAcompanantesAhora = false;
+    
+    habitacionSeleccionada.value = null;
     personType.value = "natural";
     clearErrors();
   };
@@ -82,109 +116,92 @@ export const useReservaStore = defineStore("reserva", () => {
     let isValid = true;
     clearErrors();
 
-    if (!form.nombres.trim()) {
-      errors.nombres = true;
-      isValid = false;
-    }
-
-    if (personType.value === "natural") {
-      if (!form.tipoDocumento) {
-        errors.tipoDocumento = true;
-        isValid = false;
-      }
-    }
-
+    if (!form.nombres.trim()) { errors.nombres = true; isValid = false; }
+    if (personType.value === "natural" && !form.tipoDocumento) { errors.tipoDocumento = true; isValid = false; }
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!form.correo || !emailRegex.test(form.correo)) {
-      errors.correo = true;
-      isValid = false;
-    }
-
-    if (!form.numDocumento) {
-      errors.numDocumento = true;
-      isValid = false;
-    }
-    if (!form.telefono) {
-      errors.telefono = true;
-      isValid = false;
-    }
-    if (!form.fechaReserva) {
-      errors.fechaReserva = true;
-      isValid = false;
+    if (!form.correo || !emailRegex.test(form.correo)) { errors.correo = true; isValid = false; }
+    
+    if (!form.numDocumento) { errors.numDocumento = true; isValid = false; }
+    if (!form.telefono) { errors.telefono = true; isValid = false; }
+    if (!form.habitacion) { errors.habitacion = true; isValid = false; }
+    if (!form.fechaReserva) { errors.fechaReserva = true; isValid = false; }
+    
+    if (!form.fechaSalida || form.fechaSalida <= form.fechaReserva) { 
+      errors.fechaSalida = true; 
+      isValid = false; 
     }
 
     return isValid;
   };
 
-  // --- ENVÍO CON BACKEND REAL + WHATSAPP ---
+  // --- ENVÍO CON BACKEND REAL (SIN WHATSAPP) ---
   const handleSubmit = async () => {
     if (!validateForm()) {
       Swal.fire({
         icon: "error",
-        title: "Formulario Incompleto",
-        text: "Por favor, revisa los campos marcados en rojo.",
+        title: "Datos incompletos",
+        text: "Por favor, revisa las fechas y los campos marcados en rojo.",
         confirmButtonColor: "#e74c3c",
       });
-      return;
+      return false; 
     }
 
     isSubmitting.value = true;
 
+    // 1. CALCULAR DÍAS DE ESTADÍA Y MONTO TOTAL (Requerido por FastAPI)
+    const checkIn = new Date(form.fechaReserva);
+    const checkOut = new Date(form.fechaSalida);
+    const diferenciaMilisegundos = checkOut.getTime() - checkIn.getTime();
+    const diasEstadia = Math.ceil(diferenciaMilisegundos / (1000 * 60 * 60 * 24)) || 1;
+    
+    const montoCalculado = habitacionSeleccionada.value.price * diasEstadia;
+
     Swal.fire({
       title: "Procesando Reserva...",
-      text: "Estamos registrando tu solicitud",
+      text: "Estamos registrando tu solicitud en el sistema",
       allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
+      didOpen: () => { Swal.showLoading(); },
     });
 
     try {
-      // Llamada real al backend
-      await apiClient.post("/reservas", {
-        nombres: form.nombres,
-        tipo_documento: form.tipoDocumento,
-        correo: form.correo,
-        fecha_nacimiento: form.fechaNacimiento,
-        num_documento: form.numDocumento,
-        telefono: form.telefono,
-        cantidad_personas: form.cantidadPersonas,
-        habitacion: form.habitacion,
-        fecha_reserva: form.fechaReserva,
+      // 2. ARMAR EL PAYLOAD PARA FASTAPI
+      const payload = {
+        habitacion_id: habitacionSeleccionada.value.id || habitacionSeleccionada.value._id, 
+        fecha_entrada: form.fechaReserva,
+        fecha_salida: form.fechaSalida,
+        monto_total: montoCalculado,
+        acompanantes: form.registrarAcompanantesAhora ? form.acompanantes : [], 
+        observaciones: `Reserva web para ${form.cantidadPersonas} personas.`,
+        
         tipo_persona: personType.value,
-      });
+        tipo_documento: personType.value === "juridica" ? "NIT" : form.tipoDocumento,
+        cliente_documento: form.numDocumento.toString(),
+        cliente_nombre: form.nombres,
+        cliente_email: form.correo,
+        cliente_celular: form.telefono.toString()
+      };
 
-      // Armar mensaje de WhatsApp
-      const telefonoHotel = "573124225925";
-      const mensajeWA =
-        `¡Hola Ecohotel Kofán! 🌿%0A` +
-        `Me gustaría confirmar una reserva:%0A%0A` +
-        `👤 *Nombre:* ${form.nombres}%0A` +
-        `🆔 *Doc:* ${form.numDocumento}%0A` +
-        `🏨 *Alojamiento:* ${form.habitacion}%0A` +
-        `👥 *Huéspedes:* ${form.cantidadPersonas}%0A` +
-        `📅 *Check-In:* ${form.fechaReserva}%0A%0A` +
-        `Espero instrucciones de pago.`;
+      // 3. LLAMADA A LA RUTA DE INVITADOS
+      await apiClient.post("/api/reservas/invitado", payload);
 
+      // 4. MENSAJE DE ÉXITO Y CIERRE (Todo queda en el admin)
       await Swal.fire({
         icon: "success",
-        title: "¡Solicitud Registrada!",
-        text: `Gracias ${form.nombres}, ahora te redirigiremos a WhatsApp para finalizar tu pago.`,
+        title: "¡Reserva Solicitada!",
+        text: `Gracias ${form.nombres}. Tu reserva quedó en estado Pendiente. Pronto te contactaremos para confirmar.`,
         confirmButtonColor: "#0f3b2a",
-        confirmButtonText: "Ir a WhatsApp 💬",
+        confirmButtonText: "Entendido",
       });
-
-      window.open(`https://wa.me/${telefonoHotel}?text=${mensajeWA}`, "_blank");
 
       closeModal();
       resetForm();
 
+      return true;
+
     } catch (error) {
-      // Manejo de errores del backend
-      const msg =
-        error.response?.data?.detail ||
-        error.response?.data?.message ||
-        "No pudimos registrar tu reserva. Intenta de nuevo.";
+      console.error("Error del backend:", error);
+      const msg = error.response?.data?.detail || "No pudimos registrar tu reserva. Verifica los datos e intenta de nuevo.";
 
       Swal.fire({
         icon: "error",
@@ -192,11 +209,13 @@ export const useReservaStore = defineStore("reserva", () => {
         text: msg,
         confirmButtonColor: "#e74c3c",
       });
+      return false;
     } finally {
       isSubmitting.value = false;
     }
   };
 
+  // 🟢 ESTO ERA LO QUE FALTABA (EL RETURN)
   return {
     isModalOpen,
     isSubmitting,
@@ -207,6 +226,7 @@ export const useReservaStore = defineStore("reserva", () => {
     labelNombres,
     placeholderNombres,
     labelNumDoc,
+    habitacionSeleccionada,
     openModal,
     closeModal,
     setPersonType,

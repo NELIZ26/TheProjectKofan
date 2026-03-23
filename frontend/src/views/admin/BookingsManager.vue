@@ -1,91 +1,171 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import Swal from "sweetalert2";
+import apiClient from "@/api/apiClient";
 
-// 1. Datos simulados de reservas
-const reservas = ref([
-  {
-    id: "RES-001",
-    cliente: "Andrés Mendoza",
-    habitacion: "Suite del Tucán",
-    checkIn: "2024-03-10",
-    checkOut: "2024-03-12",
-    total: 500000,
-    estado: "Confirmada",
-  },
-  {
-    id: "RES-002",
-    cliente: "Lucía Fernández",
-    habitacion: "Cabaña del Río",
-    checkIn: "2024-03-15",
-    checkOut: "2024-03-20",
-    total: 900000,
-    estado: "Pendiente",
-  },
-  {
-    id: "RES-003",
-    cliente: "Mark Sullivan",
-    habitacion: "Habitación Estándar",
-    checkIn: "2024-03-05",
-    checkOut: "2024-03-07",
-    total: 300000,
-    estado: "Cancelada",
-  },
-]);
-
-// 2. Filtro de búsqueda
+const reservas = ref([]);
 const filtro = ref("");
 
-const reservasFiltradas = computed(() => {
-  return reservas.value.filter(
-    (res) =>
-      res.cliente.toLowerCase().includes(filtro.value.toLowerCase()) ||
-      res.id.toLowerCase().includes(filtro.value.toLowerCase()),
-  );
-});
-
-// 3. Acciones
-const actualizarEstado = (id, nuevoEstado) => {
-  const res = reservas.value.find((r) => r.id === id);
-  if (res) {
-    res.estado = nuevoEstado;
-    Swal.fire({
-      title: "Estado Actualizado",
-      text: `La reserva ahora está ${nuevoEstado}`,
-      icon: "success",
-      confirmButtonColor: "#0f3b2a",
-    });
+const cargarReservas = async () => {
+  try {
+    const response = await apiClient.get("/api/reservas/admin/todas");
+    console.log("Respuesta de FastAPI:", response.data); 
+    reservas.value = response.data.reservas || response.data.data || response.data; 
+  } catch (error) {
+    console.error("Error al cargar reservas:", error);
   }
 };
 
-const eliminarReserva = (id) => {
+onMounted(() => {
+  cargarReservas();
+});
+
+const reservasFiltradas = computed(() => {
+  if (!filtro.value) return reservas.value;
+  const termino = filtro.value.toLowerCase();
+  
+  return reservas.value.filter((res) => {
+    const nombre = res.cliente_nombre ? res.cliente_nombre.toLowerCase() : "";
+    const email = res.cliente_email ? res.cliente_email.toLowerCase() : "";
+    const idReserva = res._id ? res._id.toLowerCase() : "";
+    
+    return nombre.includes(termino) || email.includes(termino) || idReserva.includes(termino);
+  });
+});
+
+const actualizarEstado = (id, nuevoEstado) => {
+  let titulo = "¿Actualizar estado?";
+  let texto = `¿Estás seguro de cambiar el estado a ${nuevoEstado}?`;
+  let textoBoton = "Sí, cambiar";
+
+  if (nuevoEstado === 'confirmada') {
+    titulo = "¿Aprobar Pago?";
+    texto = "Esto confirmará la reserva oficialmente.";
+    textoBoton = "Sí, aprobar";
+  } else if (nuevoEstado === 'ocupada') {
+    titulo = "¿Hacer Check-in?";
+    texto = "¿El huésped ya llegó y se le entregaron las llaves?";
+    textoBoton = "Sí, hacer Check-in";
+  } else if (nuevoEstado === 'finalizada') {
+    titulo = "¿Hacer Check-out?";
+    texto = "¿El huésped ya entregó la cabaña y se retiró?";
+    textoBoton = "Sí, finalizar";
+  }
+  else if (nuevoEstado === 'pendiente') {
+    titulo = "¿Restaurar Reserva?";
+    texto = "La reserva volverá a estar activa (Pendiente). Asegúrate de que la cabaña siga libre en esas fechas.";
+    textoBoton = "Sí, restaurar";
+  }
+
   Swal.fire({
-    title: "¿Eliminar registro?",
-    text: "Esta acción borrará la reserva del historial.",
-    icon: "warning",
+    title: titulo,
+    text: texto,
+    icon: "question",
     showCancelButton: true,
-    confirmButtonColor: "#d33",
-    confirmButtonText: "Sí, borrar",
-  }).then((result) => {
+    confirmButtonColor: "#0f3b2a",
+    cancelButtonColor: "#d33",
+    confirmButtonText: textoBoton,
+    cancelButtonText: "Cancelar"
+  }).then(async (result) => {
+    
+    // 3. Si el administrador hizo clic en "Sí..."
     if (result.isConfirmed) {
-      reservas.value = reservas.value.filter((r) => r.id !== id);
+      try {
+        // Le avisamos a FastAPI
+        await apiClient.patch(`/api/reservas/${id}/estado`, {
+          estado: nuevoEstado,
+          motivo_actualizacion: "Cambio de estado desde el panel de administrador"
+        });
+
+        // 🟢 MAGIA AQUÍ: Volvemos a pedir los datos a la BD. 
+        // Esto actualiza la tabla al instante sin que el usuario presione F5.
+        await cargarReservas();
+
+        // Alerta de éxito pequeñita que desaparece sola
+        Swal.fire({
+          title: "¡Éxito!",
+          text: `La reserva ahora está ${nuevoEstado}.`,
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+
+      } catch (error) {
+        Swal.fire("Error", "Hubo un problema de conexión con el servidor.", "error");
+      }
     }
   });
 };
 
-// Helpers para colores
+// 6. Eliminar / Cancelar (En hotelería es mejor "Cancelar" que "Borrar" de la BD)
+const eliminarReserva = (id) => {
+  Swal.fire({
+    title: "¿Cancelar Reserva?",
+    text: "Esta acción marcará la reserva como cancelada y liberará la cabaña.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    confirmButtonText: "Sí, cancelar",
+    cancelButtonText: "No, volver"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      // Reutilizamos nuestra función para cambiar estado a "cancelada"
+      actualizarEstado(id, "cancelada"); 
+    }
+  });
+};
+
+// 🟢 7. Helpers de colores (Alineados exactamente con los estados de tu FastAPI)
 const getBadgeClass = (estado) => {
-  switch (estado) {
-    case "Confirmada":
+  // Aseguramos que el estado esté en minúsculas por si acaso
+  const estadoLimpio = estado ? estado.toLowerCase() : "";
+  
+  switch (estadoLimpio) {
+    case "confirmada":
       return "bg-success";
-    case "Pendiente":
+    case "ocupada": // El nuevo estado que agregamos
+      return "bg-primary"; // O el color que prefieras para check-in
+    case "pendiente":
       return "bg-warning text-dark";
-    case "Cancelada":
+    case "cancelada":
       return "bg-danger";
-    default:
+    case "finalizada":
       return "bg-secondary";
+    default:
+      return "bg-light text-dark";
   }
 };
+
+const verDetalles = (reserva) => {
+  // 1. Calculamos la cantidad de noches mágicamente
+  const fechaIn = new Date(reserva.fecha_entrada);
+  const fechaOut = new Date(reserva.fecha_salida);
+  const diferenciaTiempo = Math.abs(fechaOut - fechaIn);
+  // Dividimos los milisegundos entre los milisegundos que tiene un día
+  const noches = Math.ceil(diferenciaTiempo / (1000 * 60 * 60 * 24)); 
+
+  // 2. Mostramos el modal
+  Swal.fire({
+    title: `Detalles de la Reserva`,
+    html: `
+      <div class="text-start" style="font-size: 0.95rem;">
+        <p><strong>ID Reserva:</strong> <span class="text-muted">${reserva.id}</span></p>
+        <p><strong>Cliente:</strong> ${reserva.cliente}</p>
+        <p><strong>Habitación:</strong> ${reserva.habitacion}</p>
+        <hr>
+        <p><strong>Fecha de Entrada:</strong> ${reserva.fecha_entrada}</p>
+        <p><strong>Fecha de Salida:</strong> ${reserva.fecha_salida}</p>
+        <p><strong>Total de Noches:</strong> <span class="badge bg-secondary">${noches} noche(s)</span></p>
+        <hr>
+        <p><strong>Monto Total:</strong> <span class="text-success fw-bold">$${reserva.monto?.toLocaleString()}</span></p>
+        <p><strong>Estado Actual:</strong> ${reserva.estado.toUpperCase()}</p>
+      </div>
+    `,
+    icon: 'info',
+    confirmButtonColor: "#0f3b2a"
+  });
+};
+
 </script>
 
 <template>
@@ -104,7 +184,7 @@ const getBadgeClass = (estado) => {
             <div>
               <h6 class="text-muted mb-0">Confirmadas</h6>
               <h4 class="fw-bold mb-0">
-                {{ reservas.filter((r) => r.estado === "Confirmada").length }}
+                {{ reservas.filter((r) => r.estado === "confirmada").length }}
               </h4>
             </div>
           </div>
@@ -123,7 +203,7 @@ const getBadgeClass = (estado) => {
             <div>
               <h6 class="text-muted mb-0">Pendientes</h6>
               <h4 class="fw-bold mb-0">
-                {{ reservas.filter((r) => r.estado === "Pendiente").length }}
+                {{ reservas.filter((r) => r.estado === "pendiente").length }}
               </h4>
             </div>
           </div>
@@ -146,7 +226,7 @@ const getBadgeClass = (estado) => {
               <h6 class="text-muted mb-0">Ingresos Proyectados</h6>
               <h4 class="fw-bold mb-0">
                 ${{
-                  reservas.reduce((acc, r) => acc + r.total, 0).toLocaleString()
+                  reservas.reduce((acc, r) => acc + r.monto, 0).toLocaleString()
                 }}
               </h4>
             </div>
@@ -179,26 +259,24 @@ const getBadgeClass = (estado) => {
               <th>Fechas (In - Out)</th>
               <th>Total</th>
               <th>Estado</th>
-              <th class="text-end pe-4">Acciones</th>
+              <th class="text-center">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="res in reservasFiltradas" :key="res.id">
-              <td class="ps-4">
-                <div class="fw-bold">{{ res.id }}</div>
-                <div class="small text-muted">{{ res.cliente }}</div>
-              </td>
-              <td>{{ res.habitacion }}</td>
+            <tr v-for="res in reservasFiltradas" :key="res._id">
               <td>
-                <div class="small">
-                  <span class="fw-bold">Entra:</span> {{ res.checkIn }}
-                </div>
-                <div class="small">
-                  <span class="fw-bold">Sale:</span> {{ res.checkOut }}
-                </div>
+                  <div class="fw-bold text-dark">RES-{{ res.id.slice(-6).toUpperCase() }}</div>
+                  <div class="text-muted small">{{ res.cliente }}</div>
+                </td>
+
+                <td>{{ res.habitacion }}</td>
+
+                <td>
+                <div class="small text-muted"><strong>Entra:</strong> {{ res.fecha_entrada }}</div>
+                <div class="small text-muted"><strong>Sale:</strong> {{ res.fecha_salida }}</div>
               </td>
               <td class="fw-bold text-success">
-                ${{ res.total.toLocaleString() }}
+                ${{ res.monto.toLocaleString() }}
               </td>
               <td>
                 <span
@@ -210,36 +288,42 @@ const getBadgeClass = (estado) => {
                   {{ res.estado }}
                 </span>
               </td>
-              <td class="text-end pe-4">
-                <div class="btn-group">
-                  <button
-                    class="btn btn-sm btn-light border"
-                    @click="actualizarEstado(res.id, 'Confirmada')"
-                    title="Confirmar"
-                  >
-                    <font-awesome-icon
-                      icon="fa-solid fa-check"
-                      class="text-success"
-                    />
-                  </button>
-                  <button
-                    class="btn btn-sm btn-light border"
-                    @click="actualizarEstado(res.id, 'Cancelada')"
-                    title="Cancelar"
-                  >
-                    <font-awesome-icon
-                      icon="fa-solid fa-xmark"
-                      class="text-danger"
-                    />
-                  </button>
-                  <button
-                    class="btn btn-sm btn-light border text-secondary"
-                    @click="eliminarReserva(res.id)"
-                  >
-                    <font-awesome-icon icon="fa-solid fa-trash" />
-                  </button>
-                </div>
-              </td>
+              <td class="text-center align-middle">
+                <div class="d-flex justify-content-center gap-2">
+                  <button v-if="res.estado === 'pendiente'" 
+                            @click="actualizarEstado(res.id, 'confirmada')" 
+                            class="btn btn-sm btn-outline-success" title="Confirmar Pago">
+                      <i class="bi bi-check-lg"></i> </button>
+
+                    <button v-if="res.estado === 'confirmada'" 
+                            @click="actualizarEstado(res.id, 'ocupada')" 
+                            class="btn btn-sm btn-outline-primary" title="Hacer Check-in">
+                      <i class="bi bi-door-open"></i>
+                    </button>
+
+                    <button v-if="res.estado === 'ocupada'" 
+                            @click="actualizarEstado(res.id, 'finalizada')" 
+                            class="btn btn-sm btn-outline-secondary" title="Hacer Check-out">
+                      <i class="bi bi-box-arrow-right"></i>
+                    </button>
+
+                    <button v-if="['pendiente', 'confirmada'].includes(res.estado)" 
+                            @click="eliminarReserva(res.id)" 
+                            class="btn btn-sm btn-outline-danger" title="Cancelar Reserva">
+                      <i class="bi bi-x-lg"></i>
+                    </button>
+
+                    <button v-if="['finalizada', 'cancelada'].includes(res.estado)" 
+                          @click="verDetalles(res)" 
+                          class="btn btn-sm btn-outline-info" title="Ver Detalles completos">
+                    <i class="bi bi-eye"></i> </button>
+
+                    <button v-if="res.estado === 'cancelada'" 
+                        @click="actualizarEstado(res.id, 'pendiente')" 
+                        class="btn btn-sm btn-outline-warning" title="Restaurar Reserva">
+                         <i class="bi bi-arrow-counterclockwise"></i> </button>
+                  </div>
+                </td>
             </tr>
           </tbody>
         </table>

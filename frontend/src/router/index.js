@@ -3,11 +3,13 @@ import { useAuthStore } from "@/stores/auth";
 
 // --- IMPORTACIONES ESTÁTICAS ---
 import PublicLayout from "@/layouts/PublicLayout.vue";
+import LandingPortal from "@/views/public/LandingPortal.vue";
 import HomeView from "@/views/public/Home.vue";
 import AboutUs from "@/views/public/AboutUs.vue";
 import ContactUs from "@/views/public/ContactUs.vue";
 import PhotoGallery from "@/views/public/PhotosGallery.vue";
 import Catalog from "@/views/public/Catalog.vue";
+
 
 // Layouts Privados
 import AppLayout from "@/layouts/AppLayout.vue";
@@ -18,9 +20,16 @@ const routes = [
   // ZONA PÚBLICA
   {
     path: "/",
+    name: "landing-portal",
+    component: LandingPortal, 
+    meta: { hideNavbar: true }
+  },
+
+  {
+    path: "/hospedaje",
     component: PublicLayout,
     children: [
-      { path: "", name: "home", component: HomeView },
+      { path: "", name: "hospedaje-home", component: HomeView }, // El inicio de hospedaje
       { path: "about", name: "about", component: AboutUs },
       { path: "gallery", name: "gallery", component: PhotoGallery },
       { path: "rooms", name: "rooms", component: Catalog },
@@ -29,12 +38,7 @@ const routes = [
         path: "servicios",
         name: "servicios",
         component: () => import("@/views/ServiceSelection.vue"),
-      },
-      {
-        path: "servicios/hospedaje",
-        name: "hospedaje",
-        component: () => import("@/views/public/Catalog.vue"),
-      },
+      }
     ],
   },
 

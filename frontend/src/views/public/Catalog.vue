@@ -22,11 +22,14 @@
       <div class="cards-grid">
         <div
           v-for="c in cabanasIndependientes"
-          :key="c.id"
+          :key="c.id || c._id"
           class="card-kofan-v2"
         >
           <div class="img-container">
-            <img :src="c.image" :alt="c.name" />
+            <img 
+              :src="c.main_image ? `${API_BASE_URL}${c.main_image}` : 'https://via.placeholder.com/400x250?text=Kofan+Hospedaje'" 
+              :alt="c.name" 
+            />
             <div class="badge-precio">{{ formatPrice(c.price) }}</div>
           </div>
           <div class="content p-4">
@@ -39,7 +42,7 @@
                 ><font-awesome-icon icon="fa-solid fa-users" />
                 {{ c.capacity }} pers.</span
               >
-              <button class="btn-reservar-kofan" @click="reserva.openModal()">
+              <button class="btn-reservar-kofan" @click="reserva.openModal(c)">
                 Reservar Ahora
               </button>
             </div>
@@ -57,7 +60,7 @@
       <div class="cards-grid">
         <div v-for="h in habitacionesMaloka" :key="h.id" class="card-kofan-v2">
           <div class="img-container">
-            <img :src="h.image" :alt="h.name" />
+            <img :src="h.main_image ? `${API_BASE_URL}${h.main_image}` : 'https://via.placeholder.com/400x250?text=Kofan+Hospedaje'" :alt="h.name" class="object-fit-cover" />
             <div class="badge-precio">{{ formatPrice(h.price) }}</div>
           </div>
           <div class="content p-4">
@@ -70,7 +73,7 @@
                 ><font-awesome-icon icon="fa-solid fa-bed" />
                 {{ h.capacity }} pers.</span
               >
-              <button class="btn-reservar-kofan" @click="reserva.openModal()">
+              <button class="btn-reservar-kofan" @click="reserva.openModal(h)">
                 Reservar Ahora
               </button>
             </div>
@@ -82,14 +85,16 @@
 </template>
 
 <script setup>
-import { computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useReservaStore } from "@/stores/reserva.js";
+// 🟢 1. Importa la función que creaste para obtener las habitaciones de tu backend
+import { getRooms } from "@/services/roomService"; // Ajusta esta ruta a tu proyecto
 
-const images = import.meta.glob("@/img/habitacion*.jpg", {
-  eager: true,
-  import: "default",
-});
+const API_BASE_URL = "http://127.0.0.1:8000"; // Para poder armar la URL de las imágenes
 const reserva = useReservaStore();
+
+// 🟢 2. Ahora allAccommodations es reactivo y arranca vacío
+const allAccommodations = ref([]);
 
 const formatPrice = (v) =>
   v.toLocaleString("es-CO", {
@@ -98,88 +103,28 @@ const formatPrice = (v) =>
     maximumFractionDigits: 0,
   });
 
-// DATA ORGANIZADA
-const allAccommodations = [
-  {
-    id: 1,
-    type: "cabana",
-    name: "Cabaña Ancestral",
-    capacity: "2",
-    price: 120000,
-    description: "Privacidad total con vista al sendero botánico.",
-    image: images["@/img/habitacion1.jpg"],
-  },
-  {
-    id: 2,
-    type: "cabana",
-    name: "Nido de Selva",
-    capacity: "2",
-    price: 140000,
-    description: "Arquitectura en madera con ventanales panorámicos.",
-    image: images["@/img/habitacion2.jpg"],
-  },
-  {
-    id: 3,
-    type: "habitacion",
-    name: "Habitación Familiar Maloka",
-    capacity: "6",
-    price: 200000,
-    description: "Ubicada en la estructura principal, ideal para grupos.",
-    image: images["@/img/habitacion3.jpg"],
-  },
-  {
-    id: 4,
-    type: "habitacion",
-    name: "Suite Kofán",
-    capacity: "8",
-    price: 150000,
-    description: "Nuestra habitación más amplia con balcones internos.",
-    image: images["@/img/habitacion4.jpg"],
-  },
-  {
-    id: 5,
-    type: "habitacion",
-    name: "Suite Kofán",
-    capacity: "8",
-    price: 150000,
-    description: "Nuestra habitación más amplia con balcones internos.",
-    image: images["@/img/habitacion5.jpg"],
-  },
-  {
-    id: 6,
-    type: "habitacion",
-    name: "Suite Kofán",
-    capacity: "8",
-    price: 150000,
-    description: "Nuestra habitación más amplia con balcones internos.",
-    image: images["@/img/habitacion6.jpg"],
-  },
-  {
-    id: 7,
-    type: "cabana",
-    name: "Nido de Selva",
-    capacity: "2",
-    price: 140000,
-    description: "Arquitectura en madera con ventanales panorámicos.",
-    image: images["@/img/habitacion6.jpg"],
-  },
-  {
-    id: 8,
-    type: "cabana",
-    name: "Nido de Selva",
-    capacity: "2",
-    price: 140000,
-    description: "Arquitectura en madera con ventanales panorámicos.",
-    image: images["@/img/habitacion5.jpg"],
-  },
-  // Agrega los demás aquí según su tipo...
-];
+// 🟢 3. Función para ir al backend de FastAPI y traer las habitaciones reales
+const cargarCatalogo = async () => {
+  try {
+    const response = await getRooms();
+    allAccommodations.value = response?.data && Array.isArray(response.data) ? response.data : 
+                              Array.isArray(response) ? response : [];
+  } catch (error) {
+    console.error("Error al cargar los alojamientos:", error);
+  }
+};
 
+onMounted(() => {
+  cargarCatalogo();
+});
+
+// 🟢 4. Filtramos por tipo Y agregamos que la habitación esté activa (active: true)
 const cabanasIndependientes = computed(() =>
-  allAccommodations.filter((a) => a.type === "cabana"),
+  allAccommodations.value.filter((a) => a.type === "cabana" && a.active === true)
 );
+
 const habitacionesMaloka = computed(() =>
-  allAccommodations.filter((a) => a.type === "habitacion"),
+  allAccommodations.value.filter((a) => a.type === "habitacion" && a.active === true)
 );
 </script>
 

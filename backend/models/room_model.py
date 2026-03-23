@@ -19,6 +19,7 @@ class RoomCreate(RoomBase):
     description: Optional[str] = None
     price: float
     capacity: int
+    type : str
 
 
 class RoomUpdate(BaseModel):
@@ -31,6 +32,7 @@ class RoomUpdate(BaseModel):
     images: Optional[List[str]] = None
     main_image: Optional[str] = None
     active: Optional[bool] = None
+    type : Optional[str] = None
 
 
 class RoomResponse(RoomBase):

@@ -1,11 +1,11 @@
-def room_schema(room) -> dict:
+def room_schema(room: dict) -> dict:
     return {
-        "id": str(room["_id"]),
+        "id": str(room.get("_id", "")),
         "room_number": room.get("room_number"),
-        "name": room["name"],
-        "capacity": room.get("capacity"),
-        "description": room.get("description"),
-        "price": room["price"],
+        "name": room.get("name", "Sin nombre"),
+        "capacity": room.get("capacity", 1),
+        "description": room.get("description", ""),
+        "price": room.get("price", 0.0),
         "is_available": room.get("is_available", True), 
         "images": room.get("images", []),
         "main_image": room.get("main_image"),
@@ -14,7 +14,8 @@ def room_schema(room) -> dict:
         "updated_by": room.get("updated_by"),
         "created_at": room.get("created_at"),
         "updated_at": room.get("updated_at"),
+        "type": room.get("type", "cabana"),
     }
 
-def rooms_schema(rooms):
+def rooms_schema(rooms: list) -> list:
     return [room_schema(r) for r in rooms]
