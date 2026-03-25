@@ -139,18 +139,35 @@ async def get_all_bookings_service(estado_filtro: str = None):
         if estado == "pendiente":
             conteo_pendientes += 1
 
-        # 4. LÓGICA DEL NOMBRE (Soporta usuarios registrados y reservas de "invitados" sin ID)
+        # 4. LÓGICA DEL NOMBRE Y CONTACTO (Soporta usuarios y visitantes públicos)
         nombre_cliente = "Desconocido"
-        if cliente:
+        correo_cliente = ""
+        celular_cliente = ""
+        
+        if cliente: # Si es un usuario registrado, sacamos sus datos base
             nombre_cliente = cliente.get("full_name", "Desconocido")
+            correo_cliente = cliente.get("email", "")
+            celular_cliente = cliente.get("phone", "") 
         elif reserva.get("cliente_nombre"):
             nombre_cliente = reserva.get("cliente_nombre")
+            
+        # 🟢 Prioridad a la reserva: Si la reserva trajo un correo/celular específico, lo usamos
+        correo_cliente = reserva.get("cliente_email", correo_cliente)
+        celular_cliente = reserva.get("cliente_celular", celular_cliente)
 
-        # 5. ARMAR EL DICCIONARIO SEGURO
+        # 5. ARMAR EL DICCIONARIO SEGURO (Agregamos los campos nuevos)
         lista_global.append({
             "id": str(reserva["_id"]),
             "habitacion_id": str(habitacion["_id"]) if habitacion else None, 
             "cliente": nombre_cliente,
+            
+            # 🟢 AQUÍ ENVIAMOS LOS NUEVOS DATOS A VUE:
+            "cliente_email": correo_cliente,
+            "cliente_celular": celular_cliente,
+            "tipo_documento": reserva.get("tipo_documento", ""),
+            "cliente_documento": reserva.get("cliente_documento", ""),
+            "acompanantes": reserva.get("acompanantes", []),
+            "consumos_extras": reserva.get("consumos_extras", []),
             "habitacion": f"Hab. {habitacion.get('room_number', 'S/N')}" if habitacion else "N/A",
             "monto": reserva.get("monto_total", 0),
             "estado": estado,
@@ -173,3 +190,16 @@ async def get_all_bookings_service(estado_filtro: str = None):
         },
         "reservas": lista_global
     }
+
+    
+async def update_booking_details_service(reserva_id: str, datos: dict) -> bool:
+    try:
+        id_obj = ObjectId(reserva_id)
+        resultado = await db.bookings.update_one(
+            {"_id": id_obj},
+            {"$set": datos}
+        )
+        return resultado.matched_count > 0
+    except Exception as e:
+        print(f"Error actualizando detalles de reserva: {e}")
+        return False

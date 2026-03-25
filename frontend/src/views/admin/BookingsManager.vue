@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
+import ModalEdicionReserva from "@/components/ModalEdicionReserva.vue";
+import ModalFactura from "@/components/ModalFactura.vue";
 
 const reservas = ref([]);
 const filtro = ref("");
@@ -166,6 +168,26 @@ const verDetalles = (reserva) => {
   });
 };
 
+const mostrarModalEdicion = ref(false);
+const reservaAEditar = ref(null);
+
+const abrirModalEdicion = (reserva) => {
+  reservaAEditar.value = reserva;
+  mostrarModalEdicion.value = true;
+};
+
+const refrescarTabla = async () => {
+  await cargarReservas();
+};
+
+const mostrarModalFactura = ref(false);
+const reservaParaFactura = ref(null);
+
+const abrirModalFactura = (reserva) => {
+  reservaParaFactura.value = reserva;
+  mostrarModalFactura.value = true;
+};
+
 </script>
 
 <template>
@@ -266,8 +288,12 @@ const verDetalles = (reserva) => {
             <tr v-for="res in reservasFiltradas" :key="res._id">
               <td>
                   <div class="fw-bold text-dark">RES-{{ res.id.slice(-6).toUpperCase() }}</div>
-                  <div class="text-muted small">{{ res.cliente }}</div>
-                </td>
+                  <div class="text-dark fw-bold" style="font-size: 0.9rem;">{{ res.cliente }}</div>
+                   <div class="text-muted mt-1" style="font-size: 0.75rem;">
+                  <i class="bi bi-telephone-fill me-1"></i> {{ res.cliente_celular || 'Sin celular' }} <br>
+                  <i class="bi bi-envelope-fill me-1"></i> {{ res.cliente_email || 'Sin correo' }}
+                </div>
+              </td>
 
                 <td>{{ res.habitacion }}</td>
 
@@ -290,12 +316,20 @@ const verDetalles = (reserva) => {
               </td>
               <td class="text-center align-middle">
                 <div class="d-flex justify-content-center gap-2">
-                  <button v-if="res.estado === 'pendiente'" 
+                  
+                    <button v-if="['pendiente', 'confirmada', 'ocupada'].includes(res.estado)" 
+                            @click="abrirModalEdicion(res)" 
+                            class="btn btn-sm btn-outline-dark" title="Editar Detalles y Fechas">
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <button v-if="res.estado === 'pendiente'" 
                             @click="actualizarEstado(res.id, 'confirmada')" 
                             class="btn btn-sm btn-outline-success" title="Confirmar Pago">
-                      <i class="bi bi-check-lg"></i> </button>
+                      <i class="bi bi-check-lg"></i> 
+                    </button>
 
-                    <button v-if="res.estado === 'confirmada'" 
+                    <button v-if="res.estado === 'confirmada' && res.cliente_documento && res.cliente_documento !== '0'" 
                             @click="actualizarEstado(res.id, 'ocupada')" 
                             class="btn btn-sm btn-outline-primary" title="Hacer Check-in">
                       <i class="bi bi-door-open"></i>
@@ -313,10 +347,11 @@ const verDetalles = (reserva) => {
                       <i class="bi bi-x-lg"></i>
                     </button>
 
-                    <button v-if="['finalizada', 'cancelada'].includes(res.estado)" 
-                          @click="verDetalles(res)" 
-                          class="btn btn-sm btn-outline-info" title="Ver Detalles completos">
-                    <i class="bi bi-eye"></i> </button>
+                    <button v-if="res.estado === 'finalizada'" 
+                      @click="abrirModalFactura(res)" 
+                      class="btn btn-sm btn-outline-info" title="Ver Factura / Descargar PDF">
+                       <i class="bi bi-eye"></i>
+                    </button>
 
                     <button v-if="res.estado === 'cancelada'" 
                         @click="actualizarEstado(res.id, 'pendiente')" 
@@ -329,6 +364,17 @@ const verDetalles = (reserva) => {
         </table>
       </div>
     </div>
+    <ModalEdicionReserva 
+      :show="mostrarModalEdicion" 
+      :reserva="reservaAEditar" 
+      @close="mostrarModalEdicion = false" 
+      @actualizado="refrescarTabla" 
+    />
+    <ModalFactura 
+      :show="mostrarModalFactura" 
+      :reserva="reservaParaFactura" 
+      @close="mostrarModalFactura = false" 
+    />
   </div>
 </template>
 

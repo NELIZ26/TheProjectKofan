@@ -26,6 +26,12 @@ export const createRoom = async (roomDetails, imageFilesArray) => {
     });
   }
 
+  if (roomDetails.amenities && roomDetails.amenities.length > 0) {
+    roomDetails.amenities.forEach(amenidad => {
+      formData.append('amenities', amenidad); // Se envía uno por uno
+    });
+  }
+
   // --- LOG DE DEPURACIÓN (Súper útil) ---
   console.log("--- REVISANDO QUÉ LLEVA EL FORMDATA ---");
   for (let [key, value] of formData.entries()) {

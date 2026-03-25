@@ -1,15 +1,11 @@
 <template>
   <div id="contenido1" class="bg-light-kofan">
+    
     <div class="header-section text-center py-5">
-      <font-awesome-icon
-        icon="fa-solid fa-mountain-sun"
-        class="verde-kofan mb-3 fs-1"
-      />
+      <font-awesome-icon icon="fa-solid fa-mountain-sun" class="verde-kofan mb-3 fs-1" />
       <h1 class="fw-bold verde-kofan">Nuestros Alojamientos</h1>
       <p class="text-muted container" style="max-width: 700px">
-        Desconéctate del mundo y reconéctate con la tierra. Elige entre la
-        privacidad de nuestras cabañas artesanales o la calidez de nuestras
-        habitaciones tradicionales.
+        Desconéctate del mundo y reconéctate con la tierra. Elige entre la privacidad de nuestras cabañas artesanales o la calidez de nuestras habitaciones tradicionales.
       </p>
     </div>
 
@@ -19,36 +15,12 @@
         <h2 class="mx-3 fw-bold verde-kofan">Cabañas Independientes</h2>
       </div>
 
-      <div class="cards-grid">
-        <div
-          v-for="c in cabanasIndependientes"
-          :key="c.id || c._id"
-          class="card-kofan-v2"
-        >
-          <div class="img-container">
-            <img 
-              :src="c.main_image ? `${API_BASE_URL}${c.main_image}` : 'https://via.placeholder.com/400x250?text=Kofan+Hospedaje'" 
-              :alt="c.name" 
-            />
-            <div class="badge-precio">{{ formatPrice(c.price) }}</div>
-          </div>
-          <div class="content p-4">
-            <h4 class="fw-bold mb-2">{{ c.name }}</h4>
-            <p class="text-muted small flex-grow-1">{{ c.description }}</p>
-            <div
-              class="footer-card d-flex justify-content-between align-items-center"
-            >
-              <span class="capacidad"
-                ><font-awesome-icon icon="fa-solid fa-users" />
-                {{ c.capacity }} pers.</span
-              >
-              <button class="btn-reservar-kofan" @click="reserva.openModal(c)">
-                Reservar Ahora
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <RoomCard 
+        v-for="c in cabanasIndependientes" 
+        :key="c.id || c._id" 
+        :habitacion="c" 
+        @reservar="reserva.openModal($event)" 
+      />
     </section>
 
     <section class="container pb-5" id="seccionHabitaciones">
@@ -57,29 +29,12 @@
         <h2 class="mx-3 fw-bold verde-kofan">Habitaciones en Maloka</h2>
       </div>
 
-      <div class="cards-grid">
-        <div v-for="h in habitacionesMaloka" :key="h.id" class="card-kofan-v2">
-          <div class="img-container">
-            <img :src="h.main_image ? `${API_BASE_URL}${h.main_image}` : 'https://via.placeholder.com/400x250?text=Kofan+Hospedaje'" :alt="h.name" class="object-fit-cover" />
-            <div class="badge-precio">{{ formatPrice(h.price) }}</div>
-          </div>
-          <div class="content p-4">
-            <h4 class="fw-bold mb-2">{{ h.name }}</h4>
-            <p class="text-muted small flex-grow-1">{{ h.description }}</p>
-            <div
-              class="footer-card d-flex justify-content-between align-items-center"
-            >
-              <span class="capacidad"
-                ><font-awesome-icon icon="fa-solid fa-bed" />
-                {{ h.capacity }} pers.</span
-              >
-              <button class="btn-reservar-kofan" @click="reserva.openModal(h)">
-                Reservar Ahora
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <RoomCard 
+        v-for="h in habitacionesMaloka" 
+        :key="h.id || h._id" 
+        :habitacion="h" 
+        @reservar="reserva.openModal($event)" 
+      />
     </section>
   </div>
 </template>
@@ -87,23 +42,14 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useReservaStore } from "@/stores/reserva.js";
-// 🟢 1. Importa la función que creaste para obtener las habitaciones de tu backend
-import { getRooms } from "@/services/roomService"; // Ajusta esta ruta a tu proyecto
+import { getRooms } from "@/services/roomService"; 
 
-const API_BASE_URL = "http://127.0.0.1:8000"; // Para poder armar la URL de las imágenes
+// 🟢 Importamos la nueva tarjeta de diseño premium
+import RoomCard from "@/components/RoomCard.vue"; 
+
 const reserva = useReservaStore();
-
-// 🟢 2. Ahora allAccommodations es reactivo y arranca vacío
 const allAccommodations = ref([]);
 
-const formatPrice = (v) =>
-  v.toLocaleString("es-CO", {
-    style: "currency",
-    currency: "COP",
-    maximumFractionDigits: 0,
-  });
-
-// 🟢 3. Función para ir al backend de FastAPI y traer las habitaciones reales
 const cargarCatalogo = async () => {
   try {
     const response = await getRooms();
@@ -118,7 +64,6 @@ onMounted(() => {
   cargarCatalogo();
 });
 
-// 🟢 4. Filtramos por tipo Y agregamos que la habitación esté activa (active: true)
 const cabanasIndependientes = computed(() =>
   allAccommodations.value.filter((a) => a.type === "cabana" && a.active === true)
 );
@@ -137,95 +82,10 @@ const habitacionesMaloka = computed(() =>
 .verde-kofan {
   color: #0f3b2a;
 }
-
 .linea-verde {
   height: 4px;
   width: 50px;
   background-color: #2ecc71;
   border-radius: 2px;
-}
-
-.cards-grid {
-  display: grid;
-  gap: 2.5rem;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-}
-
-.card-kofan-v2 {
-  background: white;
-  border-radius: 30px;
-  overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
-  transition: all 0.4s ease;
-  display: flex;
-  flex-direction: column;
-  border: 1px solid rgba(15, 59, 42, 0.05);
-}
-
-.card-kofan-v2:hover {
-  transform: translateY(-12px);
-  box-shadow: 0 25px 50px rgba(15, 59, 42, 0.15);
-}
-
-.img-container {
-  position: relative;
-  height: 250px;
-  overflow: hidden;
-}
-
-.img-container img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  transition: transform 0.6s ease;
-}
-
-.card-kofan-v2:hover .img-container img {
-  transform: scale(1.1);
-}
-
-.badge-precio {
-  position: absolute;
-  bottom: 15px;
-  right: 15px;
-  background: #0f3b2a;
-  color: white;
-  padding: 8px 18px;
-  border-radius: 50px;
-  font-weight: 700;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.content {
-  flex-grow: 1;
-  display: flex;
-  flex-direction: column;
-}
-
-.capacidad {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: #1a5c43;
-}
-
-.btn-reservar-kofan {
-  background: #0f3b2a;
-  color: white;
-  border: none;
-  padding: 10px 22px;
-  border-radius: 15px;
-  font-weight: 600;
-  transition: 0.3s;
-}
-
-.btn-reservar-kofan:hover {
-  background: #2ecc71;
-  transform: scale(1.05);
-}
-
-@media (max-width: 768px) {
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
 }
 </style>

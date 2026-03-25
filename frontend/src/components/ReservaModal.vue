@@ -1,214 +1,96 @@
 <script setup>
 import { useReservaStore } from "@/stores/reserva";
+import { DatePicker as VDatePicker } from 'v-calendar'; 
+import 'v-calendar/dist/style.css'; 
+import { ref, onMounted, onUnmounted } from 'vue'; // 🟢 Agregamos esto
 
 const store = useReservaStore();
 
-// Ahora simplemente llamamos a la función del store que ya hace todo el trabajo pesado,
-// sin meter lógica de WhatsApp aquí.
+// 🟢 Lógica para saber si mostrar 1 o 2 calendarios según la pantalla
+const columnasCalendario = ref(window.innerWidth >= 768 ? 2 : 1);
+
+const actualizarColumnas = () => {
+  columnasCalendario.value = window.innerWidth >= 768 ? 2 : 1;
+};
+
+// Escuchamos si el cliente voltea el celular o cambia el tamaño de la ventana
+onMounted(() => window.addEventListener('resize', actualizarColumnas));
+onUnmounted(() => window.removeEventListener('resize', actualizarColumnas));
+
 const handleConfirmarReserva = async () => {
   await store.handleSubmit(); 
 };
 </script>
 
 <template>
-  <div
-    class="modal-overlay"
-    :class="{ active: store.isModalOpen }"
-    @click.self="store.closeModal"
-  >
-    <div class="modal-card modal-lg"> <button class="btn-close-custom" @click="store.closeModal">
+  <div class="modal-overlay" :class="{ active: store.isModalOpen }" @click.self="store.closeModal">
+    <div class="modal-card modal-lg">
+      <button class="btn-close-custom" @click="store.closeModal">
         <font-awesome-icon icon="fa-solid fa-plus" style="transform: rotate(45deg)" />
       </button>
 
       <div class="modal-body">
         <div class="text-center mb-4">
           <font-awesome-icon icon="fa-solid fa-leaf" class="verde-kofan mb-2 fs-4" />
-          <h2 class="fw-bold verde-kofan">Reserva tu Experiencia</h2>
-          
-          <p v-if="store.habitacionSeleccionada" class="text-muted small mb-0">
-            Estás reservando: <strong>{{ store.habitacionSeleccionada.name }}</strong>
-          </p>
-          <p v-if="store.habitacionSeleccionada" class="text-success fw-bold mt-1">
-            Valor por noche: ${{ store.habitacionSeleccionada.price.toLocaleString("es-CO") }} COP
-          </p>
-          
-          <p v-else class="text-muted small">
-            Completa tus datos para vivir la magia del Putumayo
-          </p>
-        </div>
-
-        <div class="tabs-kofan mb-4">
-          <button
-            type="button"
-            class="tab-item"
-            :class="{ active: store.personType === 'natural' }"
-            @click="store.setPersonType('natural')"
-          >
-            Persona Natural
-          </button>
-          <button
-            type="button"
-            class="tab-item"
-            :class="{ active: store.personType === 'juridica' }"
-            @click="store.setPersonType('juridica')"
-          >
-            Empresa (Jurídica)
-          </button>
+          <h2 class="fw-bold verde-kofan" v-if="store.habitacionSeleccionada">
+            Reservar: <strong>{{ store.habitacionSeleccionada.name }}</strong>
+          </h2>
         </div>
 
         <form @submit.prevent="handleConfirmarReserva" novalidate>
           <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label-kofan">{{ store.labelNombres }}</label>
-              <input
-                type="text"
-                class="input-kofan"
-                v-model="store.form.nombres"
-                :placeholder="store.placeholderNombres"
-                :class="{ 'is-invalid': store.errors.nombres }"
-              />
+            
+            <div class="col-12 mb-3 d-flex flex-column align-items-center">
+              <label class="form-label-kofan mb-2 text-center fw-bold text-success">1. Selecciona tus fechas</label>
+              
+              <div class="calendario-wrapper p-2 bg-light rounded border d-flex justify-content-center" style="width: 100%; max-width: 550px;">
+                <VDatePicker
+                  v-model.range="store.selectedDateRange" 
+                  is-range
+                  :min-date="store.minDate"
+                  :disabled-dates="store.disabledDates"
+                  color="green"
+                  title-position="left"
+                  :columns="columnasCalendario"
+                />
+              </div>
+              
+              <p v-if="store.errors.dates" class="text-danger small text-center mt-2 mb-0">Selecciona una fecha de ingreso y salida.</p>
             </div>
 
-            <div class="col-md-4" v-if="store.personType === 'natural'">
-              <label class="form-label-kofan">Tipo Documento</label>
-              <select
-                class="input-kofan"
-                v-model="store.form.tipoDocumento"
-                :class="{ 'is-invalid': store.errors.tipoDocumento }"
-              >
-                <option value="" disabled>Seleccione...</option>
-                <option value="CC">C.C.</option>
-                <option value="CE">C.E.</option>
-                <option value="PA">Pasaporte</option>
-              </select>
+            <div class="col-12 mt-3">
+              <label class="form-label-kofan fw-bold text-success text-center d-block">2. Datos de Contacto</label>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label-kofan">Nombre y Apellido / Razón Social</label>
+              <input type="text" class="input-kofan" v-model="store.form.nombreCompleto" placeholder="Ej: Juan Pérez" :class="{ 'is-invalid': store.errors.nombreCompleto }" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-kofan">Celular (WhatsApp)</label>
+              <input type="tel" class="input-kofan" v-model="store.form.telefono" placeholder="310 123 4567" :class="{ 'is-invalid': store.errors.telefono }" />
             </div>
 
             <div class="col-md-6">
               <label class="form-label-kofan">Correo Electrónico</label>
-              <input
-                type="email"
-                class="input-kofan"
-                v-model="store.form.correo"
-                placeholder="ejemplo@correo.com"
-                :class="{ 'is-invalid': store.errors.correo }"
-              />
+              <input type="email" class="input-kofan" v-model="store.form.correo" placeholder="ejemplo@correo.com" :class="{ 'is-invalid': store.errors.correo }" />
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label-kofan">{{ store.labelNumDoc }}</label>
-              <input
-                type="number"
-                class="input-kofan"
-                v-model="store.form.numDocumento"
-                :class="{ 'is-invalid': store.errors.numDocumento }"
-              />
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label-kofan">Teléfono</label>
-              <input
-                type="tel"
-                class="input-kofan"
-                v-model="store.form.telefono"
-                placeholder="300..."
-                :class="{ 'is-invalid': store.errors.telefono }"
-              />
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label-kofan">Huéspedes</label>
-              <select class="input-kofan" v-model="store.form.cantidadPersonas">
-                <option value="1">1 Persona</option>
-                <option value="2">2 Personas</option>
-                <option value="3">3 Personas</option>
-                <option value="4">4 Personas</option>
-                <option value="5+">5+ Personas</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label-kofan">Alojamiento</label>
-              <input
-                type="text"
-                class="input-kofan bg-light text-muted"
-                v-model="store.form.habitacion"
-                readonly
-                :class="{ 'is-invalid': store.errors.habitacion }"
-                title="Alojamiento seleccionado en el catálogo"
-              />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label-kofan">Ingreso (Check-In)</label>
-              <input
-                type="date"
-                class="input-kofan"
-                v-model="store.form.fechaReserva"
-                :min="store.minDate"
-                :class="{ 'is-invalid': store.errors.fechaReserva }"
-              />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label-kofan">Salida (Check-Out)</label>
-              <input
-                type="date"
-                class="input-kofan"
-                v-model="store.form.fechaSalida"
-                :min="store.form.fechaReserva || store.minDate"
-                :class="{ 'is-invalid': store.errors.fechaSalida }"
-              />
-            </div>
-
-            <div class="col-12 mt-4" v-if="store.form.cantidadPersonas > 1 || store.form.cantidadPersonas === '5+'">
-              <div class="p-3 bg-light rounded border border-light">
-                <div class="form-check form-switch d-flex align-items-center mb-0">
-                  <input 
-                    class="form-check-input me-3" 
-                    type="checkbox" 
-                    id="switchAcompanantes" 
-                    v-model="store.form.registrarAcompanantesAhora"
-                    style="transform: scale(1.3); cursor: pointer;"
-                  >
-                  <label class="form-check-label text-muted small" for="switchAcompanantes" style="cursor: pointer;">
-                    <strong style="color: #0f3b2a;">¿Registrar acompañantes ahora?</strong> <br>
-                    Puedes hacerlo ahora o dejarnos estos datos en recepción el día de tu llegada.
-                  </label>
-                </div>
-
-                <div v-if="store.form.registrarAcompanantesAhora" class="mt-4">
-                  <div v-for="(acomp, index) in store.form.acompanantes" :key="index" class="row g-2 mb-3 pb-3 border-bottom">
-                    <div class="col-12"><strong class="small" style="color: #0f3b2a;">Acompañante {{ index + 1 }}</strong></div>
-                    <div class="col-md-4">
-                      <input type="text" class="form-control form-control-sm" placeholder="Nombre completo" v-model="acomp.nombre_completo">
-                    </div>
-                    <div class="col-md-4">
-                      <input type="text" class="form-control form-control-sm" placeholder="N° Documento" v-model="acomp.numero_documento">
-                    </div>
-                    <div class="col-md-4">
-                      <input type="text" class="form-control form-control-sm" placeholder="Parentesco (Ej: Hijo)" v-model="acomp.parentesco">
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-          </div>
+          </div> 
 
           <div class="text-center mt-5">
             <button type="submit" class="btn-kofan-confirm" :disabled="store.isSubmitting">
-            <font-awesome-icon icon="fa-solid fa-check" class="me-2" />
-            {{ store.isSubmitting ? 'Procesando...' : 'Confirmar Reserva' }}
-          </button>
+              <font-awesome-icon icon="fa-solid fa-check" class="me-2" />
+              {{ store.isSubmitting ? 'Procesando...' : 'Solicitar Reserva' }}
+            </button>
           </div>
         </form>
-      </div>
-    </div>
-  </div>
-</template>
+        
+      </div> </div> </div> </template>
 
 <style scoped>
-/* Contenedor principal del modal */
+/* 🟢 TUS ESTILOS ORIGINALES INTACTOS */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -227,7 +109,6 @@ const handleConfirmarReserva = async () => {
   visibility: visible;
 }
 
-/* Tarjeta del modal */
 .modal-card {
   background: white;
   width: 95%;
@@ -240,14 +121,8 @@ const handleConfirmarReserva = async () => {
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-body {
@@ -256,7 +131,6 @@ const handleConfirmarReserva = async () => {
   overflow-y: auto;
 }
 
-/* Estilos de las Pestañas (Tabs) */
 .tabs-kofan {
   background: #f1f5f2;
   padding: 5px;
@@ -281,7 +155,6 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Etiquetas y Campos de entrada */
 .form-label-kofan {
   font-size: 0.8rem;
   font-weight: 700;
@@ -308,7 +181,6 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
 }
 
-/* Estado de error */
 .is-invalid {
   border-color: #e74c3c !important;
   background-color: #fff8f8;
@@ -318,7 +190,6 @@ const handleConfirmarReserva = async () => {
   color: #0f3b2a;
 }
 
-/* Botón de cierre superior */
 .btn-close-custom {
   position: absolute;
   top: 20px;
@@ -342,7 +213,6 @@ const handleConfirmarReserva = async () => {
   transform: rotate(90deg);
 }
 
-/* Botón Confirmar */
 .btn-kofan-confirm {
   background: #0f3b2a;
   color: white;
@@ -361,7 +231,23 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 20px 25px -5px rgba(15, 59, 42, 0.4);
 }
 
-/* Responsive */
+/* 🟢 NUEVOS ESTILOS PARA EL CALENDARIO */
+.calendario-wrapper {
+  overflow: hidden; 
+}
+.calendario-wrapper :deep(.vc-expanded) {
+  width: 100% !important;
+}
+.calendario-wrapper :deep(.vc-container) {
+  border: none !important;
+  background-color: transparent !important;
+}
+.calendario-wrapper :deep(.vc-day-content.vc-disabled) {
+  opacity: 0.4 !important;
+  text-decoration: line-through; 
+  color: #e74c3c; /* Las fechas ocupadas se verán rojizas */
+}
+
 @media (max-width: 768px) {
   .modal-body {
     padding: 1.5rem;
@@ -369,5 +255,10 @@ const handleConfirmarReserva = async () => {
   .btn-kofan-confirm {
     width: 100%;
   }
+}
+.calendario-wrapper :deep(.vc-container) {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 600px !important; 
 }
 </style>

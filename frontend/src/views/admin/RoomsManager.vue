@@ -5,15 +5,11 @@ import { createRoom, getRooms, deleteRoom, updateRoom, deleteRoomImage, addRoomI
 import  ImageUploader from '@/components/ImageUploader.vue';
 import  RoomCalendarModal from '@/components/RoomCalendarModal.vue';
 
-// 🟢 BUENA PRÁCTICA: Centralizar la URL base. A futuro usa import.meta.env.VITE_API_URL
 const API_BASE_URL = "http://127.0.0.1:8000";
-
 const isLoading = ref(true);
 const habitaciones = ref([]);
 const isSubmitting = ref(false);
 const uploaderRef = ref(null);
-
-// 🟢 1. ESTADO UNIFICADO: Un solo formulario y una bandera para saber si editamos
 const isEditing = ref(false);
 const initialFormState = {
   room_number: "",
@@ -23,24 +19,21 @@ const initialFormState = {
   description: "",
   active: true,
   type: "",
+  amenities: [],
   images: [] 
 };
 const roomForm = ref({ ...initialFormState });
-const currentRoomId = ref(null); // Guarda el ID cuando estamos editando
-
-// Variables para Múltiples Imágenes
+const currentRoomId = ref(null);
 const imagenesParaCargar = ref([]);
 const isDragging = ref(false);
 const fileInputRef = ref(null);
 const closeBtnRef = ref(null); 
 const modalVisible = ref(false);
 const habitacionSeleccionada = ref(null);
-
 const fotosRestantesCount = computed(() => {
   const fotosExistentes = roomForm.value.images ? roomForm.value.images.length : 0;
   return 5 - (fotosExistentes + imagenesParaCargar.value.length);
 });
-
 const cargarHabitaciones = async () => {
   isLoading.value = true;
   try {
@@ -59,7 +52,6 @@ onMounted(() => {
   cargarHabitaciones();
 });
 
-// --- LÓGICA DE DRAG & DROP UNIFICADA ---
 const procesarArchivos = (files) => {
   if (!files || !files.length) return;
   if (files.length > fotosRestantesCount.value) {
@@ -95,15 +87,14 @@ const quitarFotoNueva = (index) => {
   imagenesParaCargar.value.splice(index, 1);
 };
 
-// --- PREPARACIÓN DE MODAL ---
 const resetForm = () => {
   roomForm.value = { ...initialFormState };
   isEditing.value = false;
   currentRoomId.value = null;
-  imagenesParaCargar.value = []; // Limpiamos nuestro array
+  imagenesParaCargar.value = []; 
   
   if (uploaderRef.value) {
-    uploaderRef.value.reset(); // Le decimos al componente hijo que se limpie
+    uploaderRef.value.reset();
   }
 };
 
@@ -113,10 +104,9 @@ const prepararEdicion = (hab) => {
   resetForm();
   isEditing.value = true;
   currentRoomId.value = hab.id || hab._id;
-  roomForm.value = { ...hab }; // Clona los datos de la habitación al formulario
+  roomForm.value = { ...hab };
 };
 
-// --- GUARDAR O EDITAR (UNIFICADO) ---
 const guardarHabitacion = async () => {
   const { room_number, name, price, type } = roomForm.value;
 
@@ -130,21 +120,19 @@ const guardarHabitacion = async () => {
     const arrayDeArchivos = imagenesParaCargar.value;
 
     if (isEditing.value) {
-      // Flujo de Edición
       await updateRoom(currentRoomId.value, roomForm.value);
       if (arrayDeArchivos.length > 0) {
         await addRoomImages(currentRoomId.value, arrayDeArchivos);
       }
       Swal.fire({ icon: "success", title: "¡Actualizada!", timer: 1500, showConfirmButton: false });
     } else {
-      // Flujo de Creación
       await createRoom(roomForm.value, arrayDeArchivos);
       Swal.fire({ icon: "success", title: "¡Creada!", timer: 1500, showConfirmButton: false });
     }
 
     resetForm();
     await cargarHabitaciones();
-    if (closeBtnRef.value) closeBtnRef.value.click(); // 🟢 Cerrar modal sin DOM puro
+    if (closeBtnRef.value) closeBtnRef.value.click();
 
   } catch (error) {
     console.error("Error al guardar:", error);
@@ -154,7 +142,6 @@ const guardarHabitacion = async () => {
   }
 };
 
-// --- ELIMINAR REGISTROS ---
 const eliminarHabitacion = async (id) => {
   const result = await Swal.fire({
     title: '¿Estás seguro?', text: "Esta acción es irreversible.", icon: 'warning',
@@ -204,6 +191,21 @@ const abrirCalendario = (habitacion) => {
   habitacionSeleccionada.value = habitacion;
   modalVisible.value = true;
 };
+
+const listaAmenidades = [
+  "Aire Acondicionado",
+  "Ventilador",
+  "Televisión",
+  "Wifi",
+  "Baño Privado",
+  "Nevera / Minibar",
+  "Zonas Verdes",
+  "Vista a la Selva",
+  "Malla Catamarán",
+  "Tina / Jacuzzi",
+  "Balcón"
+];
+
 
 </script>
 
@@ -356,9 +358,24 @@ const abrirCalendario = (habitacion) => {
                   </select>
                 </div>
                 
-                <div class="col-12">
-                  <label class="form-label fw-bold">Descripción / Amenidades</label>
-                  <textarea v-model="roomForm.description" class="form-control" rows="2"></textarea>
+                <div class="col-12 mt-3">
+                  <label class="form-label fw-bold">Descripción de la Habitación</label>
+                  <textarea v-model="roomForm.description" class="form-control border-light-subtle shadow-sm" rows="2" placeholder="Ej: Cabaña romántica ideal para parejas..."></textarea>
+                </div>
+
+                <div class="col-12 mt-4">
+                  <label class="form-label fw-bold mb-3 border-bottom pb-2 w-100">¿Qué incluye la habitación? (Amenidades)</label>
+                  <div class="row g-2">
+                    <div class="col-md-4 col-sm-6" v-for="(amenidad, index) in listaAmenidades" :key="index">
+                      <div class="form-check form-switch p-2 rounded bg-light border border-light-subtle transition-all" 
+                           :class="{ 'border-success bg-success-subtle': roomForm.amenities && roomForm.amenities.includes(amenidad) }">
+                        <input class="form-check-input ms-1 me-2" type="checkbox" role="switch" :id="'amenidad-' + index" :value="amenidad" v-model="roomForm.amenities">
+                        <label class="form-check-label text-dark" :for="'amenidad-' + index" style="cursor: pointer;">
+                          {{ amenidad }}
+                        </label>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div class="col-12 mt-4" v-if="isEditing && roomForm.images && roomForm.images.length">

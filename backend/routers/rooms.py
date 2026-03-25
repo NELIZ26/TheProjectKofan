@@ -110,7 +110,8 @@ async def create_new_room_with_images(
     capacity: int = Form(...),
     description: str = Form(""),
     active: bool = Form(True),
-    type: str = Form(), # 🟢 FastAPI atrapa el nuevo campo (por defecto 'cabana' si no viene)
+    type: str = Form(),
+    amenities: List[str] = Form([]),
     images: List[UploadFile] = File(...),
     user = Depends(get_current_user) # 🟢 Obtenemos el usuario autenticado
 ):
@@ -122,9 +123,12 @@ async def create_new_room_with_images(
         "capacity": capacity,
         "description": description,
         "active": active,
+        "amenities": amenities,
         "type": type, # 🟢 Lo agregamos al diccionario
     }
     
+    
+
     # 2. Guardamos las imágenes físicas y creamos la lista de URLs (images)
     image_urls = []
     if images:
