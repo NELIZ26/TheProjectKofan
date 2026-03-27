@@ -110,10 +110,13 @@ async def create_new_room_with_images(
     capacity: int = Form(...),
     description: str = Form(""),
     active: bool = Form(True),
-    type: str = Form(),
+    type: str = Form(...),
+    # 🟢 1. RECIBIMOS LOS NUEVOS DATOS DESDE VUE
+    num_cuartos: int = Form(1),
+    tipo_camas: str = Form(""),
     amenities: List[str] = Form([]),
     images: List[UploadFile] = File(...),
-    user = Depends(get_current_user) # 🟢 Obtenemos el usuario autenticado
+    user = Depends(get_current_user)
 ):
     # 1. Armamos el diccionario 'data'
     data = {
@@ -124,11 +127,12 @@ async def create_new_room_with_images(
         "description": description,
         "active": active,
         "amenities": amenities,
-        "type": type, # 🟢 Lo agregamos al diccionario
+        "type": type,
+        # 🟢 2. LOS AGREGAMOS AL DICCIONARIO PARA QUE VAYAN A LA BASE DE DATOS
+        "num_cuartos": num_cuartos,
+        "tipo_camas": tipo_camas,
     }
     
-    
-
     # 2. Guardamos las imágenes físicas y creamos la lista de URLs (images)
     image_urls = []
     if images:
@@ -148,10 +152,9 @@ async def create_new_room_with_images(
     # 3. Llamamos al servicio EXACTAMENTE con los 3 parámetros que él espera
     return await create_room_with_images(
         data=data, 
-        images=image_urls, # Pasamos la lista que acabamos de crear
-        user_email=user["email"] # Pasamos el email extraído del token
+        images=image_urls, 
+        user_email=user["email"] 
     )
-
 # 7. ELIMINAR UNA IMAGEN ESPECÍFICA
 @router.delete("/{room_id}/delete-image")
 async def delete_room_image(room_id: str, url: str, user=Depends(required_admin)):

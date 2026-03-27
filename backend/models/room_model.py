@@ -10,7 +10,8 @@ class RoomBase(BaseModel):
     images: List[str] = []
     main_image: Optional[str] = None
     active: bool = True
-    # 🟢 LO SUBIMOS A LA BASE PARA QUE LA RESPUESTA TAMBIÉN LO TENGA
+    num_cuartos: int = 1
+    tipo_camas: str = ""
     amenities: List[str] = []
 
 class RoomCreate(RoomBase):
@@ -29,7 +30,8 @@ class RoomUpdate(BaseModel):
     main_image: Optional[str] = None
     active: Optional[bool] = None
     type: Optional[str] = None
-    # 🟢 En el Update sí lo dejamos explícito por si mandan una lista vacía para borrar
+    num_cuartos: Optional[int] = None
+    tipo_camas: Optional[str] = None
     amenities: Optional[List[str]] = None
 
 class RoomResponse(RoomBase):
@@ -38,4 +40,3 @@ class RoomResponse(RoomBase):
     updated_by: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
-    # Como hereda de RoomBase, ¡ya trae amenities incluido!

@@ -70,6 +70,10 @@ onMounted(() => {
           <i class="fa fa-images me-2"></i> <span>Galería</span>
         </router-link>
         
+        <router-link :to="{ name: 'admin-config' }" class="nav-link-admin">
+          <i class="fa fa-cog me-2"></i> <span>Configuración</span>
+        </router-link>
+        
         <hr class="border-secondary opacity-25">
         
         <button @click="handleLogout" class="btn btn-outline-danger w-100 mt-2 border-0 shadow-sm">

@@ -9,6 +9,7 @@ import AboutUs from "@/views/public/AboutUs.vue";
 import ContactUs from "@/views/public/ContactUs.vue";
 import PhotoGallery from "@/views/public/PhotosGallery.vue";
 import Catalog from "@/views/public/Catalog.vue";
+import ConfiguracionAdmin from '@/views/admin/config.vue';
 
 
 // Layouts Privados
@@ -128,6 +129,13 @@ const routes = [
         name: "admin-gallery",
         component: () => import("@/views/admin/GalleryManager.vue"),
       },
+      {
+      path: '/admin/configuracion', // La URL que verás en el navegador
+      name: 'admin-config',
+      component: ConfiguracionAdmin,
+      // Aquí podrías tener tus validaciones de rol, por ejemplo:
+      // meta: { requiresAuth: true, role: 'admin' }
+      }
     ],
   },
 

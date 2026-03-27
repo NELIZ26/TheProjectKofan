@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import admin, auth, earnings, register, users, bookings, rooms, bookings_sin_auth
+from backend.routers import admin, auth, earnings, register, users, bookings, rooms, bookings_sin_auth, config
 from fastapi.staticfiles import StaticFiles
 from contextlib import asynccontextmanager
 from backend.services.task_service import cancelar_reservas_vencidas
@@ -50,3 +50,4 @@ app.include_router(earnings.router)
 app.include_router(rooms.router)
 app.include_router(bookings_sin_auth.router)
 app.include_router(admin.router)
+app.include_router(config.router)

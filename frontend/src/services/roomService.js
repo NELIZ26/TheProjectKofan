@@ -10,7 +10,9 @@ export const createRoom = async (roomDetails, imageFilesArray) => {
   formData.append("price", roomDetails.price);
   formData.append("capacity", roomDetails.capacity);
   formData.append("active", roomDetails.active);
-  formData.append("type", roomDetails.type); // 🟢 Aquí va nuestro nuevo campo
+  formData.append("type", roomDetails.type);
+  formData.append('num_cuartos', roomDetails.num_cuartos);
+  formData.append('tipo_camas', roomDetails.tipo_camas);
 
   // 2. Descripción: la agregamos solo si existe y no está vacía
   if (roomDetails.description && roomDetails.description.trim() !== "") {

@@ -16,6 +16,8 @@ def room_schema(room: dict) -> dict:
         "updated_at": room.get("updated_at"),
         "type": room.get("type", "cabana"),
         "amenities": room.get("amenities", []),
+        "num_cuartos": room.get("num_cuartos", 1),
+        "tipo_camas": room.get("tipo_camas", ""),
     }
 
 def rooms_schema(rooms: list) -> list:

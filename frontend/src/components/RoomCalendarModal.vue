@@ -175,7 +175,7 @@ const crearReservaAdmin = async () => {
 
     // Armamos el JSON con el ID seguro
     const payload = {
-      habitacion_id: idSeguro, // 🟢 Usamos la variable segura
+      habitacion_id: idSeguro, 
       fecha_entrada: fEntrada,
       fecha_salida: fSalida,
       monto_total: formularioAdmin.monto_total,
@@ -183,7 +183,10 @@ const crearReservaAdmin = async () => {
       observaciones: formularioAdmin.observaciones || "Reserva manual desde Panel Admin",
       cliente_nombre: formularioAdmin.cliente_nombre,
       cliente_email: formularioAdmin.cliente_email,
-      cliente_celular: formularioAdmin.cliente_celular
+      cliente_celular: formularioAdmin.cliente_celular,
+      tipo_persona: "Natural",
+      tipo_documento: "Pendient", 
+      cliente_documento: "0"
     };
 
     // 🔍 TRAMPA DE DEBUG 2: Imprimimos el JSON exacto que va a viajar a FastAPI
@@ -232,59 +235,6 @@ const cerrar = () => {
   emit('close');
 };
 </script>
-
-<style scoped>
-/* Estilos del Modal Overlay con Blur moderno */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; width: 100vw; height: 100vh;
-  background-color: rgba(15, 59, 42, 0.5); 
-  z-index: 1060; 
-  backdrop-filter: blur(6px);
-  transition: all 0.3s ease;
-}
-
-/* Animación de entrada de la tarjeta */
-.modal-box {
-  animation: scaleIn 0.3s ease-out forwards;
-  border: 1px solid rgba(15, 59, 42, 0.1);
-}
-
-@keyframes scaleIn {
-  from { transform: scale(0.9) translateY(20px); opacity: 0; }
-  to { transform: scale(1) translateY(0); opacity: 1; }
-}
-
-/* Clases de utilidad personalizadas */
-.bg-success-light {
-  background-color: #f1f8f5;
-}
-
-.hover-danger:hover {
-  background-color: #dc3545 !important;
-  color: white !important;
-}
-
-.hover-dark:hover {
-  color: #000 !important;
-}
-
-.form-label-kofan {
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-/* Ajustes para el contenedor del calendario */
-.calendar-container :deep(.vc-container) {
-  width: 100%;
-  --vc-accent-green: #0f3b2a; /* Color verde corporativo Kofán */
-}
-
-.calendar-container :deep(.vc-pane-container) {
-  background-color: white;
-}
-</style>
-
 
 <template>
   <div v-if="show" class="modal-overlay d-flex justify-content-center align-items-center" @click.self="cerrar">
@@ -385,4 +335,60 @@ const cerrar = () => {
     </div>
   </div>
 </template>
+
+
+<style scoped>
+/* Estilos del Modal Overlay con Blur moderno */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100vw; height: 100vh;
+  background-color: rgba(15, 59, 42, 0.5); 
+  z-index: 1060; 
+  backdrop-filter: blur(6px);
+  transition: all 0.3s ease;
+}
+
+/* Animación de entrada de la tarjeta */
+.modal-box {
+  animation: scaleIn 0.3s ease-out forwards;
+  border: 1px solid rgba(15, 59, 42, 0.1);
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.9) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Clases de utilidad personalizadas */
+.bg-success-light {
+  background-color: #f1f8f5;
+}
+
+.hover-danger:hover {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.hover-dark:hover {
+  color: #000 !important;
+}
+
+.form-label-kofan {
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+/* Ajustes para el contenedor del calendario */
+.calendar-container :deep(.vc-container) {
+  width: 100%;
+  --vc-accent-green: #0f3b2a; /* Color verde corporativo Kofán */
+}
+
+.calendar-container :deep(.vc-pane-container) {
+  background-color: white;
+}
+</style>
+
+
+
 

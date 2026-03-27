@@ -11,6 +11,8 @@ const habitaciones = ref([]);
 const isSubmitting = ref(false);
 const uploaderRef = ref(null);
 const isEditing = ref(false);
+
+// 🟢 1. AGREGAMOS LOS DOS CAMPOS NUEVOS AL ESTADO INICIAL
 const initialFormState = {
   room_number: "",
   name: "",
@@ -19,9 +21,12 @@ const initialFormState = {
   description: "",
   active: true,
   type: "",
+  num_cuartos: 1, // Nuevo: Nivel de privacidad
+  tipo_camas: "", // Nuevo: Distribución (Ej: 1 Doble, 2 Sencillas)
   amenities: [],
   images: [] 
 };
+
 const roomForm = ref({ ...initialFormState });
 const currentRoomId = ref(null);
 const imagenesParaCargar = ref([]);
@@ -30,10 +35,12 @@ const fileInputRef = ref(null);
 const closeBtnRef = ref(null); 
 const modalVisible = ref(false);
 const habitacionSeleccionada = ref(null);
+
 const fotosRestantesCount = computed(() => {
   const fotosExistentes = roomForm.value.images ? roomForm.value.images.length : 0;
   return 5 - (fotosExistentes + imagenesParaCargar.value.length);
 });
+
 const cargarHabitaciones = async () => {
   isLoading.value = true;
   try {
@@ -46,7 +53,6 @@ const cargarHabitaciones = async () => {
     isLoading.value = false;
   }
 };
-
 
 onMounted(() => {
   cargarHabitaciones();
@@ -108,10 +114,11 @@ const prepararEdicion = (hab) => {
 };
 
 const guardarHabitacion = async () => {
-  const { room_number, name, price, type } = roomForm.value;
+  // 🟢 2. VALIDAMOS QUE EL CAMPO DE CAMAS SE LLENE
+  const { room_number, name, price, type, tipo_camas } = roomForm.value;
 
-  if (!room_number || !name || !price || !type  || (!isEditing.value && imagenesParaCargar.value.length === 0)) {
-    Swal.fire({ icon: "error", title: "Campos incompletos", text: "Verifica los datos y las fotos obligatorias." });
+  if (!room_number || !name || !price || !type || !tipo_camas || (!isEditing.value && imagenesParaCargar.value.length === 0)) {
+    Swal.fire({ icon: "error", title: "Campos incompletos", text: "Verifica los datos obligatorios, incluyendo la distribución de camas." });
     return;
   }
 
@@ -205,8 +212,6 @@ const listaAmenidades = [
   "Tina / Jacuzzi",
   "Balcón"
 ];
-
-
 </script>
 
 <template>
@@ -217,7 +222,7 @@ const listaAmenidades = [
         <p class="text-muted mb-0">Administra y organiza la oferta de alojamiento de Kofán.</p>
       </div>
       
-      <button @click="prepararNuevaHabitacion" class="btn btn-kofan shadow-sm px-4 py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
+      <button @click="prepararCreacion" class="btn btn-kofan shadow-sm px-4 py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
         <font-awesome-icon icon="fa-solid fa-plus" class="me-2" />
         Nueva Habitación
       </button>
@@ -238,7 +243,7 @@ const listaAmenidades = [
           </thead>
           <tbody>
             <tr v-if="habitaciones.length === 0 && !isLoading">
-              <td colspan="5" class="text-center text-muted py-4">
+              <td colspan="6" class="text-center text-muted py-4">
                 No hay habitaciones registradas
               </td>
             </tr>
@@ -337,20 +342,31 @@ const listaAmenidades = [
                 </div>
                 
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Capacidad</label>
-                  <input v-model="roomForm.capacity" type="number" class="form-control" required />
+                  <label class="form-label fw-bold">Capacidad Total (Pers.)</label>
+                  <input v-model="roomForm.capacity" type="number" min="1" class="form-control" required />
                 </div>
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">Tipo de Alojamiento</label>
                   <select v-model="roomForm.type" class="form-select" required>
-                  <option value="" disabled>Selecciona una opción...</option>
-                  <option value="cabana">Cabaña Independiente</option>
-                  <option value="habitacion">Habitación en Maloka</option>
+                    <option value="" disabled>Selecciona una opción...</option>
+                    <option value="cabana">Cabaña Independiente</option>
+                    <option value="habitacion">Habitación en Maloka</option>
                   </select>
-                 </div>
+                </div>
 
-                <div class="col-12" v-if="isEditing">
+                <div class="col-md-6">
+                  <label class="form-label fw-bold">N° de Habitaciones (Cuartos)</label>
+                  <input v-model="roomForm.num_cuartos" type="number" min="1" class="form-control" required />
+                </div>
+
+                <div class="col-12 mt-3">
+                  <label class="form-label fw-bold">Distribución de Camas</label>
+                  <input v-model="roomForm.tipo_camas" type="text" class="form-control" placeholder="Ej: 1 Cama Doble, 2 Sencillas" required />
+                  <small class="text-muted">Este texto es el que verá el cliente en la tarjeta principal.</small>
+                </div>
+
+                <div class="col-12 mt-3" v-if="isEditing">
                   <label class="form-label fw-bold">Estado Operativo</label>
                   <select class="form-select" v-model="roomForm.active">
                     <option :value="true">Activa (Lista para reservas)</option>

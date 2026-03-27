@@ -1,3 +1,7 @@
+/* 1. Importamos la fuente moderna desde Google Fonts al inicio del archivo */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+/* Tus fuentes locales originales (las conservamos) */
 @font-face {
   font-family: "Forum";
   src: url(../fonts/Forum-Regular.ttf);
@@ -12,16 +16,27 @@
   font-style: normal;
   font-display: swap;
 }
-#page {
-  font-family: "Forum";
-  font-size: 18px;
+
+/* 🟢 APLICAMOS EL CAMBIO AL CONTENEDOR PRINCIPAL */
+body, html, #page {
+  /* Cambiamos "Forum" por "Poppins" */
+  font-family: 'Poppins', sans-serif !important; 
+  /* Te sugiero 16px. Como Poppins es más ancha, 18px se puede ver gigante */
+  font-size: 16px; 
   background: #fffdfc !important;
+  /* Suaviza los bordes de la letra */
+  -webkit-font-smoothing: antialiased; 
 }
+
 #content {
   width: 100%;
   height: 100%;
   padding: 0;
-  width: 100%;
   margin: 0;
 }
 
+/* Para que los títulos tengan ese peso profesional de la imagen que me enviaste */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
