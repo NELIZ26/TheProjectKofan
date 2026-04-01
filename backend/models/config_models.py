@@ -11,4 +11,6 @@ class SiteConfig(BaseModel):
     currency: str
     social_facebook: Optional[str] = ""
     social_instagram: Optional[str] = ""
+    social_tiktok: Optional[str] = None
+    whatsapp_number: Optional[str] = None
     tax_percentage: float

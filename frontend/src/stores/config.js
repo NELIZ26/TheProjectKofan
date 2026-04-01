@@ -12,6 +12,8 @@ export const useConfigStore = defineStore("config", {
       address: "",
       social_facebook: "",
       social_instagram: "",
+      social_tiktok: "",
+      whatsapp_number: "",
     },
     isLoaded: false, // Para saber si ya pedimos los datos
   }),

@@ -71,7 +71,12 @@ import {
   faChartLine,
   faSignOutAlt,
   faLock,
-  faPaperPlane
+  faPaperPlane,
+  faImages,
+  faBan, 
+  faRotateLeft, 
+  faCheckCircle,
+  faTimesCircle
 } from "@fortawesome/free-solid-svg-icons";
 
 // Iconos de Marcas (fab)
@@ -146,7 +151,25 @@ library.add(
   faChartLine,
   faSignOutAlt,
   faLock,
-  faPaperPlane
+  faPaperPlane,
+  faInstagram, 
+  faFacebook, faTiktok, 
+  faWhatsapp,
+  faLocationDot, 
+  faPhone, 
+  faEnvelope, 
+  faCircleInfo, 
+  faShieldHalved, 
+  faPlane, 
+  faCar, 
+  faLeaf, 
+  faHandsHolding, 
+  faMoon, 
+  faImages,
+  faBan, 
+  faRotateLeft, 
+  faCheckCircle,
+  faTimesCircle
 );
 
 // --- CREAR LA APP ---

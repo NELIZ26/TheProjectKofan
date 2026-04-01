@@ -3,11 +3,13 @@ import { useRouter, useRoute } from "vue-router";
 import { computed, ref, onMounted, onUnmounted, watch } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { Collapse } from "bootstrap";
+import { useConfigStore } from '@/stores/config';
 
 const router = useRouter();
 const route = useRoute();
 const auth = useAuthStore();
-
+const configStore = useConfigStore();
+const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 const isScrolled = ref(false);
 const handleScroll = () => { isScrolled.value = window.scrollY > 50; };
 
@@ -40,8 +42,16 @@ const navbarSolid = computed(() => {
     :class="navbarSolid ? 'navbar-dark bg-kofan shadow-sm' : 'navbar-dark bg-transparent'"
   >
     <div class="container-fluid px-lg-5">
-      <router-link :to="{ name: 'landing-portal' }" class="navbar-brand">
-        <img src="../img/Kofan.png" width="80" alt="Logo Kofán" />
+      <router-link :to="{ name: 'hospedaje-home' }" class="navbar-brand d-flex align-items-center">
+      <img 
+        v-if="configStore.data.logo_url" 
+        :src="`${base}${configStore.data.logo_url}`" 
+        alt="Logo Kofán" 
+        style="max-height: 50px; object-fit: contain;"
+      />
+      <span v-else class="text-white fw-bold fs-4 ms-2 handlee-font">
+        {{ configStore.data.hotel_name || 'Kofán' }}
+      </span>
       </router-link>
 
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarKofan">

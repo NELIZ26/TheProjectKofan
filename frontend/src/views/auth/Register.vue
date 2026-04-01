@@ -1,91 +1,41 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import { register, login } from "@/services/authServices";
-import PasswordInput from "@/components/form/PasswordInput.vue"; // Asegúrate de que la ruta sea correcta
+
+// 1. 🟢 IMPORTAMOS TU NUEVO COMPONENTE "LEGO"
+import FormularioRegistro from "@/components/FormularioRegistro.vue";
 
 const auth = useAuthStore();
 const router = useRouter();
 const isLoading = ref(false);
 
-const form = ref({
-  tipo_persona: "",
-  full_name: "", // Si tu backend pide names y surnames por separado, debes cambiar esto
-  type_document: "",
-  number_document: "",
-  email: "",
-  phone: "",
-  country: "",
-  city: "",
-  password: "",
-});
-
-const confirmPassword = ref("");
-
-// Lógica de validación
-const passwordsMatch = computed(() => {
-  if (!form.value.password || !confirmPassword.value) return true;
-  return form.value.password === confirmPassword.value;
-});
-
-const isFormInvalid = computed(() => {
-  return (
-    !form.value.tipo_persona ||
-    !form.value.full_name ||
-    !form.value.type_document ||
-    !form.value.number_document ||
-    !form.value.email ||
-    !form.value.country ||
-    !form.value.city ||
-    !form.value.password ||
-    !passwordsMatch.value
-  );
-});
-
-const submit = async () => {
-  // Validación de seguridad adicional
-  if (!passwordsMatch.value) {
-    return Swal.fire({
-      icon: "warning",
-      title: "Contraseñas no coinciden",
-      text: "Por favor, asegúrate de que ambas contraseñas sean iguales.",
-      confirmButtonColor: "#0f3b2a",
-    });
-  }
-
-  if (form.value.password.length < 8) {
-    return Swal.fire({
-      icon: "warning",
-      title: "Contraseña muy corta",
-      text: "La contraseña debe tener al menos 8 caracteres.",
-      confirmButtonColor: "#0f3b2a",
-    });
-  }
-
+// 2. 🟢 ESTA FUNCIÓN ATRAPA LOS DATOS CUANDO EL FORMULARIO HACE EL "EMIT"
+const registrarCliente = async (datosDelFormulario) => {
   isLoading.value = true;
 
   try {
     // 1. Registrar
     await register({
-      tipo_persona:    form.value.tipo_persona,
-      full_name:       form.value.full_name,
-      type_document:   form.value.type_document,
-      number_document: form.value.number_document,
-      email:           form.value.email,
-      phone:           form.value.phone || null,
-      country:         form.value.country,
-      city:            form.value.city,
-      password:        form.value.password,
+      tipo_persona:    datosDelFormulario.tipo_persona,
+      full_name:       datosDelFormulario.full_name,
+      type_document:   datosDelFormulario.type_document,
+      number_document: datosDelFormulario.number_document,
+      email:           datosDelFormulario.email,
+      phone:           datosDelFormulario.phone || null,
+      country:         datosDelFormulario.country,
+      city:            datosDelFormulario.city,
+      password:        datosDelFormulario.password,
     });
 
     // 2. Login automático
-    const tokenData = await login({ username: form.value.email, password: form.value.password });
+    const tokenData = await login({ username: datosDelFormulario.email, password: datosDelFormulario.password });
 
     // 3. Guardar sesión
     auth.login(
-      { email: form.value.email, full_name: form.value.full_name, role: "client" },
+      { email: datosDelFormulario.email, full_name: datosDelFormulario.full_name, role: "client" },
       tokenData.access_token,
       tokenData.token_type
     );
@@ -94,7 +44,7 @@ const submit = async () => {
     await Swal.fire({
       icon: "success",
       title: "¡Bienvenido a Kofán!",
-      text: `Hola ${form.value.full_name}, tu cuenta ha sido creada con éxito.`,
+      text: `Hola ${datosDelFormulario.full_name}, tu cuenta ha sido creada con éxito.`,
       timer: 2500,
       showConfirmButton: false,
     });
@@ -147,88 +97,19 @@ const submit = async () => {
             <div class="divider mx-auto"></div>
           </div>
 
-          <form @submit.prevent="submit" class="row g-3">
-            
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Tipo Persona <span class="text-danger">*</span></label>
-              <select v-model="form.tipo_persona" class="form-select custom-input">
-                <option value="">Seleccione...</option>
-                <option value="natural">Natural</option>
-                <option value="juridica">Jurídica</option>
-              </select>
-            </div>
+          <FormularioRegistro 
+            :mostrarRol="false" 
+            :cargando="isLoading"
+            @enviar="registrarCliente" 
+          />
 
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Nombre Completo <span class="text-danger">*</span></label>
-              <input v-model="form.full_name" type="text" class="form-control custom-input" placeholder="Ej: Juan Pérez">
-            </div>
+          <div class="col-12 text-center mt-3">
+            <p class="text-muted small mb-0">
+              ¿Ya tienes una cuenta?
+              <router-link :to="{ name: 'login' }" class="verde-kofan fw-bold text-decoration-none">Inicia Sesión</router-link>
+            </p>
+          </div>
 
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Tipo Documento <span class="text-danger">*</span></label>
-              <select v-model="form.type_document" class="form-select custom-input">
-                <option value="">Seleccione...</option>
-                <option value="CC">Cédula de Ciudadanía</option>
-                <option value="CE">Cédula Extranjera</option>
-                <option value="PASAPORTE">Pasaporte</option>
-                <option value="NIT">NIT</option>
-              </select>
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Número Documento <span class="text-danger">*</span></label>
-              <input v-model="form.number_document" type="text" class="form-control custom-input" placeholder="12345678">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Correo Electrónico <span class="text-danger">*</span></label>
-              <input v-model="form.email" type="email" class="form-control custom-input" placeholder="correo@ejemplo.com">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Teléfono</label>
-              <input v-model="form.phone" type="tel" class="form-control custom-input" placeholder="+57 3xx xxx xxxx">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">País <span class="text-danger">*</span></label>
-              <input v-model="form.country" type="text" class="form-control custom-input" placeholder="Ej: Colombia">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Ciudad <span class="text-danger">*</span></label>
-              <input v-model="form.city" type="text" class="form-control custom-input" placeholder="Ej: Sibundoy">
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Contraseña <span class="text-danger">*</span></label>
-              <PasswordInput v-model="form.password" placeholder="Min. 8 caracteres" class="custom-input-p" />
-            </div>
-
-            <div class="col-md-6">
-              <label class="form-label fw-semibold small mb-1">Confirmar Contraseña <span class="text-danger">*</span></label>
-              <PasswordInput 
-                v-model="confirmPassword" 
-                placeholder="Repite la contraseña" 
-                :error="!passwordsMatch ? 'Contraseñas no coinciden' : ''"
-                class="custom-input-p"
-              />
-            </div>
-
-            <div class="col-12 mt-4 d-flex justify-content-center">
-              <button type="submit" class="btn btn-kofan px-5 py-2 shadow-sm" :disabled="isLoading || isFormInvalid">
-                <span v-if="isLoading" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                {{ isLoading ? 'Creando cuenta...' : 'Completar Registro' }}
-              </button>
-            </div>
-
-            <div class="col-12 text-center mt-3">
-              <p class="text-muted small mb-0">
-                ¿Ya tienes una cuenta?
-                <router-link :to="{ name: 'login' }" class="verde-kofan fw-bold text-decoration-none">Inicia Sesión</router-link>
-              </p>
-            </div>
-
-          </form>
         </div>
 
       </div>

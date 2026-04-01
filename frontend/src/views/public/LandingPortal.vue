@@ -5,9 +5,6 @@
   <div class="split-landing">
     <div class="hero-header">
       <p class="eyebrow">Experiencia premium en la selva</p>
-      <p class="hero-text">
-        Hospedaje y eventos en un entorno natural, exclusivo y armonioso.
-      </p>
     </div>
 
     <div class="cards-grid">

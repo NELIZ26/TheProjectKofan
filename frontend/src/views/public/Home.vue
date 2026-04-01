@@ -3,7 +3,11 @@ import { ref, onMounted } from "vue";
 import { useReservaStore } from "@/stores/reserva";
 import apiClient from "@/api/apiClient";
 
+// 1. Importamos el store de configuración para los datos dinámicos
+import { useConfigStore } from '@/stores/config';
+
 const resStore = useReservaStore();
+const configStore = useConfigStore(); // 2. Inicializamos el store
 
 const fotosPreview = ref([]);
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -52,14 +56,12 @@ onMounted(async () => {
               y2="0%"
             >
               <stop offset="0%" style="stop-color: #1a5c43; stop-opacity: 1" />
-
               <stop
                 offset="100%"
                 style="stop-color: #0f3b2a; stop-opacity: 1"
               />
             </linearGradient>
           </defs>
-
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
             fill="url(#miGradienteKofan)"
@@ -124,7 +126,6 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- SECCIÓN PREVIEW GALERÍA -->
     <section class="galeria-preview py-5">
       <div class="container">
         <div class="text-center mb-4">
@@ -190,8 +191,8 @@ onMounted(async () => {
             <ul class="info-list">
               <li>
                 <span class="check">✔</span>
-                <strong>Check-in:&nbsp;</strong> 03:00 pm&nbsp;
-                <strong> Check-out:&nbsp;</strong> 12:00 pm
+                <strong>Check-in: </strong> {{ configStore.data.check_in_time || '03:00 pm' }} 
+                <strong> Check-out: </strong> {{ configStore.data.check_out_time || '12:00 pm' }}
               </li>
               <li>
                 <span class="check">✔</span> Early Check-in sujeto a
@@ -206,7 +207,7 @@ onMounted(async () => {
                 ruidos fuertes.
               </li>
               <li>
-                <span class="check">✔</span> Reserva con el&nbsp;
+                <span class="check">✔</span> Reserva con el 
                 <strong> 25% del valor</strong>.
               </li>
             </ul>
@@ -268,14 +269,14 @@ onMounted(async () => {
             Nuestra ubicación en el Putumayo
           </h2>
           <p class="parrafo-ubicacion">
-            Nos encontramos en <strong>Puerto Asís, Putumayo</strong>. Un
+            Nos encontramos en <strong>{{ configStore.data.address || 'Puerto Asís, Putumayo' }}</strong>. Un
             refugio natural donde la selva comienza a contar sus historias.
           </p>
         </div>
 
         <div class="mapa-wrapper shadow-soft">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15958.521652611322!2d-76.5355120619749!3d0.5560764129741063!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e287e6540874957%3A0x9a11032de2a63510!2sCentro%20Ecoturistico%20Kofan!5e0!3m2!1ses!2sco!4v1762307375610!5m2!1ses!2sco"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.431284566359!2d-76.50537872421477!3d0.5055018994892419!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e2a1dd0b8ccb649%3A0x6b83f3fc3c2cc0db!2sPuerto%20As%C3%ADs%2C%20Putumayo!5e0!3m2!1ses!2sco!4v1710971000000!5m2!1ses!2sco"
             width="100%"
             height="450"
             style="border: 0"
@@ -286,14 +287,14 @@ onMounted(async () => {
           </iframe>
         </div>
 
-        <div class="detalles-llegada">
-          <div class="item-llegada">
-            <font-awesome-icon icon="fa-solid fa-plane" class="icon-llegada" />
-            <p>A solo 15 minutos del Aeropuerto 3 de Mayo.</p>
+        <div class="detalles-llegada mt-4">
+          <div class="item-llegada text-white d-flex align-items-center justify-content-center mb-2">
+            <font-awesome-icon icon="fa-solid fa-plane" class="icon-llegada me-2" />
+            <p class="mb-0">A solo 15 minutos del Aeropuerto 3 de Mayo.</p>
           </div>
-          <div class="item-llegada">
-            <font-awesome-icon icon="fa-solid fa-car" class="icon-llegada" />
-            <p>Fácil acceso por vía principal con parqueadero privado.</p>
+          <div class="item-llegada text-white d-flex align-items-center justify-content-center">
+            <font-awesome-icon icon="fa-solid fa-car" class="icon-llegada me-2" />
+            <p class="mb-0">Fácil acceso por vía principal con parqueadero privado.</p>
           </div>
         </div>
       </div>

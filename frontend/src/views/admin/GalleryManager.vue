@@ -1,117 +1,10 @@
-<template>
-  <div class="gallery-manager">
-
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h3 class="fw-bold verde-kofan mb-0">Gestión de Galería</h3>
-        <p class="text-muted small mb-0">Administra las fotos públicas del Ecohotel</p>
-      </div>
-      <button class="btn btn-kofan px-4" @click="mostrarFormulario = true">
-        <font-awesome-icon :icon="['fas', 'plus']" class="me-2" />
-        Subir Foto
-      </button>
-    </div>
-
-    <!-- Formulario de subida -->
-    <div v-if="mostrarFormulario" class="upload-card mb-4 p-4 shadow-sm">
-      <h5 class="fw-bold verde-kofan mb-3">Nueva Foto</h5>
-      <div class="row g-3">
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small">Título</label>
-          <input v-model="nuevaFoto.titulo" type="text" class="form-control kofan-input" placeholder="Ej: Atardecer en el río">
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label fw-semibold small">Categoría</label>
-          <select v-model="nuevaFoto.categoria" class="form-select kofan-input">
-            <option value="">Seleccione...</option>
-            <option v-for="cat in categorias" :key="cat.value" :value="cat.value">{{ cat.label }}</option>
-          </select>
-        </div>
-
-        <div class="col-12">
-          <label class="form-label fw-semibold small">Imagen</label>
-          <div
-            class="drop-zone"
-            :class="{ 'drag-over': isDragging }"
-            @dragover.prevent="isDragging = true"
-            @dragleave="isDragging = false"
-            @drop.prevent="onDrop"
-            @click="$refs.fileInput.click()"
-          >
-            <div v-if="!preview">
-              <font-awesome-icon :icon="['fas', 'cloud-arrow-up']" class="fs-2 text-muted mb-2 d-block mx-auto" />
-              <p class="text-muted small mb-0">Arrastra una imagen o haz clic para seleccionar</p>
-              <p class="text-muted" style="font-size:0.75rem">JPEG, PNG, WebP — máx. 5MB</p>
-            </div>
-            <img v-else :src="preview" class="preview-img" alt="Preview" />
-          </div>
-          <input ref="fileInput" type="file" accept="image/*" class="d-none" @change="onFileSelect">
-        </div>
-
-      </div>
-
-      <div class="d-flex gap-2 mt-3 justify-content-end">
-        <button class="btn btn-outline-secondary" @click="cancelarUpload">Cancelar</button>
-        <button class="btn btn-kofan px-4" @click="subirFoto" :disabled="isUploading">
-          <span v-if="isUploading" class="spinner-border spinner-border-sm me-2"></span>
-          {{ isUploading ? 'Subiendo...' : 'Guardar Foto' }}
-        </button>
-      </div>
-    </div>
-
-    <!-- Filtros -->
-    <div class="d-flex gap-2 flex-wrap mb-4">
-      <button
-        v-for="cat in [{ value: 'todos', label: 'Todas' }, ...categorias]"
-        :key="cat.value"
-        class="btn btn-sm"
-        :class="filtroActivo === cat.value ? 'btn-kofan' : 'btn-outline-kofan'"
-        @click="cambiarFiltro(cat.value)"
-      >
-        {{ cat.label }}
-        <span v-if="filtroActivo === cat.value" class="ms-1 badge bg-white text-success">
-          {{ fotos.length }}
-        </span>
-      </button>
-    </div>
-
-    <!-- Estado de carga -->
-    <div v-if="isLoading" class="text-center py-5">
-      <div class="spinner-border text-success" role="status"></div>
-      <p class="text-muted mt-2 small">Cargando galería...</p>
-    </div>
-
-    <!-- Sin fotos -->
-    <div v-else-if="fotos.length === 0" class="empty-state text-center py-5">
-      <font-awesome-icon :icon="['fas', 'images']" class="fs-1 text-muted mb-3 d-block mx-auto" />
-      <p class="text-muted">No hay fotos en esta categoría.</p>
-      <button class="btn btn-kofan mt-2" @click="mostrarFormulario = true">Subir primera foto</button>
-    </div>
-
-    <!-- Grid de fotos -->
-    <div v-else class="gallery-grid">
-      <div v-for="foto in fotos" :key="foto.id" class="gallery-item">
-        <img :src="fotoUrl(foto.url)" :alt="foto.titulo" class="gallery-img" />
-        <div class="gallery-overlay">
-          <span class="foto-titulo">{{ foto.titulo }}</span>
-          <span class="foto-categoria badge-cat">{{ labelCategoria(foto.categoria) }}</span>
-          <button class="btn btn-danger btn-sm mt-2" @click="confirmarEliminar(foto)" :disabled="eliminando === foto.id">
-            <span v-if="eliminando === foto.id" class="spinner-border spinner-border-sm"></span>
-            <font-awesome-icon v-else :icon="['fas', 'trash']" />
-          </button>
-        </div>
-      </div>
-    </div>
-
-  </div>
-</template>
-
 <script setup>
 import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
+
+// Importamos el componente que me pasaste
+import ImageUploader from "@/components/ImageUploader.vue"; // Ajusta la ruta si es necesario
 
 const fotos = ref([]);
 const isLoading = ref(false);
@@ -119,28 +12,18 @@ const isUploading = ref(false);
 const eliminando = ref(null);
 const mostrarFormulario = ref(false);
 const filtroActivo = ref("todos");
-const isDragging = ref(false);
-const preview = ref(null);
-const fileInput = ref(null);
 
-const nuevaFoto = ref({ titulo: "", categoria: "", archivo: null });
-
-const categorias = [
-  { value: "naturaleza",    label: "Naturaleza" },
-  { value: "experiencias",  label: "Experiencias" },
-  { value: "instalaciones", label: "Instalaciones" },
-  { value: "eventos",       label: "Eventos" },
-];
+// Variables para conectar con ImageUploader
+const archivosParaSubir = ref([]);
+const uploaderRef = ref(null);
 
 const BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
-
 const fotoUrl = (url) => `${BASE_URL}${url}`;
-
-const labelCategoria = (val) => categorias.find(c => c.value === val)?.label || val;
 
 const cargarFotos = async (categoria = "todos") => {
   isLoading.value = true;
   try {
+    // Si no es "todos", le pegamos el parámetro a la URL
     const params = categoria !== "todos" ? `?categoria=${categoria}` : "";
     const { data } = await apiClient.get(`/gallery/${params}`);
     fotos.value = data;
@@ -151,61 +34,35 @@ const cargarFotos = async (categoria = "todos") => {
   }
 };
 
-const cambiarFiltro = (cat) => {
-  filtroActivo.value = cat;
-  cargarFotos(cat);
-};
-
-const onFileSelect = (e) => {
-  const file = e.target.files[0];
-  if (file) setArchivo(file);
-};
-
-const onDrop = (e) => {
-  isDragging.value = false;
-  const file = e.dataTransfer.files[0];
-  if (file) setArchivo(file);
-};
-
-const setArchivo = (file) => {
-  nuevaFoto.value.archivo = file;
-  const reader = new FileReader();
-  reader.onload = (e) => { preview.value = e.target.result; };
-  reader.readAsDataURL(file);
-};
-
 const cancelarUpload = () => {
   mostrarFormulario.value = false;
-  nuevaFoto.value = { titulo: "", categoria: "", archivo: null };
-  preview.value = null;
+  if (uploaderRef.value) uploaderRef.value.reset(); // Usamos la función reset() que dejaste expuesta en tu componente
+  archivosParaSubir.value = [];
 };
 
-const subirFoto = async () => {
-  const { titulo, categoria, archivo } = nuevaFoto.value;
-
-  if (!titulo || !categoria || !archivo) {
-    return Swal.fire({ icon: "warning", title: "Campos incompletos", text: "Completa todos los campos y selecciona una imagen.", confirmButtonColor: "#0f3b2a" });
-  }
-
+// Como tu componente permite múltiples fotos y el backend recibe 1 a 1, iteramos
+const subirFotosBatch = async () => {
+  if (archivosParaSubir.value.length === 0) return;
   isUploading.value = true;
+  let subidasExitosas = 0;
 
   try {
-    const formData = new FormData();
-    formData.append("file", archivo);
-    formData.append("titulo", titulo);
-    formData.append("categoria", categoria);
+    for (const file of archivosParaSubir.value) {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("categoria", categoriaSeleccionada.value); // <-- AQUÍ SE ENVÍA LA CATEGORÍA
 
-    await apiClient.post("/gallery/", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+      await apiClient.post("/gallery/", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      subidasExitosas++;
+    }
 
-    await Swal.fire({ icon: "success", title: "¡Foto subida!", timer: 1500, showConfirmButton: false });
+    await Swal.fire({ icon: "success", title: `¡${subidasExitosas} foto(s) subida(s)!`, timer: 1500, showConfirmButton: false });
     cancelarUpload();
-    cargarFotos(filtroActivo.value);
-
+    cargarFotos(); // Esto recargará la grilla
   } catch (error) {
-    const detail = error.response?.data?.detail || "No se pudo subir la foto.";
-    Swal.fire({ icon: "error", title: "Error al subir", text: detail, confirmButtonColor: "#0f3b2a" });
+    Swal.fire({ icon: "error", title: "Error al subir", text: "Hubo un problema.", confirmButtonColor: "#0f3b2a" });
   } finally {
     isUploading.value = false;
   }
@@ -214,7 +71,7 @@ const subirFoto = async () => {
 const confirmarEliminar = async (foto) => {
   const result = await Swal.fire({
     title: "¿Eliminar foto?",
-    text: `Se eliminará "${foto.titulo}" permanentemente.`,
+    text: `Se eliminará permanentemente.`,
     icon: "warning",
     showCancelButton: true,
     confirmButtonColor: "#dc3545",
@@ -237,8 +94,118 @@ const confirmarEliminar = async (foto) => {
   }
 };
 
+const categoriaSeleccionada = ref("instalaciones"); // Valor por defecto
+
+const categorias = [
+  { value: "naturaleza",    label: "Naturaleza" },
+  { value: "experiencias",  label: "Experiencias" },
+  { value: "instalaciones", label: "Cabañas e Instalaciones" },
+  { value: "eventos",       label: "Eventos" },
+];
+const cambiarFiltro = (cat) => {
+  filtroActivo.value = cat;
+  cargarFotos(cat); // Recarga la grilla con la nueva categoría
+};
+
 onMounted(() => cargarFotos());
 </script>
+
+<template>
+  <div class="gallery-manager">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold verde-kofan mb-0">Gestión de Galería</h3>
+        <p class="text-muted small mb-0">Administra las fotos públicas del Ecohotel</p>
+      </div>
+      <button class="btn btn-kofan px-4" @click="mostrarFormulario = true" v-if="!mostrarFormulario">
+        <font-awesome-icon :icon="['fas', 'plus']" class="me-2" />
+        Subir Fotos
+      </button>
+    </div>
+
+    <div class="d-flex gap-2 flex-wrap mb-4" v-if="!mostrarFormulario">
+      <button
+        v-for="cat in [{ value: 'todos', label: 'Todos' }, ...categorias]"
+        :key="cat.value"
+        class="btn px-4 rounded-pill transition-all"
+        :class="filtroActivo === cat.value ? 'btn-kofan text-white shadow-sm' : 'btn-outline-success'"
+        @click="cambiarFiltro(cat.value)"
+      >
+        {{ cat.label }}
+        <span v-if="filtroActivo === cat.value && cat.value !== 'todos'" class="ms-1 badge bg-white text-success rounded-circle">
+          {{ fotos.length }}
+        </span>
+      </button>
+    </div>
+
+    <div v-if="mostrarFormulario" class="upload-card mb-4 p-4 shadow-sm bg-white rounded-4 border">
+      <h5 class="fw-bold verde-kofan mb-4">Agregar Nuevas Fotos</h5>
+      
+      <div class="mb-4 w-100" style="max-width: 400px;">
+        <label class="form-label fw-bold text-dark">¿A qué categoría pertenecen estas fotos?</label>
+        <select v-model="categoriaSeleccionada" class="form-select form-select-lg border-success-subtle shadow-sm">
+          <option v-for="cat in categorias" :key="cat.value" :value="cat.value">
+            {{ cat.label }}
+          </option>
+        </select>
+      </div>
+
+      <ImageUploader 
+        ref="uploaderRef"
+        v-model="archivosParaSubir"
+        :maxFiles="10" 
+        :existingCount="0"
+        :isEditing="true"
+      />
+
+      <div class="d-flex gap-2 mt-4 justify-content-end border-top pt-3">
+        <button class="btn btn-outline-secondary px-4" @click="cancelarUpload">Cancelar</button>
+        <button class="btn btn-kofan px-5 fw-bold" @click="subirFotosBatch" :disabled="isUploading || archivosParaSubir.length === 0">
+          <span v-if="isUploading" class="spinner-border spinner-border-sm me-2"></span>
+          {{ isUploading ? 'Subiendo...' : 'Guardar Fotos' }}
+        </button>
+      </div>
+    </div>
+
+    <div v-if="isLoading" class="text-center py-5">
+      <div class="spinner-border text-success" role="status"></div>
+      <p class="text-muted mt-2 small fw-bold">Cargando galería...</p>
+    </div>
+
+    <div v-else-if="fotos.length === 0 && !mostrarFormulario" class="empty-state text-center py-5 bg-light rounded-4 border border-dashed mt-3">
+      <font-awesome-icon :icon="['fas', 'images']" class="fs-1 text-muted mb-3 d-block mx-auto opacity-50" />
+      <h5 class="text-muted fw-bold">No hay fotos aquí</h5>
+      <p class="text-muted small">Selecciona otra categoría o sube nuevas imágenes.</p>
+    </div>
+
+    <div v-else-if="!mostrarFormulario" class="gallery-grid mt-2">
+      <div v-for="foto in fotos" :key="foto.id" class="gallery-item position-relative mb-2">
+        
+        <img :src="fotoUrl(foto.url)" :alt="foto.title" class="img-fluid rounded-4 shadow-sm w-100 object-fit-cover" style="height: 220px;" />
+        
+        <div class="position-absolute top-0 w-100 p-2 d-flex justify-content-between align-items-start">
+          <span class="badge bg-dark bg-opacity-75 text-white border border-secondary shadow-sm">
+            {{ categorias.find(c => c.value === foto.categoria)?.label || 'General' }}
+          </span>
+          
+          <button class="btn btn-danger btn-sm rounded-circle shadow transition-all hover-scale" @click="confirmarEliminar(foto)" :disabled="eliminando === foto.id" title="Eliminar foto">
+            <span v-if="eliminando === foto.id" class="spinner-border spinner-border-sm"></span>
+            <font-awesome-icon v-else :icon="['fas', 'trash']" />
+          </button>
+        </div>
+
+        <div class="mt-2 text-truncate small fw-semibold text-secondary text-center px-2">
+          {{ foto.title }}
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</template>
+
+
 
 <style scoped>
 .verde-kofan { color: #0f3b2a; }

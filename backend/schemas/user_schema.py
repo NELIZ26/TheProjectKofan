@@ -1,7 +1,5 @@
 from typing import Optional
-
 from pydantic import BaseModel, EmailStr
-
 
 class UserCreate(BaseModel):
     tipo_persona: str
@@ -13,10 +11,9 @@ class UserCreate(BaseModel):
     city: str 
     password: str
     phone: Optional[str] = None
+    is_active: bool = True
     role: str = "client"
 
-
-    
 class UserLogin(BaseModel):
     username: str
     password: str
@@ -26,21 +23,21 @@ class Token(BaseModel):
     refresh_token: str
     token_type: str = "bearer"
 
-# Esquema para la respuesta de datos del usuario (sin password)
-
-
-class UserUpdate(BaseModel):
-    full_name: Optional[str] = None
-    email: Optional[EmailStr] = None
-    phone: Optional[str] = None
-    password: Optional[str] = None
-
-class AdminUserUpdate(UserUpdate):
-    role: Optional[str] = None
-    number_document: Optional[str] = None
-    tipo_persona: Optional[str] = None 
-
 class UserResponse(BaseModel):
     full_name: str
     email: EmailStr
     role: str
+
+# ==========================================
+# 🟢 LÓGICA EMPRESARIAL ESTRICTA (UPDATE)
+# ==========================================
+
+class UserUpdate(BaseModel):
+    full_name: Optional[str] = None
+    phone: Optional[str] = None
+    country: Optional[str] = None  
+    city: Optional[str] = None     
+
+class AdminUserUpdate(UserUpdate):
+    tipo_persona: Optional[str] = None 
+    type_document: Optional[str] = None 

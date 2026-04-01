@@ -22,7 +22,7 @@ async def register_user(new_user: UserCreate):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="El número de documento ya está registrado."
         )
-
+    new_user.role = "client"
     # 3. Guardar en la base de datos
     # Aquí es donde ocurre la magia: el servicio hashea y guarda.
     new_id = await create_user_service(new_user)

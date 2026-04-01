@@ -11,6 +11,8 @@ def site_config_schema(config) -> dict:
             "currency": "COP",
             "social_facebook": "",
             "social_instagram": "",
+            "social_tiktok": "",
+             "whatsapp_number": "",
             "tax_percentage": 0.0
         }
         
@@ -25,5 +27,7 @@ def site_config_schema(config) -> dict:
         "currency": config.get("currency", "COP"),
         "social_facebook": config.get("social_facebook", ""),
         "social_instagram": config.get("social_instagram", ""),
+        "social_tiktok": config.get("social_tiktok", ""),
+         "whatsapp_number": config.get("whatsapp_number", ""),
         "tax_percentage": config.get("tax_percentage", 0.0)
     }

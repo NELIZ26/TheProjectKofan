@@ -1,54 +1,82 @@
+<script setup>
+// 1. Importamos el store de configuración
+import { useConfigStore } from '@/stores/config';
+
+// 2. Lo inicializamos
+const configStore = useConfigStore();
+
+// 3. Traemos la URL de tu backend para armar la ruta del logo
+// (Asumimos que la env: VITE_BACKEND_URL es http://localhost:8000)
+const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
+</script>
+
 <template>
-  <footer class="kofan-footer">
+  <footer class="kofan-footer mt-auto">
     <div class="container footer-grid">
+      
       <div class="footer-brand">
-        <h2 class="footer-logo">Kofán</h2>
+        <h2 class="footer-logo mb-3">{{ configStore.data.hotel_name || 'Kofán Hospedaje' }}</h2>
         <p>
           Conectando el espíritu humano con la magia de la Amazonía. Un refugio
           de paz, cultura y naturaleza.
         </p>
-        <div class="social-links">
-          <a href="https://www.instagram.com/ecohotelkofan/" class="social-icon"
-            ><font-awesome-icon :icon="['fab', 'instagram']"
-          /></a>
-          <a href="https://www.facebook.com/ecohotelkofan" class="social-icon"
-            ><font-awesome-icon :icon="['fab', 'facebook']"
-          /></a>
-          <a href="https://www.tiktok.com/@ecohotelkofan?_r=1&_t=ZS-94Lg6dczT2D" class="social-icon"
-            ><font-awesome-icon :icon="['fab', 'tiktok']"
-          /></a>
+        
+        <div class="social-links mt-4">
+          <a v-if="configStore.data.social_instagram" :href="configStore.data.social_instagram" target="_blank" class="social-icon">
+            <font-awesome-icon :icon="['fab', 'instagram']" style="font-size: 1.3rem;" />
+          </a>
+          
+          <a v-if="configStore.data.social_facebook" :href="configStore.data.social_facebook" target="_blank" class="social-icon">
+            <font-awesome-icon :icon="['fab', 'facebook']" style="font-size: 1.3rem;" />
+          </a>
+          
+          <a v-if="configStore.data.social_tiktok" :href="configStore.data.social_tiktok" target="_blank" class="social-icon">
+            <font-awesome-icon :icon="['fab', 'tiktok']" style="font-size: 1.3rem;" />
+          </a>
+
+          <a v-if="configStore.data.whatsapp_number" :href="`https://wa.me/${configStore.data.whatsapp_number.replace(/\+/g, '').replace(/ /g, '')}`" target="_blank" class="social-icon whatsapp-icon">
+            <font-awesome-icon :icon="['fab', 'whatsapp']" style="font-size: 1.4rem;" />
+          </a>
         </div>
       </div>
 
-      <div class="footer-links">
-        <h3>Navegación</h3>
-        <ul>
-          <li><a href="#home">Inicio</a></li>
-          <li><a href="#experiencias">Experiencias</a></li>
-          <li><a href="#servicios">Hospedaje</a></li>
-          <li><a href="#donde-estamos">Ubicación</a></li>
-        </ul>
+      <div class="footer-links d-flex justify-content-md-center">
+        <div>
+          <h3 class="mb-4 text-white">Navegación</h3>
+          <ul class="list-unstyled">
+            <li class="mb-2"><a href="#home">Inicio</a></li>
+            <li class="mb-2"><a href="#experiencias">Experiencias</a></li>
+            <li class="mb-2"><a href="#servicios">Hospedaje</a></li>
+            <li class="mb-2"><a href="#donde-estamos">Ubicación</a></li>
+          </ul>
+        </div>
       </div>
 
-      <div class="footer-contact">
-        <h3>Contacto</h3>
-        <p>
-          <font-awesome-icon :icon="['fas', 'location-dot']" /> Puerto Asís,
-          Putumayo
+      <div class="footer-contact text-center text-md-start">
+        <h3 class="mb-4 text-white">Contacto</h3>
+        
+        <p class="mb-3 d-flex align-items-center justify-content-center justify-content-md-start">
+          <font-awesome-icon :icon="['fas', 'location-dot']" class="me-3 text-white fs-5" /> 
+          <span>{{ configStore.data.address || 'Puerto Asís, Putumayo' }}</span>
         </p>
-        <p><font-awesome-icon :icon="['fas', 'phone']" /> +57 322 4225925</p>
-        <p>
-          <font-awesome-icon :icon="['fas', 'envelope']" /> kofancentroecoturistico@gmail.com
+        <p class="mb-3 d-flex align-items-center justify-content-center justify-content-md-start">
+          <font-awesome-icon :icon="['fas', 'phone']" class="me-3 text-white fs-5" /> 
+          <span>{{ configStore.data.phone || '+57 322 4225925' }}</span>
+        </p>
+        <p class="mb-0 d-flex align-items-center justify-content-center justify-content-md-start">
+          <font-awesome-icon :icon="['fas', 'envelope']" class="me-3 text-white fs-5" /> 
+          <span>{{ configStore.data.contact_email || 'kofancentroecoturistico@gmail.com' }}</span>
         </p>
       </div>
+      
     </div>
 
-    <div class="footer-bottom">
+    <div class="footer-bottom mt-5">
       <div class="container">
         <hr class="footer-line" />
         <div class="bottom-flex">
-          <p>&copy; 2026 Kofán Amazonía. Todos los derechos reservados.</p>
-          <p>Hecho con ❤️ en el Putumayo</p>
+          <p class="mb-0">&copy; {{ new Date().getFullYear() }} {{ configStore.data.hotel_name || 'Kofán Amazonía' }}. Todos los derechos reservados.</p>
+          <p class="mb-0">Hecho con ❤️ en el Putumayo</p>
         </div>
       </div>
     </div>
@@ -56,6 +84,14 @@
 </template>
 
 <style scoped>
+/* AÑADIDO: Estilo para que el logo dinámico se vea bien */
+.footer-img-logo {
+  max-height: 80px;
+  object-fit: contain;
+  margin-bottom: 20px;
+}
+
+/* --- TUS ESTILOS ORIGINALES INTACTOS --- */
 .kofan-footer {
   background-color: #0f3b2a; /* Verde oscuro "Noche" */
   color: #e0eee0;
@@ -155,6 +191,11 @@
   margin-bottom: 15px;
   font-size: 0.95rem;
   opacity: 0.8;
+}
+.social-icon.whatsapp-icon:hover {
+  background: #25D366; /* Verde oficial de WhatsApp */
+  color: white;
+  transform: translateY(-5px);
 }
 
 /* --- BOTTOM --- */

@@ -21,6 +21,8 @@ const config = ref({
   currency: 'COP',
   social_facebook: '',
   social_instagram: '',
+  social_tiktok: "",
+  whatsapp_number: "",
   tax_percentage: 0
 });
 
@@ -180,20 +182,50 @@ onMounted(loadSettings);
                 <div class="tab-pane fade" id="social">
                   <h5 class="mb-4 fw-bold text-dark">Presencia Digital</h5>
                   <div class="row g-4">
+                    
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Facebook URL</label>
                       <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;"><i class="bi bi-facebook text-primary"></i></span>
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
+                          <i class="bi bi-facebook text-primary"></i>
+                        </span>
                         <input v-model="config.social_facebook" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://facebook.com/...">
                       </div>
                     </div>
+                    
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Instagram URL</label>
                       <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;"><i class="bi bi-instagram text-danger"></i></span>
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
+                          <i class="bi bi-instagram text-danger"></i>
+                        </span>
                         <input v-model="config.social_instagram" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://instagram.com/...">
                       </div>
                     </div>
+                    
+                    <div class="col-md-12">
+                      <label class="form-label fw-semibold small ms-1">TikTok URL</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
+                          <i class="bi bi-tiktok text-dark"></i>
+                        </span>
+                        <input v-model="config.social_tiktok" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://tiktok.com/@...">
+                      </div>
+                    </div>
+
+                    <div class="col-md-12">
+                      <label class="form-label fw-semibold small ms-1">Número de WhatsApp</label>
+                      <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
+                          <i class="bi bi-whatsapp text-success"></i>
+                        </span>
+                        <input v-model="config.whatsapp_number" type="text" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="Ej: 573224225925">
+                      </div>
+                      <div class="form-text small ms-2 mt-1 opacity-75">
+                        Incluye el indicativo (ej. 57 para Colombia) sin el símbolo "+".
+                      </div>
+                    </div>
+
                   </div>
                 </div>
 

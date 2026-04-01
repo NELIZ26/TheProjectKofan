@@ -5,7 +5,8 @@ import apiClient from '@/api/apiClient';
 
 const props = defineProps({
   show: Boolean,
-  reserva: Object
+  reserva: Object,
+  modoCheckIn: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['close', 'actualizado']);
@@ -63,7 +64,7 @@ watch(() => form.fecha_salida, recalcularTotal);
 watch(() => form.consumos_extras, recalcularTotal, { deep: true }); // deep: true observa los cambios dentro de la lista
 
 // 2. Cargamos los datos al abrir el modal
-watch(() => props.show, (newVal) => {
+watch(() => props.show, async (newVal) => {
   if (newVal && props.reserva) {
     form.cliente_nombre = props.reserva.cliente || props.reserva.cliente_nombre || '';
     form.cliente_email = props.reserva.cliente_email || '';
@@ -71,19 +72,34 @@ watch(() => props.show, (newVal) => {
     form.tipo_documento = props.reserva.tipo_documento === "Pendiente" ? "" : (props.reserva.tipo_documento || "");
     form.cliente_documento = props.reserva.cliente_documento === "0" ? "" : (props.reserva.cliente_documento || "");
     
-    // Clonamos acompañantes y consumos
+    // Clonamos acompañantes (estos sí se quedan en la reserva)
     form.acompanantes = props.reserva.acompanantes 
       ? JSON.parse(JSON.stringify(props.reserva.acompanantes)).map(acomp => ({ ...acomp, bloqueado: true }))
       : [];
-    form.consumos_extras = props.reserva.consumos_extras 
-      ? JSON.parse(JSON.stringify(props.reserva.consumos_extras)).map(extra => ({ ...extra, bloqueado: true }))
-      : [];
+
+    // 🟢 AHORA CONSULTAMOS LOS EXTRAS DIRECTAMENTE DESDE LA FACTURA
+    form.consumos_extras = []; // Limpiamos la lista por defecto
+    try {
+      const idReserva = props.reserva.id || props.reserva._id;
+      const { data } = await apiClient.get(`/invoices/by-booking/${idReserva}`);
+      
+      // Si la factura existe y tiene cargos, los mapeamos al formulario
+      if (data && data.extra_charges) {
+        form.consumos_extras = data.extra_charges.map(extra => ({
+          concepto: extra.description,
+          valor: extra.amount,
+          bloqueado: true // Los bloqueamos para que no se editen desde aquí
+        }));
+      }
+    } catch (error) {
+      // Es normal que falle si el huésped aún no tiene Check-in (no hay factura)
+    }
 
     form.fecha_entrada = props.reserva.fecha_entrada || '';
     form.fecha_salida = props.reserva.fecha_salida || '';
     form.monto_total = props.reserva.monto || props.reserva.monto_total || 0;
 
-    // Calculamos el precio base por noche restando los extras que ya estaban guardados
+    // Calculamos el precio base por noche
     const fIn = new Date(form.fecha_entrada);
     const fOut = new Date(form.fecha_salida);
     const nochesOriginales = Math.max(1, Math.ceil(Math.abs(fOut - fIn) / (1000 * 60 * 60 * 24)));
@@ -114,20 +130,23 @@ const quitarAcompanante = (index) => {
 const guardarDetalles = async () => {
   guardando.value = true;
   try {
-    const payload = {
+    const idReserva = props.reserva.id || props.reserva._id;
+    
+    // 1. Calculamos los totales
+    const totalExtras = form.consumos_extras.reduce((acc, e) => acc + Number(e.valor || 0), 0);
+    const subtotalHabitacion = Number(form.monto_total) - totalExtras;
+    const extrasParaFactura = form.consumos_extras.map(e => ({ concepto: e.concepto, valor: Number(e.valor) }));
+
+    // 2. Preparamos el payload de la reserva
+    const payloadReserva = {
       cliente_nombre: form.cliente_nombre,
       cliente_email: form.cliente_email,
       cliente_celular: form.cliente_celular,
       tipo_documento: form.tipo_documento || "CC",
       cliente_documento: form.cliente_documento || "0",
-      
-      // 🟢 LOS 3 CAMPOS NUEVOS QUE FALTABAN EN EL ENVÍO
       fecha_entrada: form.fecha_entrada,
       fecha_salida: form.fecha_salida,
       monto_total: Number(form.monto_total),
-      
-      // 🟢 LA LISTA DE EXTRAS Y ACOMPAÑANTES
-      consumos_extras: form.consumos_extras.map(e => ({ concepto: e.concepto, valor: Number(e.valor) })),
       acompanantes: form.acompanantes.map(a => ({
         nombre_completo: a.nombre_completo,
         tipo_documento: a.tipo_documento,
@@ -136,24 +155,68 @@ const guardarDetalles = async () => {
       })),
     };
 
-    console.log("Enviando a FastAPI:", payload); // Para que veas en consola que sí viaja
+    // 3. Guardamos los datos de la reserva siempre
+    await apiClient.put(`/api/reservas/${idReserva}/detalles`, payloadReserva);
 
-    await apiClient.put(`/api/reservas/${props.reserva.id}/detalles`, payload);
+    // 🟢 4. BIFURCACIÓN: ¿Es Check-in o es Edición normal?
+    if (props.modoCheckIn) {
+      
+      // A. Cambiamos el estado a 'ocupada'
+      await apiClient.patch(`/api/reservas/${idReserva}/estado`, {
+        estado: 'ocupada',
+        motivo_actualizacion: "Check-in realizado en recepción"
+      });
 
-    Swal.fire({
-      icon: 'success',
-      title: '¡Guardado!',
-      text: 'Los detalles, fechas y consumos se actualizaron correctamente.',
-      timer: 2000,
-      showConfirmButton: false,
-      confirmButtonColor: "#0f3b2a"
-    });
+      // B. Nace la factura
+      await apiClient.post("/invoices/", {
+        booking_id: idReserva,
+        guest_name: form.cliente_nombre,
+        guest_document: form.cliente_documento,
+        guest_email: form.cliente_email,
+        guest_phone: form.cliente_celular,
+        room_name: props.reserva.habitacion_nombre || props.reserva.habitacion || "Habitación",
+        check_in_date: form.fecha_entrada,
+        check_out_date: form.fecha_salida,
+        room_subtotal: subtotalHabitacion,
+        status: "open",
+        extra_charges: extrasParaFactura
+      });
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Check-in Exitoso!',
+        text: 'El huésped ya está registrado y su cuenta está abierta.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+
+    } else {
+      // Es una edición normal (sincronizar factura)
+      try {
+        await apiClient.put(`/invoices/sync-by-booking/${idReserva}`, {
+          check_out_date: form.fecha_salida,
+          room_subtotal: subtotalHabitacion,
+          total_amount: Number(form.monto_total),
+          extra_charges: extrasParaFactura 
+        });
+      } catch (invoiceError) {
+        console.warn("Aviso:", "El huésped aún no tiene cuenta abierta.");
+      }
+
+      Swal.fire({
+        icon: 'success',
+        title: '¡Guardado!',
+        text: 'Los detalles se actualizaron correctamente.',
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }
 
     emit('actualizado'); 
     cerrar();
   } catch (error) {
-    console.error("Error al guardar detalles:", error);
-    Swal.fire('Error', 'No se pudieron guardar los detalles.', 'error');
+    console.error("Error al guardar/check-in:", error);
+    Swal.fire('Error', 'Hubo un problema al procesar la solicitud.', 'error');
   } finally {
     guardando.value = false;
   }
@@ -170,9 +233,9 @@ const cerrar = () => {
       
       <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center border-bottom border-success border-3">
         <h5 class="mb-0 fw-bold d-flex align-items-center">
-          <font-awesome-icon icon="fa-solid fa-user-pen" class="text-success me-3 fs-4" />
-          Completar Datos: {{ form.cliente_nombre }}
-        </h5>
+        <font-awesome-icon :icon="modoCheckIn ? 'fa-solid fa-door-open' : 'fa-solid fa-user-pen'" class="text-success me-3 fs-4" />
+        {{ modoCheckIn ? 'Realizar Check-in:' : 'Completar Datos:' }} {{ form.cliente_nombre }}
+      </h5>
         <button @click="cerrar" class="btn btn-sm text-white fs-5 border-0 hover-danger">
           <font-awesome-icon icon="fa-solid fa-times" />
         </button>
@@ -309,9 +372,10 @@ const cerrar = () => {
       <div class="p-3 bg-light border-top text-end">
         <button type="button" class="btn btn-secondary me-2" @click="cerrar">Cancelar</button>
         <button type="submit" form="formEdicionReserva" class="btn btn-dark px-4" :disabled="guardando">
-          <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
-          <font-awesome-icon v-else icon="fa-solid fa-save" class="me-2" /> Guardar y Continuar
-        </button>
+        <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
+        <font-awesome-icon v-else :icon="modoCheckIn ? 'fa-solid fa-check-circle' : 'fa-solid fa-save'" class="me-2" /> 
+        {{ modoCheckIn ? 'Confirmar Check-in' : 'Guardar y Continuar' }}
+      </button>
       </div>
 
     </div>
