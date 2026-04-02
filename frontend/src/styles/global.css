@@ -40,3 +40,28 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   letter-spacing: -0.3px;
 }
+
+
+.btn-round-action {
+  width: 36px !important;  /* Tamaño uniforme y cómodo */
+  height: 36px !important;
+  border-radius: 50% !important; /* Círculo perfecto */
+  padding: 0 !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-width: 1px !important; /* 🟢 CLAVE: Borde fino, no grueso */
+  background-color: transparent !important; /* Transparente inicialmente */
+  transition: all 0.2s ease-in-out;
+}
+
+/* Efecto hover suave al pasar el mouse */
+.btn-round-action:hover {
+  transform: translateY(-2px); /* Ligero levante */
+  box-shadow: 0 3px 6px rgba(0,0,0,0.08); /* Sombra muy sutil */
+}
+
+/* Ajuste fino para el icono interno */
+.btn-round-action .fa-solid, .btn-round-action .fa-regular {
+  font-size: 0.9rem; /* Icono sutil, no gigante */
+}

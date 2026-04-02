@@ -279,29 +279,30 @@ const listaAmenidades = [
               </td>
 
               <td class="text-center align-middle">
-                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-outline-primary rounded-pill px-3 shadow-sm">
-                  <i class="fa fa-calendar-alt me-1"></i> Ver Fechas
+                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium" style="font-size: 0.82rem;">
+                  Ver Fechas
                 </button>
               </td>
 
               <td class="text-center align-middle">
                 <div class="d-flex justify-content-center gap-2">
+                  
                   <button 
-                    class="btn btn-light btn-sm border shadow-sm" 
+                    class="btn btn-outline-secondary btn-round-action shadow-none" 
                     data-bs-toggle="modal" 
                     data-bs-target="#modalHabitacion"
                     @click="prepararEdicion(hab)"
                     title="Editar habitación"
                   >
-                    <font-awesome-icon :icon="['fas', 'pen-to-square']" style="color: #0f3b2a;" />
+                    <font-awesome-icon :icon="['far', 'pen-to-square']" />
                   </button>
                   
                   <button 
-                    class="btn btn-light btn-sm border shadow-sm" 
+                    class="btn btn-outline-danger btn-round-action shadow-none" 
                     @click="eliminarHabitacion(hab.id || hab._id)"
                     title="Eliminar habitación"
                   >
-                    <font-awesome-icon :icon="['fas', 'trash']" class="text-danger" />
+                    <font-awesome-icon :icon="['fas', 'trash']" />
                   </button>
                 </div>
               </td>
