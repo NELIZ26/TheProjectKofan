@@ -31,20 +31,26 @@ const resetForm = () => {
   confirmPassword.value = "";
 };
 
-const passwordsMatch = computed(() => {
-  if (!form.value.password || !confirmPassword.value) return true;
-  return form.value.password === confirmPassword.value;
+// 1. Mensaje visual para el Input (Solo muestra error si ya escribió algo y no coincide)
+const passwordError = computed(() => {
+  if (confirmPassword.value && form.value.password !== confirmPassword.value) {
+    return "Las contraseñas no coinciden";
+  }
+  return "";
 });
 
-// Validación inteligente: No pide contraseña si estamos editando
+// 2. Validación inteligente para bloquear/desbloquear el Botón
 const isFormInvalid = computed(() => {
   const basicFields = !form.value.full_name || !form.value.country || !form.value.city;
   const identityFields = !form.value.tipo_persona || !form.value.type_document || !form.value.number_document || !form.value.email;
   
   if (isEditing.value) {
+    // 🟢 MODO EDICIÓN: Solo validamos los datos básicos, ignoramos las contraseñas
     return basicFields || identityFields;
   } else {
-    return basicFields || identityFields || !form.value.password || !passwordsMatch.value;
+    // 🟢 MODO REGISTRO: Obligamos a que la clave tenga 8 caracteres y que ambas coincidan exactamente
+    const invalidPassword = !form.value.password || form.value.password.length < 8 || form.value.password !== confirmPassword.value;
+    return basicFields || identityFields || invalidPassword;
   }
 });
 
@@ -140,7 +146,7 @@ watch(() => props.usuarioEditando, (newVal) => {
       </div>
       <div class="col-md-6">
         <label class="form-label fw-semibold small mb-1">Confirmar Contraseña <span class="text-danger">*</span></label>
-        <PasswordInput v-model="confirmPassword" placeholder="Repite la clave" :error="!passwordsMatch ? 'No coinciden' : ''" />
+        <PasswordInput v-model="confirmPassword" placeholder="Repite la clave" :error="passwordError" />
       </div>
     </template>
 

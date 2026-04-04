@@ -244,7 +244,6 @@ const cerrar = () => {
       <div class="p-4 overflow-auto" style="flex: 1;">
         <form @submit.prevent="guardarDetalles" id="formEdicionReserva">
           
-          <h6 class="fw-bold text-success mb-3 border-bottom pb-2">Datos del Titular</h6>
           <h6 class="fw-bold text-success mb-3 border-bottom pb-2">Estadía y Cobro</h6>
           <div class="row g-3 mb-4 bg-light p-3 rounded border">
             <div class="col-md-4">
@@ -261,36 +260,7 @@ const cerrar = () => {
             </div>
           </div>
 
-          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 mt-4">
-            <h6 class="fw-bold text-success mb-0">Consumos Extras (Minibar, Restaurante, etc.)</h6>
-            <button type="button" class="btn btn-sm btn-outline-success" @click="agregarConsumo">
-              <font-awesome-icon icon="fa-solid fa-plus" /> Agregar Extra
-            </button>
-          </div>
-
-          <div v-if="form.consumos_extras.length === 0" class="text-center p-3 bg-light rounded text-muted small mb-4">
-            No hay consumos extras registrados.
-          </div>
-
-          <div v-for="(extra, index) in form.consumos_extras" :key="'extra-'+index" class="row g-2 mb-3 p-3 border rounded position-relative" :class="extra.bloqueado ? 'bg-secondary bg-opacity-10 border-secondary' : 'bg-light'">
-            
-            <button v-if="!extra.bloqueado" type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" style="width: 30px; height: 30px; padding: 0;" @click="quitarConsumo(index)">
-              <font-awesome-icon icon="fa-solid fa-trash" />
-            </button>
-            
-            <div class="col-md-8">
-              <label class="form-label small fw-bold text-muted">Concepto</label>
-              <input type="text" class="form-control form-control-sm" :class="{'bg-white': extra.bloqueado}" placeholder="Ej: 2 Cervezas, 1 Desayuno..." v-model="extra.concepto" :disabled="extra.bloqueado" required>
-            </div>
-            <div class="col-md-4">
-              <label class="form-label small fw-bold text-muted">Valor ($)</label>
-              <input type="number" class="form-control form-control-sm" :class="{'bg-white': extra.bloqueado}" placeholder="Ej: 15000" v-model="extra.valor" :disabled="extra.bloqueado" required min="0">
-            </div>
-            
-            <div v-if="extra.bloqueado" class="col-12 mt-1">
-              <small class="text-success"><i class="bi bi-check-circle-fill"></i> Registrado en cuenta</small>
-            </div>
-          </div>
+          <h6 class="fw-bold text-success mb-3 border-bottom pb-2 mt-4">Datos del Titular</h6>
           <div class="row g-3 mb-4">
             <div class="col-md-12">
               <label class="form-label small fw-bold text-muted">Nombre Completo / Razón Social</label>
@@ -327,20 +297,17 @@ const cerrar = () => {
             </button>
           </div>
 
-          <div v-if="form.acompanantes.length === 0" class="text-center p-3 bg-light rounded text-muted small">
+          <div v-if="form.acompanantes.length === 0" class="text-center p-3 bg-light rounded text-muted small mb-4">
             No hay acompañantes registrados. Presiona "Agregar" si vienen más personas.
           </div>
 
           <div v-for="(acomp, index) in form.acompanantes" :key="'acomp-'+index" class="row g-2 mb-3 p-3 border rounded position-relative" :class="acomp.bloqueado ? 'bg-secondary bg-opacity-10 border-secondary' : 'bg-light'">
-            
             <button v-if="!acomp.bloqueado" type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" style="width: 30px; height: 30px; padding: 0;" @click="quitarAcompanante(index)">
               <font-awesome-icon icon="fa-solid fa-trash" />
             </button>
-            
             <div class="col-12">
               <strong class="small text-dark">Acompañante {{ index + 1 }}</strong>
             </div>
-            
             <div class="col-md-6">
               <input type="text" class="form-control form-control-sm" :class="{'bg-white': acomp.bloqueado}" placeholder="Nombre completo" v-model="acomp.nombre_completo" :disabled="acomp.bloqueado" required>
             </div>
@@ -360,9 +327,36 @@ const cerrar = () => {
             <div class="col-md-12">
               <input type="text" class="form-control form-control-sm" :class="{'bg-white': acomp.bloqueado}" placeholder="Parentesco (Ej: Hijo, Esposa)" v-model="acomp.parentesco" :disabled="acomp.bloqueado" required>
             </div>
-
             <div v-if="acomp.bloqueado" class="col-12 mt-1">
               <small class="text-success"><i class="bi bi-shield-check"></i> Huésped registrado en el sistema</small>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2 mt-4">
+            <h6 class="fw-bold text-success mb-0">Consumos Extras (Minibar, Restaurante, etc.)</h6>
+            <button type="button" class="btn btn-sm btn-outline-success" @click="agregarConsumo">
+              <font-awesome-icon icon="fa-solid fa-plus" /> Agregar Extra
+            </button>
+          </div>
+
+          <div v-if="form.consumos_extras.length === 0" class="text-center p-3 bg-light rounded text-muted small mb-4">
+            No hay consumos extras registrados.
+          </div>
+
+          <div v-for="(extra, index) in form.consumos_extras" :key="'extra-'+index" class="row g-2 mb-3 p-3 border rounded position-relative" :class="extra.bloqueado ? 'bg-secondary bg-opacity-10 border-secondary' : 'bg-light'">
+            <button v-if="!extra.bloqueado" type="button" class="btn btn-sm btn-danger position-absolute top-0 end-0 m-2" style="width: 30px; height: 30px; padding: 0;" @click="quitarConsumo(index)">
+              <font-awesome-icon icon="fa-solid fa-trash" />
+            </button>
+            <div class="col-md-8">
+              <label class="form-label small fw-bold text-muted">Concepto</label>
+              <input type="text" class="form-control form-control-sm" :class="{'bg-white': extra.bloqueado}" placeholder="Ej: 2 Cervezas, 1 Desayuno..." v-model="extra.concepto" :disabled="extra.bloqueado" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label small fw-bold text-muted">Valor ($)</label>
+              <input type="number" class="form-control form-control-sm" :class="{'bg-white': extra.bloqueado}" placeholder="Ej: 15000" v-model="extra.valor" :disabled="extra.bloqueado" required min="0">
+            </div>
+            <div v-if="extra.bloqueado" class="col-12 mt-1">
+              <small class="text-success"><i class="bi bi-check-circle-fill"></i> Registrado en cuenta</small>
             </div>
           </div>
 

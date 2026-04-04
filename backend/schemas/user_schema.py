@@ -1,18 +1,33 @@
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 
+from enum import Enum
+from typing import Optional
+from pydantic import BaseModel, EmailStr
+
+class UserRole(str, Enum):
+    ADMIN = "admin"
+    RECEPCIONISTA = "recepcionista"
+    CLIENT = "client"
+
+class DocumentType(str, Enum):
+    CC = "CC"
+    CE = "CE"
+    PASAPORTE = "PASAPORTE"
+
 class UserCreate(BaseModel):
     tipo_persona: str
     full_name: str
-    type_document: str
+    type_document: DocumentType # Usamos Enum
     number_document: str
     email: EmailStr
     country: str   
     city: str 
-    password: str
+    password: Optional[str] = None # Opcional para el truco de recepción
     phone: Optional[str] = None
     is_active: bool = True
-    role: str = "client"
+    role: UserRole = UserRole.CLIENT # Usamos Enum
+
 
 class UserLogin(BaseModel):
     username: str

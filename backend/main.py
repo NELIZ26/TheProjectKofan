@@ -1,34 +1,66 @@
+import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.routers import admin, auth, earnings, register, users, bookings, rooms, config, gallery, invoices
 from fastapi.staticfiles import StaticFiles
-from contextlib import asynccontextmanager
-from backend.services.task_service import cancelar_reservas_vencidas
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import os
-from fastapi.staticfiles import StaticFiles
-from backend.core.config import UPLOAD_DIR
 
+# Importaciones de tu aplicación
+from backend.routers import admin, auth, earnings, register, users, bookings, rooms, config, gallery, invoices
+from backend.services.task_service import cancelar_reservas_vencidas
+from backend.core.config import UPLOAD_DIR
+from backend.db.client import db
+
+# 🟢 1. UNIFICAMOS EL LIFESPAN (Tareas automáticas + Índices BD)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # -- FASE DE INICIO (STARTUP) --
+    print("Iniciando servicios del backend...")
+    
+    # A) Iniciar tareas en segundo plano
     scheduler = AsyncIOScheduler()
     scheduler.add_job(cancelar_reservas_vencidas, 'interval', hours=24)
     scheduler.start()
     print("⏳ Motor de tareas automáticas iniciado.")
+
+    # B) Crear índices de MongoDB
+    print("Verificando y creando índices de la base de datos...")
+    try:
+        await db.bookings.create_index("habitacion_id")
+        await db.bookings.create_index("cliente_id")
+        await db.bookings.create_index("estado")
+        await db.bookings.create_index([("fecha_entrada", -1)])
+        print("✅ Índices listos y optimizados.")
+    except Exception as e:
+        print(f"❌ Error al crear índices: {e}")
     
-    yield
+    # -- AQUÍ FASTAPI SE QUEDA ESCUCHANDO PETICIONES --
+    yield 
     
+    # -- FASE DE APAGADO (SHUTDOWN) --
+    print("Apagando el servidor. Conexiones cerradas.")
     scheduler.shutdown()
     print("🛑 Motor de tareas automáticas detenido.")
 
+
 app = FastAPI(lifespan=lifespan)
 
-app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="static_uploads")
-
+# 🟢 2. PROTECCIÓN DE DIRECTORIOS ESTÁTICOS Y MONTAJE
+# Definimos las rutas de las carpetas
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
+IMAGES_DIR = os.path.join(STATIC_DIR, "images") # Específico para las fotos que fallaban
+
+# Creamos las carpetas si no existen (evita que el servidor explote al arrancar)
+os.makedirs(UPLOAD_DIR, exist_ok=True)
+os.makedirs(STATIC_DIR, exist_ok=True)
+os.makedirs(IMAGES_DIR, exist_ok=True)
+
+# Montamos las rutas para que el frontend las pueda ver
+app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="static_uploads")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
+# 🟢 3. CONFIGURACIÓN CORS
 origins = [
     "http://localhost:5173",
     "http://127.0.0.1:5173",
@@ -42,6 +74,7 @@ app.add_middleware(
     allow_headers=["*"],        
 )
 
+# 🟢 4. REGISTRO DE RUTAS (ROUTERS)
 app.include_router(auth.router)
 app.include_router(users.router)
 app.include_router(bookings.router)

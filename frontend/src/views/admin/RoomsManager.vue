@@ -222,38 +222,39 @@ const listaAmenidades = [
         <p class="text-muted mb-0">Administra y organiza la oferta de alojamiento de Kofán.</p>
       </div>
       
-      <button @click="prepararCreacion" class="btn btn-kofan shadow-sm px-4 py-2 rounded-pill" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
-        <font-awesome-icon icon="fa-solid fa-plus" class="me-2" />
+      <button @click="prepararCreacion" class="btn btn-dark shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
+        <i class="bi bi-plus-circle-fill me-2"></i>
         Nueva Habitación
       </button>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4">
-      <div class="table-responsive p-3">
-        <table class="table table-hover align-middle">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="table-responsive p-0">
+        <table class="table table-hover align-middle mb-0">
           <thead class="table-light">
             <tr>
-              <th>Nombre</th>
-              <th>Precio/Noche</th>
-              <th>Capacidad</th>
-              <th>Estado</th>
-              <th class="text-center">Disponibilidad</th>
-              <th class="text-center">Acciones</th>
+              <th class="ps-4 py-3 text-muted small fw-bold">NOMBRE</th>
+              <th class="py-3 text-muted small fw-bold">PRECIO/NOCHE</th>
+              <th class="py-3 text-muted small fw-bold">CAPACIDAD</th>
+              <th class="py-3 text-muted small fw-bold">ESTADO</th>
+              <th class="text-center py-3 text-muted small fw-bold">DISPONIBILIDAD</th>
+              <th class="text-center py-3 text-muted small fw-bold">ACCIONES</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="habitaciones.length === 0 && !isLoading">
-              <td colspan="6" class="text-center text-muted py-4">
+              <td colspan="6" class="text-center text-muted py-5">
+                <i class="bi bi-door-closed display-4 mb-3 d-block text-light"></i>
                 No hay habitaciones registradas
               </td>
             </tr>
             
             <tr v-for="hab in habitaciones" :key="hab.id || hab._id" class="align-middle">
-              <td>
+              <td class="ps-4">
                 <div class="d-flex align-items-center">
                   <img 
                     :src="`${API_BASE_URL}${hab.main_image}`" 
-                    class="rounded me-3 border" 
+                    class="rounded me-3 border shadow-sm" 
                     style="width: 60px; height: 50px; object-fit: cover;"
                     @error="manejarErrorImagen"
                   >
@@ -273,14 +274,15 @@ const listaAmenidades = [
               </td>
 
               <td>
-                <span :class="hab.active ? 'badge bg-success-subtle text-success px-3 py-2 rounded-pill' : 'badge bg-warning-subtle text-warning px-3 py-2 rounded-pill'">
+                <span :class="hab.active ? 'badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill' : 'badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2 rounded-pill'">
+                  <i :class="hab.active ? 'bi bi-check-circle-fill' : 'bi bi-tools'" class="me-1"></i>
                   {{ hab.active ? 'Activa' : 'Mantenimiento' }}
                 </span>
               </td>
 
               <td class="text-center align-middle">
-                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium" style="font-size: 0.82rem;">
-                  Ver Fechas
+                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium shadow-sm" style="font-size: 0.82rem;">
+                  <i class="bi bi-calendar-range me-1"></i> Ver Fechas
                 </button>
               </td>
 
@@ -288,21 +290,23 @@ const listaAmenidades = [
                 <div class="d-flex justify-content-center gap-2">
                   
                   <button 
-                    class="btn btn-outline-secondary btn-round-action shadow-none" 
+                    class="btn btn-sm btn-outline-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
+                    style="width: 35px; height: 35px;"
                     data-bs-toggle="modal" 
                     data-bs-target="#modalHabitacion"
                     @click="prepararEdicion(hab)"
                     title="Editar habitación"
                   >
-                    <font-awesome-icon :icon="['far', 'pen-to-square']" />
+                    <i class="bi bi-pencil-square fs-6"></i>
                   </button>
                   
                   <button 
-                    class="btn btn-outline-danger btn-round-action shadow-none" 
+                    class="btn btn-sm btn-outline-danger rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
+                    style="width: 35px; height: 35px;"
                     @click="eliminarHabitacion(hab.id || hab._id)"
                     title="Eliminar habitación"
                   >
-                    <font-awesome-icon :icon="['fas', 'trash']" />
+                    <i class="bi bi-trash fs-6"></i>
                   </button>
                 </div>
               </td>
@@ -317,7 +321,7 @@ const listaAmenidades = [
         <div class="modal-content border-0 shadow-lg">
           <div class="modal-header bg-dark text-white border-0">
             <h5 class="modal-title fw-bold">
-              <font-awesome-icon :icon="isEditing ? 'fa-solid fa-pen-to-square' : 'fa-solid fa-bed'" class="me-2" />
+              <i :class="isEditing ? 'bi bi-pencil-square' : 'bi bi-door-open-fill'" class="me-2"></i>
               {{ isEditing ? 'Editar Habitación' : 'Registrar Habitación' }}
             </h5>
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" @click="resetForm"></button>
@@ -397,7 +401,7 @@ const listaAmenidades = [
 
                 <div class="col-12 mt-4" v-if="isEditing && roomForm.images && roomForm.images.length">
                   <label class="form-label fw-bold mb-1">Fotos Actuales de la Cabaña</label>
-                  <p class="text-muted small mb-3">Haz clic en la <font-awesome-icon :icon="['fas', 'star']" class="text-success" /> para elegir la foto principal.</p>
+                  <p class="text-muted small mb-3">Haz clic en la <i class="bi bi-star-fill text-warning"></i> para elegir la foto principal.</p>
                   
                   <div class="row g-2">
                     <div v-for="(imgUrl, index) in roomForm.images" :key="index" class="col-4 col-md-3">
@@ -405,7 +409,7 @@ const listaAmenidades = [
                         class="card h-100 p-1 position-relative border transition-all photo-card"
                         :class="{ 'border-success border-2 shadow principal-highlight': imgUrl === roomForm.main_image }"
                       >
-                        <span v-if="imgUrl === roomForm.main_image" class="position-absolute principal-badge rounded-pill bg-success text-white shadow-sm">
+                        <span v-if="imgUrl === roomForm.main_image" class="position-absolute principal-badge rounded-pill bg-success text-white shadow-sm px-2" style="top: -5px; left: -5px; font-size: 0.75rem; z-index: 2;">
                           Principal
                         </span>
 
@@ -413,21 +417,23 @@ const listaAmenidades = [
 
                         <button 
                           type="button" 
-                          class="btn btn-danger btn-sm position-absolute rounded-pill action-btn btn-trash shadow" 
+                          class="btn btn-danger btn-sm position-absolute rounded-circle d-inline-flex align-items-center justify-content-center shadow" 
+                          style="width: 28px; height: 28px; bottom: 5px; right: 5px;"
                           @click.stop="eliminarImagenExistente(index, imgUrl)"
                           title="Eliminar foto"
                         >
-                          <font-awesome-icon :icon="['fas', 'trash']" style="font-size: 0.70rem;" />
+                          <i class="bi bi-trash-fill" style="font-size: 0.8rem;"></i>
                         </button>
 
                         <button 
                           v-if="imgUrl !== roomForm.main_image"
                           type="button" 
-                          class="btn btn-light btn-sm position-absolute rounded-pill action-btn btn-star shadow" 
+                          class="btn btn-light btn-sm position-absolute rounded-circle d-inline-flex align-items-center justify-content-center shadow" 
+                          style="width: 28px; height: 28px; bottom: 5px; left: 5px;"
                           @click.stop="seleccionarPrincipal(imgUrl)"
                           title="Hacer foto principal"
                         >
-                          <font-awesome-icon :icon="['fas', 'star']" class="text-success" style="font-size: 0.70rem;" />
+                          <i class="bi bi-star-fill text-warning" style="font-size: 0.8rem;"></i>
                         </button>
                       </div>
                     </div>
@@ -447,10 +453,10 @@ const listaAmenidades = [
             </div>
 
             <div class="modal-footer border-0 p-4 pt-0">
-              <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" ref="closeBtnRef" @click="resetForm">
+              <button type="button" class="btn btn-light border px-4 rounded-pill" data-bs-dismiss="modal" ref="closeBtnRef" @click="resetForm">
                 Cancelar
               </button>
-              <button type="submit" class="btn btn-kofan px-4" :disabled="isSubmitting">
+              <button type="submit" class="btn btn-dark px-4 rounded-pill shadow-sm" :disabled="isSubmitting">
                 {{ isSubmitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Guardar Habitación') }}
               </button>
             </div>

@@ -126,41 +126,24 @@ onMounted(async () => {
       </div>
     </section>
 
-    <section class="galeria-preview py-5">
+    <section v-if="fotosPreview.length > 0" class="galeria-preview py-5">
       <div class="container">
         <div class="text-center mb-4">
           <span class="subtitulo">Momentos Kofán</span>
           <h2 class="titulo-seccion">Un vistazo a nuestro paraíso</h2>
         </div>
 
-        <div class="preview-grid" v-if="fotosPreview.length > 0">
-          <div v-for="foto in fotosPreview" :key="foto.id" class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img :src="baseUrl + foto.url" :alt="foto.titulo" />
-            <div class="preview-overlay"><span>{{ foto.titulo }}</span></div>
-          </div>
-        </div>
+        <div class="preview-grid">
+          <div 
+            v-for="foto in fotosPreview" 
+            :key="foto.id" 
+            class="preview-item" 
+            @click="$router.push({ name: 'gallery' })"
+          >
+            <img :src="baseUrl + foto.url" :alt="foto.titulo || 'Kofán'" @error="$event.target.style.display='none'" />
 
-        <div class="preview-grid" v-else>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos4.jpg" alt="Atardecer" />
-            <div class="preview-overlay"><span>Atardecer en el Río</span></div>
           </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/ancestral.jpg" alt="Maloka" />
-            <div class="preview-overlay"><span>Maloka Ancestral</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos3.jpg" alt="Fauna" />
-            <div class="preview-overlay"><span>Fauna Local</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos5.jpg" alt="Gastronomía" />
-            <div class="preview-overlay"><span>Gastronomía Amazónica</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos6.jpg" alt="Bienestar" />
-            <div class="preview-overlay"><span>Bienestar y Espíritu</span></div>
-          </div>
+
           <div class="preview-item preview-item-cta" @click="$router.push({ name: 'gallery' })">
             <div class="cta-content">
               <font-awesome-icon :icon="['fas', 'images']" class="fs-2 mb-2" />

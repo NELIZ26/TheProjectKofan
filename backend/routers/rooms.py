@@ -102,6 +102,7 @@ async def delete(room_id: str, user=Depends(required_admin)):
     return {"message": "Habitación y sus imágenes eliminadas correctamente"}
 
 # 6. CREAR HABITACIÓN CON MÚLTIPLES IMÁGENES (Formulario)
+# 6. CREAR HABITACIÓN CON MÚLTIPLES IMÁGENES (Formulario)
 @router.post("/create-with-images")
 async def create_new_room_with_images(
     room_number: str = Form(...),
@@ -111,7 +112,6 @@ async def create_new_room_with_images(
     description: str = Form(""),
     active: bool = Form(True),
     type: str = Form(...),
-    # 🟢 1. RECIBIMOS LOS NUEVOS DATOS DESDE VUE
     num_cuartos: int = Form(1),
     tipo_camas: str = Form(""),
     amenities: List[str] = Form([]),
@@ -128,26 +128,15 @@ async def create_new_room_with_images(
         "active": active,
         "amenities": amenities,
         "type": type,
-        # 🟢 2. LOS AGREGAMOS AL DICCIONARIO PARA QUE VAYAN A LA BASE DE DATOS
         "num_cuartos": num_cuartos,
         "tipo_camas": tipo_camas,
     }
     
-    # 2. Guardamos las imágenes físicas y creamos la lista de URLs (images)
+    # 🟢 2. EL FIX: Usamos nuestra función segura y centralizada
+    # Borramos todo el código manual de guardado y delegamos la tarea al media_service
     image_urls = []
-    if images:
-        for img in images:
-            # Generamos un nombre único
-            ext = os.path.splitext(img.filename)[1]
-            filename = f"{uuid.uuid4()}{ext}"
-            file_path = Path(UPLOAD_DIR) / filename
-            
-            # Guardamos el archivo en disco
-            with open(file_path, "wb") as buffer:
-                buffer.write(await img.read())
-            
-            # Agregamos la ruta relativa a la lista
-            image_urls.append(f"/static/uploads/{filename}")
+    if images and images[0].filename != '': # Evitamos procesar si envían un array vacío
+        image_urls = await run_in_threadpool(save_multiple, images)
 
     # 3. Llamamos al servicio EXACTAMENTE con los 3 parámetros que él espera
     return await create_room_with_images(
@@ -155,6 +144,7 @@ async def create_new_room_with_images(
         images=image_urls, 
         user_email=user["email"] 
     )
+
 # 7. ELIMINAR UNA IMAGEN ESPECÍFICA
 @router.delete("/{room_id}/delete-image")
 async def delete_room_image(room_id: str, url: str, user=Depends(required_admin)):

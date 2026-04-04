@@ -81,18 +81,13 @@ async def listar_mis_reservas(user = Depends(get_current_user)):
 # 2. En el Router, usamos ese Enum
 @router.get("/admin/todas")
 async def get_all_bookings(
-    # Ahora FastAPI solo aceptará uno de los 4 estados de arriba
-    estado: Optional[EstadoReserva] = None, 
+    estados: Optional[str] = None, 
+    page: int = 1,     # 🟢 NUEVO: Qué página queremos ver (por defecto la 1)
+    limit: int = 10,   # 🟢 NUEVO: Cuántos registros por página (por defecto 50)
     admin_user = Depends(required_admin)
 ):
-    return await get_all_bookings_service(estado_filtro=estado)
+    return await get_all_bookings_service(estados_filtro=estados, page=page, limit=limit)
 
-# 🟢 Asegúrate de importar esto arriba del todo:
-# from backend.schemas.booking_schema import UpdateReservaDetalles
-# from backend.services.booking_service import update_booking_details_service
-
-# 🟢 LA NUEVA RUTA PARA COMPLETAR DATOS EN EL CHECK-IN
-# 🟢 LA NUEVA RUTA PARA COMPLETAR DATOS EN EL CHECK-IN
 @router.put("/{reserva_id}/detalles")
 async def actualizar_detalles_reserva(
     reserva_id: str, 

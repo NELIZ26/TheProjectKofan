@@ -1,14 +1,14 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-// IMPORTANTE: Tendremos que crear este servicio en el paso 2
 import { fetchConfig, saveConfig, uploadLogo } from '@/services/configService';
+import defaultLogo from '@/img/Kofan.png';
 
 const isLoading = ref(true);
 const isSaving = ref(false);
 const message = ref({ text: '', type: '' });
 const fileInput = ref(null);
 
-const base = import.meta.env.VITE_BACKEND_URL;
+const base = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const config = ref({
   hotel_name: 'Kofán Hospedaje',
@@ -123,11 +123,11 @@ onMounted(loadSettings);
                       <label class="form-label d-block fw-semibold text-muted mb-3">Logo Actual</label>
                       <div class="mb-3">
                         <img 
-                          :src="config.logo_url ? `${base}${config.logo_url}` : '@/img/Kofan.png'" 
-                          alt="Logo Preview" 
-                          class="img-thumbnail shadow-sm p-2"
-                          style="max-height: 120px; border-radius: 15px;"
-                        >
+                        :src="config.logo_url ? `${base}${config.logo_url}` : defaultLogo" 
+                        alt="Logo Preview" 
+                        class="img-thumbnail shadow-sm p-2"
+                        style="max-height: 120px; border-radius: 15px;"
+                      >
                       </div>
                       <input type="file" ref="fileInput" @change="handleLogoUpload" class="d-none" accept="image/*">
                       <button type="button" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;" @click="fileInput.click()">
@@ -185,41 +185,33 @@ onMounted(loadSettings);
                     
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Facebook URL</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
-                          <i class="bi bi-facebook text-primary"></i>
-                        </span>
-                        <input v-model="config.social_facebook" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://facebook.com/...">
+                      <div class="position-relative">
+                        <i class="bi bi-facebook text-primary position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <input v-model="config.social_facebook" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://facebook.com/...">
                       </div>
                     </div>
                     
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Instagram URL</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
-                          <i class="bi bi-instagram text-danger"></i>
-                        </span>
-                        <input v-model="config.social_instagram" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://instagram.com/...">
+                      <div class="position-relative">
+                        <i class="bi bi-instagram text-danger position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <input v-model="config.social_instagram" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://instagram.com/...">
                       </div>
                     </div>
                     
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">TikTok URL</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
-                          <i class="bi bi-tiktok text-dark"></i>
-                        </span>
-                        <input v-model="config.social_tiktok" type="url" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="https://tiktok.com/@...">
+                      <div class="position-relative">
+                        <i class="bi bi-tiktok text-dark position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <input v-model="config.social_tiktok" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://tiktok.com/@...">
                       </div>
                     </div>
 
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Número de WhatsApp</label>
-                      <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0" style="border-radius: 18px 0 0 18px;">
-                          <i class="bi bi-whatsapp text-success"></i>
-                        </span>
-                        <input v-model="config.whatsapp_number" type="text" class="form-control custom-input border-start-0 ps-0" style="border-radius: 0 18px 18px 0;" placeholder="Ej: 573224225925">
+                      <div class="position-relative">
+                        <i class="bi bi-whatsapp text-success position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <input v-model="config.whatsapp_number" type="text" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="Ej: 573224225925">
                       </div>
                       <div class="form-text small ms-2 mt-1 opacity-75">
                         Incluye el indicativo (ej. 57 para Colombia) sin el símbolo "+".

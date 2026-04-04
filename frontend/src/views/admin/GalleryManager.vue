@@ -44,25 +44,35 @@ const cancelarUpload = () => {
 const subirFotosBatch = async () => {
   if (archivosParaSubir.value.length === 0) return;
   isUploading.value = true;
-  let subidasExitosas = 0;
 
   try {
-    for (const file of archivosParaSubir.value) {
+    // 1. Creamos un array de "promesas" (tareas a ejecutar al mismo tiempo)
+    const peticiones = archivosParaSubir.value.map(file => {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("categoria", categoriaSeleccionada.value); // <-- AQUÍ SE ENVÍA LA CATEGORÍA
+      formData.append("categoria", categoriaSeleccionada.value);
 
-      await apiClient.post("/gallery/", formData, {
+      return apiClient.post("/gallery/", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
-      subidasExitosas++;
-    }
+    });
 
-    await Swal.fire({ icon: "success", title: `¡${subidasExitosas} foto(s) subida(s)!`, timer: 1500, showConfirmButton: false });
+    // 2. Ejecutamos TODAS las subidas al mismo tiempo (Concurrencia)
+    await Promise.all(peticiones);
+
+    // 3. Si llega aquí, es porque todas fueron exitosas
+    await Swal.fire({ 
+      icon: "success", 
+      title: `¡${archivosParaSubir.value.length} foto(s) subida(s) a la velocidad de la luz!`, 
+      timer: 2000, 
+      showConfirmButton: false 
+    });
+    
     cancelarUpload();
-    cargarFotos(); // Esto recargará la grilla
+    cargarFotos(filtroActivo.value); // Recargamos manteniendo el filtro actual
+    
   } catch (error) {
-    Swal.fire({ icon: "error", title: "Error al subir", text: "Hubo un problema.", confirmButtonColor: "#0f3b2a" });
+    Swal.fire({ icon: "error", title: "Error al subir", text: "Hubo un problema con una o más fotos.", confirmButtonColor: "#0f3b2a" });
   } finally {
     isUploading.value = false;
   }
@@ -182,9 +192,15 @@ onMounted(() => cargarFotos());
     <div v-else-if="!mostrarFormulario" class="gallery-grid mt-2">
       <div v-for="foto in fotos" :key="foto.id" class="gallery-item position-relative mb-2">
         
-        <img :src="fotoUrl(foto.url)" :alt="foto.title" class="img-fluid rounded-4 shadow-sm w-100 object-fit-cover" style="height: 220px;" />
+        <img 
+          :src="fotoUrl(foto.url)" 
+          :alt="foto.title" 
+          class="img-fluid rounded-4 shadow-sm w-100 object-fit-cover" 
+          style="height: 220px;" 
+          @error="$event.target.src='https://placehold.co/400x220/f8d7da/842029?text=Archivo+Faltante'"
+        />
         
-        <div class="position-absolute top-0 w-100 p-2 d-flex justify-content-between align-items-start">
+        <div class="acciones-flotantes position-absolute top-0 w-100 p-2 d-flex justify-content-between align-items-start">
           <span class="badge bg-dark bg-opacity-75 text-white border border-secondary shadow-sm">
             {{ categorias.find(c => c.value === foto.categoria)?.label || 'General' }}
           </span>
@@ -344,4 +360,17 @@ onMounted(() => cargarFotos());
 }
 
 .empty-state .fa-images { color: #ccc; }
+.acciones-flotantes {
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  /* Fondo oscuro degradado para que el texto blanco se lea bien incluso en fotos claras */
+  background: linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0) 100%);
+  border-radius: 1rem 1rem 0 0; 
+}
+
+/* Mostramos los botones cuando el mouse pasa por encima de la tarjeta (.gallery-item) */
+.gallery-item:hover .acciones-flotantes {
+  opacity: 1;
+}
+
 </style>

@@ -1,38 +1,25 @@
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, status
 from typing import Optional
-from backend.db.client import db
-from bson import ObjectId
-from backend.schemas.gallery_schema import images_schema, image_schema
-from backend.services.media_service import save_image
-from backend.dependencies.auth import required_admin 
+from backend.services.gallery_service import get_all_photos, upload_photo, delete_photo
+from backend.dependencies.auth import required_admin, get_current_user
 
 router = APIRouter(prefix="/gallery", tags=["Gallery"])
 
-# 1. Modificamos el GET para que pueda recibir un filtro de categoría
 @router.get("/")
 async def get_gallery(categoria: Optional[str] = None):
-    query = {}
-    if categoria and categoria != "todos":
-        query = {"category": categoria}
-        
-    cursor = db.gallery.find(query)
-    images_db = await cursor.to_list(length=100)
-    return images_schema(images_db)
+    # 🟢 1. DELEGAMOS LA BÚSQUEDA AL SERVICIO
+    return await get_all_photos(categoria)
 
-# 2. Modificamos el POST para que reciba el archivo y la categoría como Form()
 @router.post("/", dependencies=[Depends(required_admin)])
 async def upload_gallery_image(
     file: UploadFile = File(...),
-    categoria: str = Form("general") # <-- NUEVO
+    categoria: str = Form("general"),
+    user = Depends(get_current_user) # Extraemos el usuario para saber quién subió la foto
 ):
     try:
-        file_url = save_image(file)
-        # 3. Guardamos la categoría en la base de datos
-        new_image = {"url": file_url, "title": file.filename, "category": categoria}
-        
-        result = await db.gallery.insert_one(new_image)
-        inserted_image = await db.gallery.find_one({"_id": result.inserted_id})
-        return image_schema(inserted_image)
+        # 🟢 2. DELEGAMOS LA SUBIDA Y CREACIÓN AL SERVICIO
+        # Nota: Asumo que el título inicial será el nombre del archivo
+        return await upload_photo(file, titulo=file.filename, categoria=categoria, uploader_email=user["email"])
     except Exception as e:        
         raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -41,7 +28,10 @@ async def upload_gallery_image(
             
 @router.delete("/{image_id}", dependencies=[Depends(required_admin)])
 async def delete_gallery_image(image_id: str):
-    result = await db.gallery.delete_one({"_id": ObjectId(image_id)})
-    if result.deleted_count == 0:
+    # 🟢 3. DELEGAMOS EL BORRADO (Físico y de BD) AL SERVICIO
+    exito = await delete_photo(image_id)
+    
+    if not exito:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imagen no encontrada")
-    return {"message": "Imagen eliminada exitosamente"}
+    
+    return {"message": "Imagen y archivo eliminados exitosamente"}
