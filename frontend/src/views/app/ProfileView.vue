@@ -1,186 +1,106 @@
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted } from "vue"; // 🟢 Añadimos onMounted
 import { useAuthStore } from "@/stores/auth";
-import Swal from "sweetalert2";
+import apiClient from "@/api/apiClient"; // 🟢 Importamos el cliente para hacer la petición
 
 const auth = useAuthStore();
 
-// 1. Estado reactivo (Iniciamos con los datos del auth o vacíos)
+// 🟢 Estado de solo lectura
 const formData = ref({
-  tipo_persona: "Natural",
-  nombres_apellidos: auth.user?.full_name || "",
-  nombre_empresa: "",
-  tipo_documento: "CC",
-  numero_documento: auth.user?.documento || "",
-  correo: auth.user?.email || "nelson@gmail.com",
-  fecha_nacimiento: "",
-  telefono: auth.user?.telefono || "",
-  direccion: ""
+  full_name: auth.user?.full_name || "",
+  phone: auth.user?.phone || "",
+  role: auth.user?.role || "Cliente",
+  email: auth.user?.email || "cliente@kofan.com",
+  number_document: auth.user?.number_document || "12223333"
 });
 
-// 2. Función de guardado con SweetAlert2
-const saveProfile = async () => {
-  // Aquí simularíamos la petición al servidor
-  console.log("Enviando a API:", formData.value);
+// 🟢 Array vacío que se llenará con la base de datos
+const avisosRecientes = ref([]);
 
-  const result = await Swal.fire({
-    title: '¿Confirmar cambios?',
-    text: "Se actualizará tu información de perfil",
-    icon: 'question',
-    showCancelButton: true,
-    confirmButtonColor: '#0f3b2a',
-    cancelButtonColor: '#d33',
-    confirmButtonText: 'Sí, guardar',
-    cancelButtonText: 'Cancelar'
-  });
-
-  if (result.isConfirmed) {
-    Swal.fire({
-      title: '¡Actualizado!',
-      text: 'Tus datos se han guardado correctamente.',
-      icon: 'success',
-      confirmButtonColor: '#0f3b2a'
-    });
+// 🟢 Función para traer los datos reales
+const cargarAvisosRecientes = async () => {
+  try {
+    const response = await apiClient.get('/api/notificaciones/mis-avisos');
+    
+    // La magia está aquí: .slice(0, 2) corta la lista y solo nos deja los 2 avisos más nuevos
+    avisosRecientes.value = response.data.slice(0, 2);
+    
+  } catch (error) {
+    console.error("Error cargando alertas recientes:", error);
   }
 };
+
+// 🟢 Ejecutar al cargar la pantalla
+onMounted(() => {
+  cargarAvisosRecientes();
+});
 </script>
 
 <template>
   <div class="perfil-section">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <div>
-        <h3 class="fw-bold verde-kofan mb-0">Mi Perfil</h3>
-        <p class="text-muted small">
-          {{ formData.tipo_persona === 'Natural' ? 'Gestiona tu información personal' : 'Datos de cuenta corporativa' }}
-        </p>
-      </div>
-      <div class="badge-tipo shadow-sm">
-        {{ formData.tipo_persona }}
+    <div class="mb-4">
+      <h3 class="fw-bold text-dark mb-1">Mi Panel</h3>
+      <p class="text-muted small mb-0">Resumen de tu cuenta y alertas recientes</p>
+    </div>
+
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden position-relative tarjeta-kofan-suave">
+      
+      <div class="card-body p-4 p-md-5 position-relative z-1">
+        <span class="badge bg-white text-success rounded-pill mb-3 px-3 py-2 shadow-sm border border-success-subtle">
+          <i class="bi bi-star-fill text-warning me-1"></i> {{ formData.role === 'admin' ? 'Administrador' : 'Cliente Kofán' }}
+        </span>
+        <h3 class="fw-bold mb-2 verde-kofan">{{ formData.full_name || 'Usuario Kofán' }}</h3>
+        
+        <div class="d-flex flex-wrap gap-4 mt-3 verde-kofan opacity-75 fw-medium">
+          <span><i class="bi bi-envelope-fill me-2"></i> {{ formData.email }}</span>
+          <span><i class="bi bi-person-vcard-fill me-2"></i> {{ formData.number_document }}</span>
+          <span v-if="formData.phone"><i class="bi bi-telephone-fill me-2"></i> {{ formData.phone }}</span>
+        </div>
       </div>
     </div>
 
-    <form @submit.prevent="saveProfile" class="p-2">
-      <div class="row g-4">
-        <div class="col-md-6">
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">Tipo de Persona</label>
-            <select class="form-select kofan-input" v-model="formData.tipo_persona">
-              <option value="Natural">Persona Natural</option>
-              <option value="Jurídica">Persona Jurídica (Empresa)</option>
-            </select>
-          </div>
+    <div class="mt-5">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="fw-bold text-dark"><i class="bi bi-bell-fill text-muted me-2"></i> Avisos Recientes</h5>
+        <router-link :to="{ name: 'account-notifications' }" class="btn btn-sm btn-link text-decoration-none text-success fw-bold">
+          Ver todos
+        </router-link>
+      </div>
 
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">
-              {{ formData.tipo_persona === 'Natural' ? 'Nombres y Apellidos' : 'Razón Social / Empresa' }}
-            </label>
-            <input 
-              v-if="formData.tipo_persona === 'Natural'" 
-              type="text" class="form-control kofan-input" v-model="formData.nombres_apellidos"
-              placeholder="Ej: Nelson Contreras"
-            />
-            <input 
-              v-else 
-              type="text" class="form-control kofan-input" v-model="formData.nombre_empresa"
-              placeholder="Nombre de la empresa"
-            />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">Tipo de Documento</label>
-            <select v-if="formData.tipo_persona === 'Natural'" class="form-select kofan-input" v-model="formData.tipo_documento">
-              <option value="CC">Cédula de Ciudadanía</option>
-              <option value="CE">Cédula de Extranjería</option>
-              <option value="PASAPORTE">Pasaporte</option>
-            </select>
-            <input v-else type="text" class="form-control kofan-input" value="NIT" disabled />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">
-              {{ formData.tipo_persona === 'Natural' ? 'Número de Documento' : 'NIT' }}
-            </label>
-            <input type="text" class="form-control kofan-input" v-model="formData.numero_documento" placeholder="Número de identificación"/>
-          </div>
+      <div class="d-flex flex-column gap-3">
+        <div v-if="avisosRecientes.length === 0" class="text-center py-4 bg-white rounded-4 shadow-sm border">
+          <i class="bi bi-bell-slash text-muted fs-1 mb-2 d-block"></i>
+          <p class="text-muted small mb-0">No tienes alertas nuevas.</p>
         </div>
 
-        <div class="col-md-6">
-          <div class="mb-3" v-if="formData.tipo_persona === 'Natural'">
-            <label class="form-label fw-bold text-secondary small">Fecha de Nacimiento</label>
-            <input type="date" class="form-control kofan-input" v-model="formData.fecha_nacimiento" />
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">Correo Electrónico</label>
-            <input type="email" class="form-control kofan-input" v-model="formData.correo" readonly />
-            <small class="text-muted" style="font-size: 0.7rem;">El correo no se puede cambiar por seguridad.</small>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">Teléfono de Contacto</label>
-            <input type="text" class="form-control kofan-input" v-model="formData.telefono" placeholder="Ej: +57 310..."/>
-          </div>
-
-          <div class="mb-3">
-            <label class="form-label fw-bold text-secondary small">Dirección de Residencia</label>
-            <input type="text" class="form-control kofan-input" v-model="formData.direccion" placeholder="Calle, Carrera, Ciudad..."/>
-          </div>
-
-          <div class="mt-4 d-flex justify-content-end">
-            <button type="submit" class="btn btn-kofan-primary px-5 shadow-sm">
-              <font-awesome-icon icon="save" class="me-2" /> Guardar Cambios
-            </button>
+        <div v-for="aviso in avisosRecientes" :key="aviso.id" class="card border-0 shadow-sm rounded-4 aviso-card" :class="`border-start border-4 border-${aviso.colorTheme}`">
+          <div class="card-body p-3 d-flex align-items-center gap-3">
+            <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" :class="`bg-${aviso.colorTheme} bg-opacity-10 text-${aviso.colorTheme}`" style="width: 45px; height: 45px;">
+              <i :class="aviso.icono" class="fs-5"></i>
+            </div>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0 text-dark">{{ aviso.titulo }}</h6>
+                <small class="text-muted">{{ aviso.fecha }}</small>
+              </div>
+              <p class="mb-0 text-secondary small">{{ aviso.mensaje }}</p>
+            </div>
           </div>
         </div>
       </div>
-    </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.verde-kofan { color: #0f3b2a; }
+.verde-kofan { color: #0f3b2a !important; }
 
-.badge-tipo {
-  background-color: #f0fdf4;
-  color: #157347;
-  padding: 8px 16px;
-  border-radius: 30px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  border: 1px solid #2ecc71;
+/* 🟢 Estilo exacto para el fondo verde suave */
+.tarjeta-kofan-suave {
+  background-color: #eafaf1; /* Verde menta muy suave */
+  border: 1px solid #d4ebd9 !important; /* Borde un poco más oscuro para darle profundidad */
 }
 
-.kofan-input {
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  padding: 10px 15px;
-  background-color: #fcfcfc;
-  transition: all 0.3s ease;
-}
-
-.kofan-input:focus {
-  border-color: #0f3b2a;
-  box-shadow: 0 0 0 0.25rem rgba(15, 59, 42, 0.1);
-  background-color: #fff;
-}
-
-.kofan-input[readonly] {
-  background-color: #f4f4f4;
-  cursor: not-allowed;
-}
-
-.btn-kofan-primary {
-  background-color: #0f3b2a;
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px;
-  font-weight: 600;
-  transition: all 0.3s;
-}
-
-.btn-kofan-primary:hover {
-  background-color: #1a5c43;
-  transform: translateY(-2px);
-}
+.aviso-card { transition: transform 0.2s ease; background-color: white; }
+.aviso-card:hover { transform: translateX(4px); }
 </style>

@@ -1,25 +1,37 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import apiClient from "@/api/apiClient";
 
-// Datos simulados para las estadísticas
+// Variables reactivas vacías por defecto
 const stats = ref({
-  ingresosMes: 4500000,
-  reservasActivas: 12,
-  huespedesHoy: 8,
-  ocupacionPorcentaje: 75
+  ingresosMes: 0,
+  reservasActivas: 0,
+  huespedesHoy: 0,
+  ocupacionPorcentaje: 0
 });
 
-const habitacionesPopulares = ref([
-  { nombre: 'Suite del Tucán', reservas: 45, ingresos: 1200000, color: 'success' },
-  { nombre: 'Cabaña del Río', reservas: 32, ingresos: 850000, color: 'primary' },
-  { nombre: 'Zona Camping', reservas: 15, ingresos: 300000, color: 'warning' },
-]);
+const habitacionesPopulares = ref([]);
+const ultimosMovimientos = ref([]);
 
-const ultimosMovimientos = ref([
-  { id: 1, usuario: 'Carlos Ruiz', accion: 'Nueva Reserva', fecha: 'Hace 10 min', monto: '+ $250.000' },
-  { id: 2, usuario: 'Marta Kofán', accion: 'Check-out', fecha: 'Hace 1 hora', monto: 'Finalizado' },
-  { id: 3, usuario: 'Elena Gómez', accion: 'Cancelación', fecha: 'Hace 3 horas', monto: '- $150.000' },
-]);
+// Función para traer los datos reales
+const cargarDashboard = async () => {
+  try {
+    const response = await apiClient.get('/dashboard'); // La ruta que creamos en FastAPI
+    
+    // Asignamos la respuesta del backend a nuestras variables de Vue
+    stats.value = response.data.stats;
+    habitacionesPopulares.value = response.data.habitacionesPopulares;
+    ultimosMovimientos.value = response.data.ultimosMovimientos;
+    
+  } catch (error) {
+    console.error("Error trayendo los datos del dashboard:", error);
+  }
+};
+
+// Se ejecuta apenas entras al panel
+onMounted(() => {
+  cargarDashboard();
+});
 </script>
 
 <template>

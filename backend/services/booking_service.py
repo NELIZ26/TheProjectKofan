@@ -3,7 +3,8 @@ from bson import ObjectId
 from bson.errors import InvalidId
 from backend.schemas.booking_schema import ReservaCreate
 from datetime import datetime, timezone
-from fastapi import HTTPException, status # Asegúrate de tener estas importaciones
+from fastapi import HTTPException, status 
+from backend.services.notifications_service import crear_notificacion_panel
 
 
 async def create_booking_service(reserva, user_id: str = None):
@@ -57,10 +58,16 @@ async def create_booking_service(reserva, user_id: str = None):
     
     return str(result.inserted_id)
 
+# 🟢 Asegúrate de tener este import en la parte superior de tu archivo:
+# from backend.services.notifications_service import crear_notificacion_panel
+
 async def update_booking_status_service(reserva_id: str, nuevo_estado: str, motivo: str = None, admin_email: str = None):
+    # 🟢 Escudo 1: Aseguramos que el estado sea texto (por si viene de Pydantic Enum)
+    estado_str = str(nuevo_estado)
+
     # Preparamos los datos básicos a actualizar
     update_data = {
-        "estado": nuevo_estado,
+        "estado": estado_str,
         "updated_at": datetime.now(timezone.utc)
     }
     
@@ -78,11 +85,83 @@ async def update_booking_status_service(reserva_id: str, nuevo_estado: str, moti
         {"$set": update_data}
     )
     
-    return result.modified_count > 0
+    # 🟢 LÓGICA DE NOTIFICACIONES: El "Cartero"
+    if result.matched_count > 0:
+        # Buscamos la reserva para saber a qué cliente le pertenece
+        reserva_actualizada = await db.bookings.find_one({"_id": ObjectId(reserva_id)})
+        
+        if reserva_actualizada:
+            cliente_id = reserva_actualizada.get("cliente_id")
+            
+            # Solo notificamos si la reserva está vinculada a un usuario registrado (con cuenta)
+            if cliente_id:
+                # 1. 🟢 VAMOS A BUSCAR EL NOMBRE DE LA HABITACIÓN
+                habitacion_id = reserva_actualizada.get("habitacion_id")
+                nombre_hab = "nuestras instalaciones" # Plan B seguro
+                
+                if habitacion_id:
+                    try:
+                        # Buscamos la cabaña (el str() asegura que no choque si ya era un ObjectId)
+                        habitacion = await db.rooms.find_one({"_id": ObjectId(str(habitacion_id))})
+                        
+                        # Usamos TU lógica perfecta de get_user_bookings_service
+                        if habitacion:
+                            nombre_oficial = habitacion.get("name")
+                            if nombre_oficial:
+                                nombre_hab = nombre_oficial
+                            else:
+                                numero = habitacion.get("room_number", "S/N")
+                                tipo = habitacion.get("type", "Cabaña").capitalize()
+                                nombre_hab = f"Hab. {numero} - {tipo}"
+                    except Exception as e:
+                        print(f"Error silencioso al buscar habitación: {e}")
+
+                # 2. 🟢 ARMAMOS LOS MENSAJES
+                titulo = "Actualización de Reserva"
+                mensaje = f"Tu reserva para '{nombre_hab}' ha cambiado de estado a: {estado_str}."
+                tipo = "primary"
+                icono = "bi-info-circle-fill"
+                
+                # Personalizamos el mensaje según el estado exacto
+                estado_lower = estado_str.lower()
+                
+                if estado_lower == "confirmada":
+                    titulo = "¡Reserva Confirmada!"
+                    mensaje = f"Tu estancia en '{nombre_hab}' ha sido aprobada. ¡Te esperamos con los brazos abiertos!"
+                    tipo = "success"
+                    icono = "bi-check-circle-fill"
+                    
+                elif estado_lower == "ocupada":
+                    titulo = "¡Check-in Realizado!"
+                    mensaje = f"Tu registro en '{nombre_hab}' fue exitoso. Esperamos que disfrutes al máximo tu descanso en la selva."
+                    tipo = "info"
+                    icono = "bi-house-door-fill"
+                    
+                elif estado_lower == "finalizada":
+                    titulo = "¡Check-out Exitoso!"
+                    mensaje = f"Tu cuenta de '{nombre_hab}' ha sido cerrada. Gracias por visitarnos, ¡esperamos verte pronto de regreso!"
+                    tipo = "secondary"
+                    icono = "bi-check2-all"
+                    
+                elif estado_lower == "cancelada":
+                    titulo = "Reserva Cancelada"
+                    mensaje = f"Tu reserva para '{nombre_hab}' ha sido cancelada. Si crees que esto es un error, por favor contáctanos."
+                    tipo = "danger"
+                    icono = "bi-x-circle-fill"
+                    
+                # Disparamos la creación de la notificación en la base de datos
+                await crear_notificacion_panel(
+                    user_id=str(cliente_id),
+                    titulo=titulo,
+                    mensaje=mensaje,
+                    tipo=tipo,
+                    icono=icono
+                )
+                
+    return result.matched_count > 0
 
 
-from bson import ObjectId
-# Asegúrate de mantener tus otras importaciones arriba (db, datetime, etc.)
+
 
 async def get_user_bookings_service(user_id: str) -> list:
     """
@@ -104,17 +183,33 @@ async def get_user_bookings_service(user_id: str) -> list:
 
     async for reserva in cursor:
         habitacion = reserva.get("habitacion_info")
-        info_habitacion = f"Hab. {habitacion.get('numero_unidad', 'S/N')} - {habitacion.get('tipo', '')}" if habitacion else "Habitación no encontrada"
         
+        # 🟢 LÓGICA MEJORADA PARA EL NOMBRE DE LA HABITACIÓN
+        if habitacion:
+            # 1. Buscamos el nombre (Ej: "Suite Presidencial")
+            nombre_oficial = habitacion.get("name")
+            
+            # 2. Si tiene nombre, lo usamos. Si no, armamos el texto con el número y tipo
+            if nombre_oficial:
+                info_habitacion = nombre_oficial
+            else:
+                numero = habitacion.get("room_number", "S/N")
+                tipo = habitacion.get("type", "Cabaña").capitalize() # Pone la primera letra en mayúscula
+                info_habitacion = f"Hab. {numero} - {tipo}"
+        else:
+            info_habitacion = "Habitación no encontrada"
+            
         fecha_ent = reserva.get("fecha_entrada")
         fecha_sal = reserva.get("fecha_salida")
+        fecha_crea = reserva.get("created_at", reserva.get("fecha_creacion")) # Buscamos la fecha de creación
 
         mis_reservas.append({
             "id": str(reserva["_id"]),
-            "habitacion": info_habitacion,
+            "habitacion_nombre": info_habitacion, # 🟢 Pasa el nombre correcto a Vue
             "habitacion_id": str(reserva.get("habitacion_id", "")),
             "fecha_entrada": fecha_ent.strftime("%Y-%m-%d") if hasattr(fecha_ent, 'strftime') else str(fecha_ent)[:10],
             "fecha_salida": fecha_sal.strftime("%Y-%m-%d") if hasattr(fecha_sal, 'strftime') else str(fecha_sal)[:10],
+            "fecha_creacion": fecha_crea.strftime("%Y-%m-%d") if hasattr(fecha_crea, 'strftime') else str(fecha_crea)[:10],
             "monto_total": reserva.get("monto_total", 0),
             "estado": reserva.get("estado", "pendiente"),
             "observaciones": reserva.get("observaciones", "")

@@ -13,62 +13,48 @@ const handleLogout = () => {
 
 <template>
   <aside class="sidebar-kofan shadow-sm">
-    <div class="user-info text-center p-3 mb-3">
-      <div class="avatar-placeholder mx-auto mb-2">
-        <img src="@/img/login.png" alt="">
-        <!--<font-awesome-icon :icon="['fas', 'users']" class="me-2 text-success" />-->
-        {{ auth.user?.full_name?.charAt(0) }}
-      </div>
-      <h6 class="mb-0 fw-bold">{{ auth.user?.full_name }}</h6>
-      <small class="text-muted">Cliente Kofán</small>
+    <div class="text-center mb-4 mt-2">
+      <h6 class="fw-bold text-muted text-uppercase tracking-wider">Menú Kofán</h6>
+      <hr class="opacity-10 mx-3">
     </div>
 
     <nav class="nav flex-column gap-2">
       <router-link :to="{ name: 'account-profile' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'user-gear']" class="me-2 text-success" /> Datos Personales
+        <i class="bi bi-person-vcard-fill me-3 fs-5 icon-kofan"></i> Mi Panel
       </router-link>
       
       <router-link :to="{ name: 'account-bookings' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'calendar-check']" class="me-2 text-success" /> Mis Reservas
+        <i class="bi bi-calendar-check-fill me-3 fs-5 icon-kofan"></i> Mis Reservas
       </router-link>
       
       <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'bell']" class="me-2 text-success" /> Avisos
+        <i class="bi bi-bell-fill me-3 fs-5 icon-kofan"></i> Todos los Avisos
       </router-link>
 
-      <hr class="my-2 opacity-10">
+      <hr class="my-3 opacity-10">
+
+      <router-link :to="{ name: 'account-settings' }" class="nav-link-kofan">
+        <i class="bi bi-gear-fill me-3 fs-5 icon-kofan"></i> Configuración
+      </router-link>
 
       <a href="#" @click.prevent="handleLogout" class="nav-link-kofan logout-link">
-        <font-awesome-icon :icon="['fas', 'right-from-bracket']" class="me-2 text-danger" /> Salir
+        <i class="bi bi-box-arrow-left me-3 fs-5 text-danger"></i> Salir
       </a>
     </nav>
   </aside>
 </template>
 
 <style scoped>
-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 .sidebar-kofan {
   background-color: #ffffff;
   border-radius: 20px;
   padding: 20px;
   border: 1px solid #eee;
+  min-height: 50vh; /* Para que no se vea tan cortita */
 }
 
-.avatar-placeholder {
-  width: 60px;
-  height: 60px;
-  background-color: #0f3b2a;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
+.tracking-wider {
+  letter-spacing: 1px;
 }
 
 .nav-link-kofan {
@@ -76,10 +62,10 @@ img {
   align-items: center;
   padding: 12px 15px;
   text-decoration: none;
-  color: #444;
+  color: #555;
   border-radius: 12px;
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .nav-link-kofan:hover {
@@ -88,13 +74,11 @@ img {
 }
 
 /* Estilo para la ruta activa */
+/* Reemplaza el .router-link-active viejo por este */
 .router-link-active {
-  background-color: #0f3b2a !important;
-  color: white !important;
-}
-
-.router-link-active .text-success {
-  color: #2ecc71 !important;
+  background-color: #eafaf1 !important; /* Verde muy clarito */
+  color: #0f3b2a !important; /* Texto verde Kofán */
+  font-weight: 700;
 }
 
 .logout-link:hover {

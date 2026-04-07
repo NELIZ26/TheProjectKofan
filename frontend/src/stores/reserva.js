@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref, reactive } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
+import { useAuthStore } from "@/stores/auth";
 
 export const useReservaStore = defineStore("reserva", () => {
   const isModalOpen = ref(false);
@@ -131,8 +132,24 @@ export const useReservaStore = defineStore("reserva", () => {
         cliente_celular: form.telefono.toString()
       };
 
-      await apiClient.post("/api/reservas/invitado", payload);
+      // 1. Instanciamos el AuthStore para saber si hay alguien logueado
+      const auth = useAuthStore();
+      
+      // 2. VERIFICACIÓN A PRUEBA DE BALAS: 
+      // Revisamos Pinia O el disco duro del navegador buscando el token
+      const tokenGuardado = localStorage.getItem("token"); // Ojo: Si tu token se guarda con otro nombre como 'token_kofan', pon ese.
+      const usuarioConfirmado = auth.isLogged || tokenGuardado !== null;
+      
+      // 3. Elegimos la ruta inteligentemente
+      const endpoint = usuarioConfirmado ? "/api/reservas/" : "/api/reservas/invitado";
+      
+      console.log("¿Usuario Confirmado?:", usuarioConfirmado);
+      console.log("Enviando a la ruta:", endpoint);
 
+      // 4. HACEMOS LA PETICIÓN
+      await apiClient.post(endpoint, payload);
+
+      // 4. Mostramos el mensaje de éxito una sola vez
       await Swal.fire({
         icon: "success",
         title: "¡Reserva Solicitada!",

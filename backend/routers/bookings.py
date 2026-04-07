@@ -62,19 +62,29 @@ async def cambiar_estado_reserva(
     }
 
 
-@router.get("/me")
+@router.get("/mis-reservas")
 async def listar_mis_reservas(user = Depends(get_current_user)):
-    # 1. Extraemos el ID del usuario del token
-    user_id = str(user["_id"])
-    
-    # 2. Llamamos al servicio para buscar sus reservas
-    reservas = await get_user_bookings_service(user_id)
-    
-    return {
-        "usuario": user["email"],
-        "total_reservas": len(reservas),
-        "reservas": reservas
-    }
+    try:
+        # 1. Extraemos el ID del usuario de forma segura
+        user_id = str(user["_id"])
+        
+        # 2. Vamos a la base de datos a buscar sus reservas
+        reservas = await get_user_bookings_service(user_id)
+        
+        # 3. Validamos que SIEMPRE devuelva una lista (incluso si está vacía)
+        # Esto evita que el frontend se rompa al hacer .map()
+        if not reservas:
+            return []
+            
+        return reservas
+
+    except Exception as e:
+        # 4. Si algo explota en la BD, se lo decimos educadamente al frontend
+        print(f"Error interno al buscar reservas: {e}") # Para que tú lo veas en la consola
+        raise HTTPException(
+            status_code=500, 
+            detail="Tuvimos un problema interno al cargar tus reservas. Intenta de nuevo."
+        )
 
 
 

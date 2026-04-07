@@ -187,6 +187,10 @@ const eliminarImagenExistente = async (index, imageUrl) => {
 };
 
 const manejarErrorImagen = (e) => {
+  // 1. Anulamos el evento de error para romper el bucle infinito
+  e.target.onerror = null; 
+  
+  // 2. Intentamos cargar la imagen de reemplazo
   e.target.src = 'https://via.placeholder.com/60x50?text=Sin+Foto';
 };
 

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 # Importaciones de tu aplicación
-from backend.routers import admin, auth, earnings, register, users, bookings, rooms, config, gallery, invoices
+from backend.routers import admin, auth, earnings, register, users, bookings, rooms, config, gallery, invoices, dashboard, notifications
 from backend.services.task_service import cancelar_reservas_vencidas
 from backend.core.config import UPLOAD_DIR
 from backend.db.client import db
@@ -85,3 +85,5 @@ app.include_router(admin.router)
 app.include_router(config.router)
 app.include_router(gallery.router)
 app.include_router(invoices.router)
+app.include_router(dashboard.router)
+app.include_router(notifications.router)

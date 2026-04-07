@@ -76,6 +76,13 @@ const routes = [
         name: "account-profile",
         component: () => import("@/views/app/ProfileView.vue"),
       },
+      // 🟢 NUEVA RUTA: CONFIGURACIÓN 🟢
+      {
+        path: "settings",
+        name: "account-settings",
+        component: () => import("@/views/app/SettingsView.vue"),
+      },
+      // -------------------------------
       {
         path: "bookings",
         name: "account-bookings",
@@ -166,7 +173,7 @@ router.beforeEach((to, from, next) => {
 
   // 2. Ruta de admin y no es admin → al home
   if (to.meta.isAdmin && !auth.isAdmin) {
-    return next({ name: "home" });
+    return next({ name: "hospedaje-home" }); // 🟢 Cambié "home" a "hospedaje-home" porque "home" no existía en tus rutas
   }
 
   // 3. Ya logueado intenta entrar al login/register → redirigir según rol

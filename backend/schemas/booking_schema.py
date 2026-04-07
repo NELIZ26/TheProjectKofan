@@ -45,8 +45,7 @@ class ReservaBase(BaseModel):
     motivo_actualizacion: Optional[str] = None
 
 # 3. PARA USUARIOS LOGUEADOS (Sacamos datos del Token)
-class ReservaCreate(ReservaBase):
-    pass 
+
 
 # 4. PARA INVITADOS (El formulario de tu Vue.js público)
 class ReservaPublicCreate(ReservaBase):
@@ -57,6 +56,9 @@ class ReservaPublicCreate(ReservaBase):
     tipo_documento: str = "Pendiente"
     cliente_documento: str = "0"
     cliente_celular: str = "" 
+
+class ReservaCreate(ReservaPublicCreate):
+    pass 
 
 # 5. ESQUEMA DE RESPUESTA (Lo que se envía al frontend)
 class ReservaResponse(ReservaBase):

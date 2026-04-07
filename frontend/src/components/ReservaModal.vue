@@ -1,23 +1,35 @@
 <script setup>
 import { useReservaStore } from "@/stores/reserva";
+import { useAuthStore } from "@/stores/auth"; // 🟢 1. Importamos el AuthStore
 import { DatePicker as VDatePicker } from 'v-calendar'; 
 import 'v-calendar/dist/style.css'; 
-import { ref, onMounted, onUnmounted } from 'vue'; // 🟢 Agregamos esto
+import { ref, onMounted, onUnmounted, watch } from 'vue'; // 🟢 2. Agregamos 'watch'
 
 const store = useReservaStore();
+const auth = useAuthStore(); // 🟢 3. Inicializamos el AuthStore
 
-// 🟢 Lógica para saber si mostrar 1 o 2 calendarios según la pantalla
+// --- Lógica del Calendario ---
 const columnasCalendario = ref(window.innerWidth >= 768 ? 2 : 1);
 
 const actualizarColumnas = () => {
   columnasCalendario.value = window.innerWidth >= 768 ? 2 : 1;
 };
 
-// Escuchamos si el cliente voltea el celular o cambia el tamaño de la ventana
 onMounted(() => window.addEventListener('resize', actualizarColumnas));
 onUnmounted(() => window.removeEventListener('resize', actualizarColumnas));
 
+// 🟢 4. LA MAGIA: Autocompletado inteligente cada vez que se abre el modal
+watch(() => store.isModalOpen, (isOpen) => {
+  if (isOpen && auth.isLogged && auth.user) {
+    store.form.nombreCompleto = auth.user.full_name || "";
+    store.form.correo = auth.user.email || "";
+    store.form.telefono = auth.user.phone || "";
+  }
+});
+
 const handleConfirmarReserva = async () => {
+  // Aquí, cuando envías al backend, el correo ya va lleno.
+  // Además, como el usuario está logueado, FastAPI atrapará su token automáticamente.
   await store.handleSubmit(); 
 };
 </script>
@@ -74,7 +86,8 @@ const handleConfirmarReserva = async () => {
 
             <div class="col-md-6">
               <label class="form-label-kofan">Correo Electrónico</label>
-              <input type="email" class="input-kofan" v-model="store.form.correo" placeholder="ejemplo@correo.com" :class="{ 'is-invalid': store.errors.correo }" />
+              <input type="email" class="input-kofan" v-model="store.form.correo" placeholder="ejemplo@correo.com" :class="{ 'is-invalid': store.errors.correo }" :disabled="auth.isLogged" />
+              <small v-if="auth.isLogged" class="text-muted" style="font-size: 0.75rem;">Asociado a tu cuenta Kofán.</small>
             </div>
 
           </div> 
@@ -87,7 +100,10 @@ const handleConfirmarReserva = async () => {
           </div>
         </form>
         
-      </div> </div> </div> </template>
+      </div> 
+    </div> 
+  </div>
+</template>
 
 <style scoped>
 /* 🟢 TUS ESTILOS ORIGINALES INTACTOS */
