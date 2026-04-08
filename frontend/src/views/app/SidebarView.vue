@@ -1,14 +1,44 @@
 <script setup>
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import apiClient from "@/api/apiClient";
 
 const router = useRouter();
+const route = useRoute();
 const auth = useAuthStore();
+
+const avisosSinLeer = ref(0);
+
+const revisarNotificaciones = async () => {
+  if (!auth.user) return;
+  try {
+    const response = await apiClient.get('/api/notificaciones/mis-avisos');
+    avisosSinLeer.value = response.data.filter(aviso => aviso.leida === false).length;
+  } catch (error) {
+    console.error("Error al revisar notificaciones:", error);
+  }
+};
 
 const handleLogout = () => {
   auth.logout();
   router.push("/");
 };
+
+onMounted(() => {
+  revisarNotificaciones();
+  // 🟢 LA OREJA: Escuchamos si el usuario hace clic en "Marcar como leídos" en la otra pantalla
+  window.addEventListener('notificaciones-leidas', revisarNotificaciones);
+});
+
+// Es buena práctica "quitar la oreja" cuando el componente se destruye
+onUnmounted(() => {
+  window.removeEventListener('notificaciones-leidas', revisarNotificaciones);
+});
+
+watch(route, () => {
+  revisarNotificaciones();
+});
 </script>
 
 <template>
@@ -27,11 +57,21 @@ const handleLogout = () => {
         <i class="bi bi-calendar-check-fill me-3 fs-5 icon-kofan"></i> Mis Reservas
       </router-link>
       
-      <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan">
-        <i class="bi bi-bell-fill me-3 fs-5 icon-kofan"></i> Todos los Avisos
+      <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan d-flex justify-content-between align-items-center">
+        <div>
+          <i class="bi bi-bell-fill me-3 fs-5 icon-kofan transition-all" :class="avisosSinLeer > 0 ? 'text-warning' : ''"></i> 
+          Todos los Avisos
+        </div>
+        <span v-if="avisosSinLeer > 0" class="badge bg-warning text-dark rounded-pill shadow-sm">
+          {{ avisosSinLeer }}
+        </span>
       </router-link>
 
       <hr class="my-3 opacity-10">
+
+      <router-link to="/" class="nav-link-kofan">
+        <i class="bi bi-house-door-fill me-3 fs-5 icon-kofan text-success"></i> Continuar Navegando
+      </router-link>
 
       <router-link :to="{ name: 'account-settings' }" class="nav-link-kofan">
         <i class="bi bi-gear-fill me-3 fs-5 icon-kofan"></i> Configuración
@@ -84,5 +124,9 @@ const handleLogout = () => {
 .logout-link:hover {
   background-color: #fff1f1;
   color: #dc3545;
+}
+
+.transition-all {
+  transition: all 0.3s ease;
 }
 </style>

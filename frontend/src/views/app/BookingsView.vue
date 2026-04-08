@@ -11,7 +11,7 @@ const resStore = useReservaStore();
 // --- 1. ESTADO REACTIVO ---
 const checkInDate = ref("");
 const checkOutDate = ref("");
-const filtroEstado = ref("todas"); // 🟢 Ahora usamos minúsculas
+const filtroEstado = ref("todas");
 const isLoading = ref(true);
 
 const reservas = ref([]);
@@ -133,9 +133,9 @@ const getBadgeIcon = (estado) => {
           Titular: <span class="fw-bold text-dark">{{ auth.user?.full_name || "Huésped" }}</span>
         </p>
       </div>
-      <button @click="resStore.openModal" class="btn btn-dark rounded-pill px-4 shadow-sm fw-medium">
-        <i class="bi bi-calendar-plus-fill me-2"></i> Nueva Reserva
-      </button>
+      <router-link to="/hospedaje/rooms" class="btn btn-dark rounded-pill px-4 shadow-sm fw-medium text-decoration-none">
+        <i class="bi bi-houses-fill me-2"></i> Explorar Cabañas
+      </router-link>
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-white d-inline-block w-100">

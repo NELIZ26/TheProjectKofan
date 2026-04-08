@@ -25,8 +25,11 @@ const marcarTodosLeidos = async () => {
   try {
     await apiClient.patch('/api/notificaciones/read-all');
     
-    // Opcional: Cambiamos visualmente el estado a leídas
+    // Cambiamos visualmente el estado a leídas
     avisos.value.forEach(a => a.leida = true);
+
+    // 🟢 EL MEGÁFONO: Le avisamos al menú lateral que actualice la campanita YA
+    window.dispatchEvent(new Event('notificaciones-leidas'));
 
     Swal.mixin({
       toast: true,
