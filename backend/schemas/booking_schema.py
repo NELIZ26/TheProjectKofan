@@ -38,6 +38,7 @@ class ReservaBase(BaseModel):
     
     observaciones: Optional[str] = None
     estado: EstadoReserva = EstadoReserva.PENDIENTE
+    comprobante_url: Optional[str] = None
     
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

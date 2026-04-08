@@ -284,7 +284,8 @@ async def get_all_bookings_service(estados_filtro: str = None, page: int = 1, li
             "monto": reserva.get("monto_total", 0),
             "estado": estado,
             "fecha_entrada": str(reserva.get("fecha_entrada", "N/A"))[:10],
-            "fecha_salida": str(reserva.get("fecha_salida", "N/A"))[:10]
+            "fecha_salida": str(reserva.get("fecha_salida", "N/A"))[:10],
+            "comprobante_url": reserva.get("comprobante_url", None)
         })
 
     # Estadísticas globales de ocupación

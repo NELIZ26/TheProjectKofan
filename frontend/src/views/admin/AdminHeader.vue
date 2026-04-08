@@ -19,7 +19,7 @@ const handleLogout = () => {
   }).then((result) => {
     if (result.isConfirmed) {
       auth.logout();
-      router.push("/home");
+      router.push({ name: "hospedaje-home" });
     }
   });
 };

@@ -137,7 +137,7 @@ const routes = [
         component: () => import("@/views/admin/GalleryManager.vue"),
       },
       {
-      path: 'configuracion', // La URL que verás en el navegador
+      path: 'configuracion',
       name: 'admin-config',
       component: ConfiguracionAdmin,
       // Aquí podrías tener tus validaciones de rol, por ejemplo:

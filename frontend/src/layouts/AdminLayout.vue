@@ -37,7 +37,7 @@ const loadProfile = async () => {
 
 const handleLogout = () => {
   auth.logout();
-  router.push("/auth/login");
+  router.push({ name: "hospedaje-home" }); 
 };
 
 onMounted(() => {

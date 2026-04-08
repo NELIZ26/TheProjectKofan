@@ -257,17 +257,16 @@ const cerrar = () => {
           </div>
 
           <div class="p-3 d-flex justify-content-center calendar-container">
-            <VDatePicker 
-              v-model="range" 
-              is-range
-              :attributes="attributes"
-              :min-date="new Date()"
-              color="green"
-              is-expanded
-              :columns="2"
-              @dayclick="onDayClick"
-              class="border-0 shadow-sm rounded-3"
-            />
+            <VDatePicker
+                v-model.range="store.selectedDateRange" 
+                is-range
+                :min-date="store.minDate"
+                :disabled-dates="store.disabledDates"
+                color="green"
+                title-position="left"
+                :columns="columnasCalendario"
+                :trim-weeks="true" 
+              />
           </div>
 
           <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
@@ -386,6 +385,15 @@ const cerrar = () => {
 
 .calendar-container :deep(.vc-pane-container) {
   background-color: white;
+}
+:deep(.vc-day.is-not-in-month) {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Opcional: Asegura que el contenedor no genere barras de scroll raras */
+:deep(.vc-pane-container) {
+  overflow: hidden;
 }
 </style>
 

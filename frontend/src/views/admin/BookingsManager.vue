@@ -278,51 +278,72 @@ const abrirModalFactura = async (reserva) => {
   }
 };
 
+const totalHuespedesEnCasa = ref(0);
+const cargarHuespedesDelDashboard = async () => {
+  try {
+    const response = await apiClient.get('/dashboard');
+    totalHuespedesEnCasa.value = response.data.stats.huespedesHoy; 
+  } catch (error) {
+    console.error("No se pudo traer el dato de huéspedes:", error);
+  }
+};
+onMounted(() => {
+  cargarReservas();
+  cargarHuespedesDelDashboard();
+});
+
 </script>
 
 <template>
   <div class="bookings-manager container-fluid py-4">
     
     <div class="row g-3 mb-4">
+      
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 border-start border-4 border-success rounded-4">
-          <div class="d-flex align-items-center">
-            <div class="icon-box bg-success-subtle p-3 rounded-3 me-3 text-success">
-              <i class="bi bi-calendar-check fs-4"></i>
-            </div>
+        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
+          <div class="d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="text-muted mb-0">Confirmadas</h6>
-              <h4 class="fw-bold mb-0">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.CONFIRMADA).length }}</h4>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Confirmadas</h6>
+              <h3 class="fw-bold mb-1 text-dark">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.CONFIRMADA).length }}</h3>
+              <p class="text-muted small mb-0">Listas para ingreso</p>
+            </div>
+            <div class="icon-box p-3 rounded-3 bg-success-subtle text-success">
+              <i class="bi bi-calendar-check fs-3"></i>
             </div>
           </div>
         </div>
       </div>
+
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 border-start border-4 border-warning rounded-4">
-          <div class="d-flex align-items-center">
-            <div class="icon-box bg-warning-subtle p-3 rounded-3 me-3 text-warning">
-              <i class="bi bi-clock fs-4"></i>
-            </div>
+        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
+          <div class="d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="text-muted mb-0">Pendientes</h6>
-              <h4 class="fw-bold mb-0">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.PENDIENTE).length }}</h4>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Pendientes</h6>
+              <h3 class="fw-bold mb-1 text-dark">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.PENDIENTE).length }}</h3>
+              <p class="text-muted small mb-0">Por verificar pago</p>
+            </div>
+            <div class="icon-box p-3 rounded-3 bg-warning-subtle text-warning">
+              <i class="bi bi-clock fs-3"></i>
             </div>
           </div>
         </div>
       </div>
+
       <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 border-start border-4 border-primary rounded-4">
-          <div class="d-flex align-items-center">
-            <div class="icon-box bg-primary-subtle p-3 rounded-3 me-3 text-primary">
-              <i class="bi bi-cash-stack fs-4"></i>
-            </div>
+        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
+          <div class="d-flex align-items-center justify-content-between">
             <div>
-              <h6 class="text-muted mb-0">Ingresos Proyectados</h6>
-              <h4 class="fw-bold mb-0">${{ reservas.reduce((acc, r) => acc + (r.monto_total || r.monto || 0), 0).toLocaleString() }}</h4>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Huéspedes Hoy</h6>
+              <h3 class="fw-bold mb-1 text-dark">{{ totalHuespedesEnCasa }}</h3>
+              <p class="text-muted small mb-0">En las instalaciones</p>
+            </div>
+            <div class="icon-box p-3 rounded-3 bg-info-subtle text-info">
+              <i class="bi bi-people-fill fs-3"></i>
             </div>
           </div>
         </div>
       </div>
+
     </div>
 
     <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
@@ -418,6 +439,14 @@ const abrirModalFactura = async (reserva) => {
                 
                 <div class="d-flex justify-content-center gap-2">
                   
+                  <a v-if="res.comprobante_url" 
+                     :href="`http://127.0.0.1:8000${res.comprobante_url}`" 
+                     target="_blank"
+                     class="btn btn-sm btn-outline-info rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
+                     style="width: 35px; height: 35px;" title="Ver Comprobante de Pago">
+                    <i class="bi bi-file-earmark-image fs-6"></i>
+                  </a>
+
                   <button v-if="res.estado === ESTADOS_RESERVA.PENDIENTE" 
                           @click="actualizarEstado(res.id || res._id, ESTADOS_RESERVA.CONFIRMADA)" 
                           class="btn btn-sm btn-outline-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
