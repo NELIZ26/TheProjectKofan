@@ -31,18 +31,22 @@ def delete_physical_file(file_url: str):
 async def get_all_photos(categoria: str = None):
     query = {}
     if categoria and categoria != "todos":
-        query["categoria"] = categoria # 🟢 Todo en español para consistencia
+        query["categoria"] = categoria 
 
     cursor = db.gallery.find(query).sort("created_at", -1)
     photos = []
 
     async for photo in cursor:
+        # 🟢 SALVAVIDAS: Si no tiene fecha, no explota, solo devuelve vacío
+        fecha_creacion = photo.get("created_at")
+        fecha_str = fecha_creacion.isoformat() if fecha_creacion else ""
+
         photos.append({
             "id": str(photo["_id"]),
             "url": photo["url"],
             "titulo": photo.get("titulo", ""),
             "categoria": photo.get("categoria", "general"),
-            "created_at": photo["created_at"].isoformat(),
+            "created_at": fecha_str,
         })
 
     return photos

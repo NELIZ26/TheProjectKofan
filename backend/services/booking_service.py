@@ -6,7 +6,6 @@ from datetime import datetime, timezone
 from fastapi import HTTPException, status 
 from backend.services.notifications_service import crear_notificacion_panel
 
-
 async def create_booking_service(reserva, user_id: str = None):
     # 1. VALIDAR ID Y BUSCAR HABITACIÓN
     try:
@@ -23,7 +22,6 @@ async def create_booking_service(reserva, user_id: str = None):
     nueva_salida = datetime.combine(reserva.fecha_salida, datetime.min.time()).replace(tzinfo=timezone.utc)
 
     # 3. EL MOTOR DE DISPONIBILIDAD: Buscar choques de fechas
-    # Buscamos si hay alguna reserva activa para esta misma habitación que se cruce en fechas
     reserva_existente = await db.bookings.find_one({
         "habitacion_id": habitacion_obj_id,
         "estado": {"$in": ["pendiente", "confirmada", "ocupada"]}, # Ignoramos las canceladas o finalizadas
@@ -39,10 +37,9 @@ async def create_booking_service(reserva, user_id: str = None):
             detail="Lo sentimos, la habitación ya está reservada durante esas fechas."
         )
 
-    # 4. PREPARAR DICCIONARIO PARA GUARDAR (Si pasó la prueba de fechas)
+    # 4. PREPARAR DICCIONARIO PARA GUARDAR
     reserva_dict = reserva.model_dump() if hasattr(reserva, 'model_dump') else reserva.dict()
     
-    # Sobrescribimos las fechas limpias y en UTC
     reserva_dict["fecha_entrada"] = nueva_entrada
     reserva_dict["fecha_salida"] = nueva_salida
     
@@ -58,109 +55,106 @@ async def create_booking_service(reserva, user_id: str = None):
     
     return str(result.inserted_id)
 
-# 🟢 Asegúrate de tener este import en la parte superior de tu archivo:
-# from backend.services.notifications_service import crear_notificacion_panel
 
-async def update_booking_status_service(reserva_id: str, nuevo_estado: str, motivo: str = None, admin_email: str = None):
-    # 🟢 Escudo 1: Aseguramos que el estado sea texto (por si viene de Pydantic Enum)
-    estado_str = str(nuevo_estado)
+# 🟢 ACTUALIZADO: Capta el estado anterior y notifica a Cliente y Admin con el nombre real de la habitación
+# 🟢 ACTUALIZADO: Capta el estado anterior y notifica a Cliente y Admin con el nombre real de la habitación
+async def update_booking_status_service(reserva_id: str, nuevo_estado: str, motivo: str = None, admin_email: str = None, admin_id: str = None):
+    estado_str = str(nuevo_estado).lower()
 
-    # Preparamos los datos básicos a actualizar
+    # 1. CAPTURAMOS EL ESTADO Y DATOS ANTES DEL CAMBIO
+    reserva_previa = await db.bookings.find_one({"_id": ObjectId(reserva_id)})
+    if not reserva_previa:
+        return False
+        
+    estado_anterior = reserva_previa.get("estado", "desconocido")
+    cliente_id = reserva_previa.get("cliente_id")
+    
+    # 2. PREPARAMOS LOS DATOS DE ACTUALIZACIÓN
     update_data = {
         "estado": estado_str,
         "updated_at": datetime.now(timezone.utc)
     }
     
-    # Si el admin escribió un motivo, lo agregamos al paquete
     if motivo:
         update_data["motivo_actualizacion"] = motivo
-        
-    # Guardamos quién hizo el cambio para tener un historial limpio
     if admin_email:
         update_data["actualizado_por"] = admin_email
         
-    # Ejecutamos la actualización en MongoDB
+    # 3. EJECUTAMOS LA ACTUALIZACIÓN EN MONGODB
     result = await db.bookings.update_one(
         {"_id": ObjectId(reserva_id)}, 
         {"$set": update_data}
     )
     
-    # 🟢 LÓGICA DE NOTIFICACIONES: El "Cartero"
+    # 4. LÓGICA DE NOTIFICACIONES
     if result.matched_count > 0:
-        # Buscamos la reserva para saber a qué cliente le pertenece
-        reserva_actualizada = await db.bookings.find_one({"_id": ObjectId(reserva_id)})
         
-        if reserva_actualizada:
-            cliente_id = reserva_actualizada.get("cliente_id")
+        # A) LÓGICA BLINDADA PARA BUSCAR EL NOMBRE DE LA HABITACIÓN
+        habitacion_id = reserva_previa.get("habitacion_id")
+        nombre_hab = "nuestras instalaciones"
+        
+        if habitacion_id:
+            try:
+                habitacion = await db.rooms.find_one({"_id": ObjectId(str(habitacion_id))})
+                if habitacion:
+                    nombre_oficial = habitacion.get("name")
+                    if nombre_oficial:
+                        nombre_hab = nombre_oficial
+                    else:
+                        numero = habitacion.get("room_number", "S/N")
+                        tipo = habitacion.get("type", "Cabaña").capitalize()
+                        nombre_hab = f"Hab. {numero} - {tipo}"
+            except Exception as e:
+                print(f"Error silencioso al buscar habitación: {e}")
+
+        # B) ARMAMOS LOS MENSAJES Y COLORES
+        config = {
+            "confirmada": ("¡Reserva Confirmada!", "success", "bi-check-circle-fill"),
+            "ocupada": ("¡Check-in Realizado!", "info", "bi-house-door-fill"),
+            "finalizada": ("¡Check-out Exitoso!", "secondary", "bi-check2-all"),
+            "cancelada": ("Reserva Cancelada", "danger", "bi-x-circle-fill")
+        }
+        
+        titulo, tipo, icono = config.get(estado_str, ("Actualización de Reserva", "primary", "bi-info-circle-fill"))
+
+        # C) NOTIFICAR AL CLIENTE (Si tiene cuenta)
+        if cliente_id:
+            mensaje_cliente = f"Tu reserva para '{nombre_hab}' ahora está: {estado_str.upper()}."
+            if estado_str == "confirmada":
+                mensaje_cliente = f"Tu estancia en '{nombre_hab}' ha sido aprobada. ¡Te esperamos!"
             
-            # Solo notificamos si la reserva está vinculada a un usuario registrado (con cuenta)
-            if cliente_id:
-                # 1. 🟢 VAMOS A BUSCAR EL NOMBRE DE LA HABITACIÓN
-                habitacion_id = reserva_actualizada.get("habitacion_id")
-                nombre_hab = "nuestras instalaciones" # Plan B seguro
-                
-                if habitacion_id:
-                    try:
-                        # Buscamos la cabaña (el str() asegura que no choque si ya era un ObjectId)
-                        habitacion = await db.rooms.find_one({"_id": ObjectId(str(habitacion_id))})
-                        
-                        # Usamos TU lógica perfecta de get_user_bookings_service
-                        if habitacion:
-                            nombre_oficial = habitacion.get("name")
-                            if nombre_oficial:
-                                nombre_hab = nombre_oficial
-                            else:
-                                numero = habitacion.get("room_number", "S/N")
-                                tipo = habitacion.get("type", "Cabaña").capitalize()
-                                nombre_hab = f"Hab. {numero} - {tipo}"
-                    except Exception as e:
-                        print(f"Error silencioso al buscar habitación: {e}")
+            await crear_notificacion_panel(
+                user_id=str(cliente_id),
+                titulo=titulo,
+                mensaje=mensaje_cliente,
+                tipo=tipo,
+                icono=icono
+            )
+            
+        # D) NOTIFICAR AL ADMIN (Para que salga en el historial del Dashboard)
+        if admin_id:
+            # Buscamos el nombre del cliente para el historial
+            nombre_cliente = reserva_previa.get("cliente_nombre")
+            if not nombre_cliente and cliente_id:
+                cliente_db = await db.clients.find_one({"_id": ObjectId(str(cliente_id))})
+                if cliente_db:
+                    nombre_cliente = cliente_db.get("full_name")
+            if not nombre_cliente:
+                nombre_cliente = "un cliente"
 
-                # 2. 🟢 ARMAMOS LOS MENSAJES
-                titulo = "Actualización de Reserva"
-                mensaje = f"Tu reserva para '{nombre_hab}' ha cambiado de estado a: {estado_str}."
-                tipo = "primary"
-                icono = "bi-info-circle-fill"
-                
-                # Personalizamos el mensaje según el estado exacto
-                estado_lower = estado_str.lower()
-                
-                if estado_lower == "confirmada":
-                    titulo = "¡Reserva Confirmada!"
-                    mensaje = f"Tu estancia en '{nombre_hab}' ha sido aprobada. ¡Te esperamos con los brazos abiertos!"
-                    tipo = "success"
-                    icono = "bi-check-circle-fill"
-                    
-                elif estado_lower == "ocupada":
-                    titulo = "¡Check-in Realizado!"
-                    mensaje = f"Tu registro en '{nombre_hab}' fue exitoso. Esperamos que disfrutes al máximo tu descanso en la selva."
-                    tipo = "info"
-                    icono = "bi-house-door-fill"
-                    
-                elif estado_lower == "finalizada":
-                    titulo = "¡Check-out Exitoso!"
-                    mensaje = f"Tu cuenta de '{nombre_hab}' ha sido cerrada. Gracias por visitarnos, ¡esperamos verte pronto de regreso!"
-                    tipo = "secondary"
-                    icono = "bi-check2-all"
-                    
-                elif estado_lower == "cancelada":
-                    titulo = "Reserva Cancelada"
-                    mensaje = f"Tu reserva para '{nombre_hab}' ha sido cancelada. Si crees que esto es un error, por favor contáctanos."
-                    tipo = "danger"
-                    icono = "bi-x-circle-fill"
-                    
-                # Disparamos la creación de la notificación en la base de datos
-                await crear_notificacion_panel(
-                    user_id=str(cliente_id),
-                    titulo=titulo,
-                    mensaje=mensaje,
-                    tipo=tipo,
-                    icono=icono
-                )
-                
+            # 🟢 AQUÍ ESTÁ LA MAGIA: Incluimos el correo de quien autorizó el cambio
+            quien_cambio = admin_email if admin_email else "un administrador"
+            mensaje_historial = f"La reserva de {nombre_cliente} ({nombre_hab}) pasó de '{estado_anterior.upper()}' a '{estado_str.upper()}' (Modificado por: {quien_cambio})."
+            
+            await crear_notificacion_panel(
+                user_id=admin_id,
+                titulo=f"Movimiento: {titulo}",
+                mensaje=mensaje_historial,
+                tipo=tipo,
+                icono=icono
+            )
+            
     return result.matched_count > 0
-
-
 
 
 async def get_user_bookings_service(user_id: str) -> list:
@@ -184,28 +178,24 @@ async def get_user_bookings_service(user_id: str) -> list:
     async for reserva in cursor:
         habitacion = reserva.get("habitacion_info")
         
-        # 🟢 LÓGICA MEJORADA PARA EL NOMBRE DE LA HABITACIÓN
         if habitacion:
-            # 1. Buscamos el nombre (Ej: "Suite Presidencial")
             nombre_oficial = habitacion.get("name")
-            
-            # 2. Si tiene nombre, lo usamos. Si no, armamos el texto con el número y tipo
             if nombre_oficial:
                 info_habitacion = nombre_oficial
             else:
                 numero = habitacion.get("room_number", "S/N")
-                tipo = habitacion.get("type", "Cabaña").capitalize() # Pone la primera letra en mayúscula
+                tipo = habitacion.get("type", "Cabaña").capitalize()
                 info_habitacion = f"Hab. {numero} - {tipo}"
         else:
             info_habitacion = "Habitación no encontrada"
             
         fecha_ent = reserva.get("fecha_entrada")
         fecha_sal = reserva.get("fecha_salida")
-        fecha_crea = reserva.get("created_at", reserva.get("fecha_creacion")) # Buscamos la fecha de creación
+        fecha_crea = reserva.get("created_at", reserva.get("fecha_creacion")) 
 
         mis_reservas.append({
             "id": str(reserva["_id"]),
-            "habitacion_nombre": info_habitacion, # 🟢 Pasa el nombre correcto a Vue
+            "habitacion_nombre": info_habitacion, 
             "habitacion_id": str(reserva.get("habitacion_id", "")),
             "fecha_entrada": fecha_ent.strftime("%Y-%m-%d") if hasattr(fecha_ent, 'strftime') else str(fecha_ent)[:10],
             "fecha_salida": fecha_sal.strftime("%Y-%m-%d") if hasattr(fecha_sal, 'strftime') else str(fecha_sal)[:10],
@@ -225,25 +215,20 @@ async def get_all_bookings_service(estados_filtro: str = None, page: int = 1, li
     pipeline = []
     query_count = {}
     
-    # 1. MANEJO DE FILTROS POR ESTADO (Para las pestañas de Vue)
     if estados_filtro:
         lista_estados = estados_filtro.split(",")
-        # Filtramos en el pipeline y en el contador
         filtro_match = {"estado": {"$in": lista_estados}}
         pipeline.append({"$match": filtro_match})
         query_count = filtro_match
 
-    # 2. CÁLCULO DE PAGINACIÓN
     skip = (page - 1) * limit
     total_documentos = await db.bookings.count_documents(query_count)
     total_paginas = (total_documentos + limit - 1) // limit if limit > 0 else 1
 
-    # 3. CONSTRUCCIÓN DEL PIPELINE DE AGREGACIÓN
     pipeline.extend([
-        {"$sort": {"fecha_entrada": -1}}, # Más recientes primero
+        {"$sort": {"fecha_entrada": -1}}, 
         {"$skip": skip},
         {"$limit": limit},
-        # Joins con otras colecciones
         {"$lookup": {"from": "rooms", "localField": "habitacion_id", "foreignField": "_id", "as": "habitacion_info"}},
         {"$lookup": {"from": "clients", "localField": "cliente_id", "foreignField": "_id", "as": "cliente_info"}},
         {"$unwind": {"path": "$habitacion_info", "preserveNullAndEmptyArrays": True}},
@@ -258,12 +243,10 @@ async def get_all_bookings_service(estados_filtro: str = None, page: int = 1, li
         habitacion = reserva.get("habitacion_info", {})
         cliente = reserva.get("cliente_info", {})
         
-        # Contador de pendientes global
         estado = reserva.get("estado", "pendiente")
         if estado == "pendiente":
             conteo_pendientes += 1
 
-        # Lógica de identificación del cliente
         nombre_cliente = cliente.get("full_name", reserva.get("cliente_nombre", "Desconocido"))
         correo_cliente = reserva.get("cliente_email", cliente.get("email", ""))
         celular_cliente = reserva.get("cliente_celular", cliente.get("phone", "")) 
@@ -288,7 +271,6 @@ async def get_all_bookings_service(estados_filtro: str = None, page: int = 1, li
             "comprobante_url": reserva.get("comprobante_url", None)
         })
 
-    # Estadísticas globales de ocupación
     habitaciones_ocupadas = await db.rooms.count_documents({"is_available": False})
     total_habitaciones = await db.rooms.count_documents({})
 
@@ -299,7 +281,7 @@ async def get_all_bookings_service(estados_filtro: str = None, page: int = 1, li
             "ocupacion_actual": f"{habitaciones_ocupadas}/{total_habitaciones}",
             "porcentaje_ocupacion": f"{(habitaciones_ocupadas/total_habitaciones)*100:.1f}%" if total_habitaciones > 0 else "0%",
             "total_paginas": total_paginas,        
-            "pagina_actual": page                 
+            "pagina_actual": page                
         },
         "reservas": lista_global
     }
