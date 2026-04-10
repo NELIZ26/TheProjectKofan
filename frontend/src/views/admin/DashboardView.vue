@@ -1,8 +1,10 @@
 <script setup>
 import { ref, onMounted } from 'vue';
 import apiClient from "@/api/apiClient";
+import RoomHistoryCard from '@/components/RoomHistoryCard.vue'; 
+import ActivityNotificationsModal from '@/components/ActivityNotificationsModal.vue';
 
-// Variables reactivas vacías por defecto
+// Variables reactivas
 const stats = ref({
   ingresosMes: 0,
   reservasActivas: 0,
@@ -10,25 +12,25 @@ const stats = ref({
   ocupacionPorcentaje: 0
 });
 
+const modalAvisosVisible = ref(false); // Controla el nuevo NotificationModal
 const habitacionesPopulares = ref([]);
 const ultimosMovimientos = ref([]);
 
-// Función para traer los datos reales
+// Función para cargar los datos del dashboard
 const cargarDashboard = async () => {
   try {
-    const response = await apiClient.get('/dashboard'); // La ruta que creamos en FastAPI
+    const response = await apiClient.get('/dashboard'); 
     
-    // Asignamos la respuesta del backend a nuestras variables de Vue
-    stats.value = response.data.stats;
-    habitacionesPopulares.value = response.data.habitacionesPopulares;
-    ultimosMovimientos.value = response.data.ultimosMovimientos;
+    // Validaciones de seguridad con optional chaining
+    stats.value = response.data?.stats || { ingresosMes: 0, reservasActivas: 0, huespedesHoy: 0, ocupacionPorcentaje: 0 };
+    habitacionesPopulares.value = response.data?.habitacionesPopulares || [];
+    ultimosMovimientos.value = response.data?.ultimosMovimientos || [];
     
   } catch (error) {
     console.error("Error trayendo los datos del dashboard:", error);
   }
 };
 
-// Se ejecuta apenas entras al panel
 onMounted(() => {
   cargarDashboard();
 });
@@ -66,9 +68,7 @@ onMounted(() => {
               <font-awesome-icon icon="fa-solid fa-calendar-check" />
             </div>
           </div>
-          <div class="mt-3 small text-muted">
-            Proximas 7 días
-          </div>
+          <div class="mt-3 small text-muted">Próximos 7 días</div>
         </div>
       </div>
 
@@ -83,9 +83,7 @@ onMounted(() => {
               <font-awesome-icon icon="fa-solid fa-users" />
             </div>
           </div>
-          <div class="mt-3 small text-muted">
-            En las instalaciones
-          </div>
+          <div class="mt-3 small text-muted">En las instalaciones</div>
         </div>
       </div>
 
@@ -108,9 +106,10 @@ onMounted(() => {
     </div>
 
     <div class="row g-4">
-      <div class="col-lg-8">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
+      <div class="col-12 col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 p-4 h-100">
           <h5 class="fw-bold mb-4">Habitaciones más solicitadas</h5>
+          
           <div v-for="hab in habitacionesPopulares" :key="hab.nombre" class="mb-4">
             <div class="d-flex justify-content-between mb-1">
               <span class="fw-bold">{{ hab.nombre }}</span>
@@ -126,21 +125,31 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="col-lg-4">
-        <div class="card border-0 shadow-sm rounded-4 p-4">
-          <h5 class="fw-bold mb-4">Actividad Reciente</h5>
-          <div v-for="item in ultimosMovimientos" :key="item.id" class="d-flex mb-3 align-items-center">
-            <div class="activity-dot me-3" :class="item.accion === 'Cancelación' ? 'bg-danger' : 'bg-success'"></div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-bold small">{{ item.usuario }}</h6>
-              <p class="mb-0 text-muted extra-small">{{ item.accion }} - {{ item.fecha }}</p>
+      <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h5 class="fw-bold mb-4">Actividad de Reservas</h5>
+          
+          <div v-for="item in (ultimosMovimientos || []).slice(0, 3)" :key="item.id" 
+               class="d-flex mb-3 align-items-center p-3 bg-white border shadow-sm rounded-3 notification-item">
+            <div class="activity-dot flex-shrink-0 me-3" :class="item.accion === 'Cancelación' ? 'bg-danger' : 'bg-success'"></div>
+            <div class="flex-grow-1 min-w-0">
+              <h6 class="mb-0 fw-bold small text-truncate">{{ item.usuario }}</h6>
+              <p class="mb-0 text-muted extra-small text-truncate">{{ item.accion }} - {{ item.fecha }}</p>
             </div>
-            <div class="fw-bold small">{{ item.monto }}</div>
+            <div class="fw-bold small text-nowrap ms-2">{{ item.monto.replace(/\.0$/, '') }}</div>
           </div>
-          <button class="btn btn-light btn-sm w-100 mt-2 fw-bold text-muted">Ver todo el historial</button>
+
+          <button @click="modalAvisosVisible = true" class="btn btn-light btn-sm w-100 mt-2 fw-bold text-muted rounded-3">
+            Ver todas las reservas y avisos
+          </button>
         </div>
+
+        <RoomHistoryCard />
       </div>
     </div>
+    
+    <ActivityNotificationsModal :show="modalAvisosVisible" @close="modalAvisosVisible = false" />
+
   </div>
 </template>
 

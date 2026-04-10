@@ -50,9 +50,6 @@ const handleLogout = () => {
       
       <div class="vertical-divider"></div>
 
-      <button @click="handleLogout" class="btn btn-outline-danger btn-sm rounded-pill px-3">
-        <i class="fa fa-sign-out-alt me-1"></i> Salir
-      </button>
     </div>
   </header>
 </template>

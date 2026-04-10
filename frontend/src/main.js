@@ -25,7 +25,7 @@ import {
   faRotate, faIdCard, faCheck, faXmark, faHandHoldingDollar, faArrowUp,
   faClock, faCloudArrowUp, faCircleCheck, faUserCircle, faChartLine,
   faSignOutAlt, faLock, faPaperPlane, faImages, faBan, faRotateLeft, 
-  faTimesCircle
+  faTimesCircle, faGripVertical
 } from "@fortawesome/free-solid-svg-icons";
 
 // Iconos de Marcas (fab)
@@ -51,7 +51,7 @@ library.add(
   faClock, faCloudArrowUp, faCircleCheck, faUserCircle, faChartLine,
   faSignOutAlt, faLock, faPaperPlane, faImages, faBan, faRotateLeft, 
   faTimesCircle, faInstagram, faFacebook, faTiktok, faWhatsapp, faFacebookF,
-  faPenToSquare
+  faPenToSquare, faGripVertical
 );
 
 // --- CREAR LA APP ---

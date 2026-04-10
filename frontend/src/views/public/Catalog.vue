@@ -9,7 +9,7 @@
       </p>
     </div>
 
-    <section class="container mb-5" id="seccionCabanas">
+    <section v-if="cabanasIndependientes.length > 0" class="container mb-5" id="seccionCabanas">
       <div class="d-flex align-items-center mb-4">
         <div class="linea-verde"></div>
         <h2 class="mx-3 fw-bold verde-kofan">Cabañas Independientes</h2>
@@ -23,19 +23,34 @@
       />
     </section>
 
-    <section class="container pb-5" id="seccionHabitaciones">
+    <section v-if="habitacionesFamiliares.length > 0" class="container mb-5" id="seccionFamiliares">
       <div class="d-flex align-items-center mb-4">
         <div class="linea-verde"></div>
-        <h2 class="mx-3 fw-bold verde-kofan">Habitaciones en Maloka</h2>
+        <h2 class="mx-3 fw-bold verde-kofan">Habitaciones Familiares</h2>
       </div>
 
       <RoomCard 
-        v-for="h in habitacionesMaloka" 
+        v-for="h in habitacionesFamiliares" 
         :key="h.id || h._id" 
         :habitacion="h" 
         @reservar="reserva.openModal($event)" 
       />
     </section>
+
+    <section v-if="habitacionesIndividuales.length > 0" class="container pb-5" id="seccionIndividuales">
+      <div class="d-flex align-items-center mb-4">
+        <div class="linea-verde"></div>
+        <h2 class="mx-3 fw-bold verde-kofan">Habitaciones Individuales</h2>
+      </div>
+
+      <RoomCard 
+        v-for="h in habitacionesIndividuales" 
+        :key="h.id || h._id" 
+        :habitacion="h" 
+        @reservar="reserva.openModal($event)" 
+      />
+    </section>
+
   </div>
 </template>
 
@@ -43,8 +58,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useReservaStore } from "@/stores/reserva.js";
 import { getRooms } from "@/services/roomService"; 
-
-// 🟢 Importamos la nueva tarjeta de diseño premium
 import RoomCard from "@/components/RoomCard.vue"; 
 
 const reserva = useReservaStore();
@@ -64,12 +77,17 @@ onMounted(() => {
   cargarCatalogo();
 });
 
+// Filtramos basándonos en los values exactos del select: "cabins", "family", "individual"
 const cabanasIndependientes = computed(() =>
-  allAccommodations.value.filter((a) => a.type === "cabana" && a.active === true)
+  allAccommodations.value.filter((a) => a.type === "cabins" && a.active === true)
 );
 
-const habitacionesMaloka = computed(() =>
-  allAccommodations.value.filter((a) => a.type === "habitacion" && a.active === true)
+const habitacionesFamiliares = computed(() =>
+  allAccommodations.value.filter((a) => a.type === "family" && a.active === true)
+);
+
+const habitacionesIndividuales = computed(() =>
+  allAccommodations.value.filter((a) => a.type === "individual" && a.active === true)
 );
 </script>
 

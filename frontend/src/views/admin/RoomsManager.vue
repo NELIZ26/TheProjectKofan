@@ -187,11 +187,11 @@ const eliminarImagenExistente = async (index, imageUrl) => {
 };
 
 const manejarErrorImagen = (e) => {
-  // 1. Anulamos el evento de error para romper el bucle infinito
+  // Rompemos el bucle
   e.target.onerror = null; 
   
-  // 2. Intentamos cargar la imagen de reemplazo
-  e.target.src = 'https://via.placeholder.com/60x50?text=Sin+Foto';
+  // Asignamos una imagen en código Base64 (un pequeño rectángulo gris)
+  e.target.src = 'data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2260%22%20height%3D%2250%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2060%2050%22%20preserveAspectRatio%3D%22none%22%3E%3Crect%20width%3D%2260%22%20height%3D%2250%22%20fill%3D%22%23eeeeee%22%2F%3E%3Ctext%20text-anchor%3D%22middle%22%20x%3D%2230%22%20y%3D%2230%22%20style%3D%22fill%3A%23aaaaaa%3Bfont-weight%3Abold%3Bfont-size%3A10px%3Bfont-family%3AArial%2CHelvetica%2Csans-serif%22%3ESin%20Foto%3C%2Ftext%3E%3C%2Fsvg%3E';
 };
 
 const seleccionarPrincipal = (imgUrl) => {
@@ -356,13 +356,14 @@ const listaAmenidades = [
                 </div>
 
                 <div class="col-md-6">
-                  <label class="form-label fw-bold">Tipo de Alojamiento</label>
-                  <select v-model="roomForm.type" class="form-select" required>
-                    <option value="" disabled>Selecciona una opción...</option>
-                    <option value="cabana">Cabaña Independiente</option>
-                    <option value="habitacion">Habitación en Maloka</option>
-                  </select>
-                </div>
+                <label class="form-label fw-bold">Tipo de Alojamiento</label>
+                <select v-model="roomForm.type" class="form-select" required>
+                  <option value="" disabled>Selecciona una opción...</option>
+                  <option value="individual">Habitación Individual</option>
+                  <option value="family">Habitación Familiar</option>
+                  <option value="cabins">Cabaña Independiente</option>
+                </select>
+              </div>
 
                 <div class="col-md-6">
                   <label class="form-label fw-bold">N° de Habitaciones (Cuartos)</label>
