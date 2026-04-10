@@ -71,9 +71,23 @@ const guardarUsuario = async (datos) => {
     mostrarModal.value = false;
     cargarUsuarios(); 
   } catch (error) {
-    const errorMsg = error.response?.data?.detail || "Hubo un problema procesando la solicitud";
-    Swal.fire("Error", errorMsg, "error");
-  } finally {
+  let errorMsg = "Hubo un problema al registrar el usuario.";
+
+  if (error.response?.data?.detail) {
+    const detail = error.response.data.detail;
+    // Si FastAPI devuelve una lista de errores (Error 422)
+    if (Array.isArray(detail)) {
+      // Tomamos el primer error de la lista para mostrar qué campo falló
+      const campo = detail[0].loc[detail[0].loc.length - 1]; // Obtiene el nombre del campo
+      errorMsg = `Error en el campo '${campo}': ${detail[0].msg}`;
+    } else {
+      // Si es un error de texto normal (Error 400, ej: "El correo ya existe")
+      errorMsg = detail;
+    }
+  }
+
+  Swal.fire("Error", errorMsg, "error");
+} finally {
     cargandoRegistro.value = false;
   }
 };

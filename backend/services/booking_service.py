@@ -136,7 +136,7 @@ async def update_booking_status_service(reserva_id: str, nuevo_estado: str, moti
             # Buscamos el nombre del cliente para el historial
             nombre_cliente = reserva_previa.get("cliente_nombre")
             if not nombre_cliente and cliente_id:
-                cliente_db = await db.clients.find_one({"_id": ObjectId(str(cliente_id))})
+                cliente_db = await db.users.find_one({"_id": ObjectId(str(cliente_id))})
                 if cliente_db:
                     nombre_cliente = cliente_db.get("full_name")
             if not nombre_cliente:
