@@ -1,7 +1,10 @@
 <script setup>
 import { ref, onMounted, computed } from "vue";
 import apiClient from "@/api/apiClient";
+import RoomHistoryCard from '@/components/RoomHistoryCard.vue'; 
+import ActivityNotificationsModal from '@/components/ActivityNotificationsModal.vue';
 
+// Variables reactivas
 const stats = ref({
   ingresosMes: 0,
   reservasActivas: 0,
@@ -9,15 +12,20 @@ const stats = ref({
   ocupacionPorcentaje: 0,
 });
 
+const modalAvisosVisible = ref(false); // Controla el nuevo NotificationModal
 const habitacionesPopulares = ref([]);
 const ultimosMovimientos = ref([]);
 
+// Función para cargar los datos del dashboard
 const cargarDashboard = async () => {
   try {
-    const response = await apiClient.get("/dashboard");
-    stats.value = response.data.stats;
-    habitacionesPopulares.value = response.data.habitacionesPopulares;
-    ultimosMovimientos.value = response.data.ultimosMovimientos;
+    const response = await apiClient.get('/dashboard'); 
+    
+    // Validaciones de seguridad con optional chaining
+    stats.value = response.data?.stats || { ingresosMes: 0, reservasActivas: 0, huespedesHoy: 0, ocupacionPorcentaje: 0 };
+    habitacionesPopulares.value = response.data?.habitacionesPopulares || [];
+    ultimosMovimientos.value = response.data?.ultimosMovimientos || [];
+    
   } catch (error) {
     console.error("Error trayendo los datos del dashboard:", error);
   }
@@ -206,35 +214,31 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="col-lg-4">
-        <div class="eco-card rounded-4 p-4 h-100">
-          <p class="brand-handmade small mb-1">Movimiento reciente</p>
-          <h5 class="section-title mb-4">Actividad Reciente</h5>
-
-          <div
-            v-for="item in ultimosMovimientos"
-            :key="item.id"
-            class="d-flex mb-3 align-items-center"
-          >
-            <div
-              class="activity-dot me-3"
-              :class="item.accion === 'Cancelación' ? 'is-cancel' : 'is-ok'"
-            ></div>
-            <div class="flex-grow-1">
-              <h6 class="mb-0 fw-bold small text-kofan">{{ item.usuario }}</h6>
-              <p class="mb-0 text-muted extra-small">
-                {{ item.accion }} · {{ item.fecha }}
-              </p>
+      <div class="col-12 col-lg-4">
+        <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+          <h5 class="fw-bold mb-4">Actividad de Reservas</h5>
+          
+          <div v-for="item in (ultimosMovimientos || []).slice(0, 3)" :key="item.id" 
+               class="d-flex mb-3 align-items-center p-3 bg-white border shadow-sm rounded-3 notification-item">
+            <div class="activity-dot flex-shrink-0 me-3" :class="item.accion === 'Cancelación' ? 'bg-danger' : 'bg-success'"></div>
+            <div class="flex-grow-1 min-w-0">
+              <h6 class="mb-0 fw-bold small text-truncate">{{ item.usuario }}</h6>
+              <p class="mb-0 text-muted extra-small text-truncate">{{ item.accion }} - {{ item.fecha }}</p>
             </div>
-            <div class="fw-bold small text-kofan">{{ item.monto }}</div>
+            <div class="fw-bold small text-nowrap ms-2">{{ item.monto.replace(/\.0$/, '') }}</div>
           </div>
 
-          <button class="btn btn-soft-sky btn-sm w-100 mt-2">
-            Ver historial completo
+          <button @click="modalAvisosVisible = true" class="btn btn-light btn-sm w-100 mt-2 fw-bold text-muted rounded-3">
+            Ver todas las reservas y avisos
           </button>
         </div>
+
+        <RoomHistoryCard />
       </div>
     </div>
+    
+    <ActivityNotificationsModal :show="modalAvisosVisible" @close="modalAvisosVisible = false" />
+
   </div>
 </template>
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from backend.db.client import db 
 
 async def get_dashboard_metrics():
@@ -70,16 +70,37 @@ async def get_dashboard_metrics():
             "color": colores[i] if i < len(colores) else "info"
         })
 
-    # 6. ACTIVIDAD RECIENTE (Últimas 3 facturas generadas)
-    ultimas_facturas = await db.invoices.find().sort("issue_date", -1).limit(3).to_list(3)
+    # 6. 🟢 ACTIVIDAD RECIENTE ACTUALIZADA (Últimos 3 movimientos de reservas)
+    pipeline_movimientos = [
+        # Ordenamos por las últimas reservas creadas o actualizadas
+        {"$sort": {"updated_at": -1, "created_at": -1}},
+        {"$limit": 3},
+        {"$lookup": {"from": "clients", "localField": "cliente_id", "foreignField": "_id", "as": "cliente_info"}},
+        {"$unwind": {"path": "$cliente_info", "preserveNullAndEmptyArrays": True}}
+    ]
+    
+    ultimas_reservas = await db.bookings.aggregate(pipeline_movimientos).to_list(3)
     ultimos_movimientos = []
-    for f in ultimas_facturas:
+    
+    for r in ultimas_reservas:
+        cliente = r.get("cliente_info", {})
+        nombre_cliente = cliente.get("full_name", r.get("cliente_nombre", "Desconocido"))
+        estado_reserva = r.get("estado", "pendiente").capitalize()
+        
+        # Buscamos la fecha de la última actualización para que el orden sea real
+        fecha_mov = r.get("updated_at", r.get("created_at", ahora))
+        
+        # Ajustamos a la hora de Colombia (-5 horas)
+        if fecha_mov.tzinfo:
+            fecha_mov = fecha_mov.replace(tzinfo=None)
+        fecha_colombia = fecha_mov - timedelta(hours=5)
+
         ultimos_movimientos.append({
-            "id": str(f["_id"]),
-            "usuario": f.get("guest_name", "Cliente"),
-            "accion": "Factura Generada",
-            "fecha": f["issue_date"].strftime("%d/%m %H:%M") if "issue_date" in f else "Reciente",
-            "monto": f"+ ${f.get('total_amount', 0):,}"
+            "id": str(r["_id"]),
+            "usuario": nombre_cliente,
+            "accion": f"Reserva {estado_reserva}", # 🟢 Muestra el estado real (Ej: Reserva Confirmada)
+            "fecha": fecha_colombia.strftime("%d/%m %I:%M %p"), # Formato de 12 horas con AM/PM
+            "monto": f"+ ${r.get('monto_total', 0):,}"
         })
 
     return {

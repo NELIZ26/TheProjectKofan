@@ -94,3 +94,8 @@ export const addRoomImages = async (roomId, files) => {
   const response = await apiClient.post(`/rooms/${roomId}/add-images`, formData);
   return response.data;
 };
+
+export const getRoomLogs = async (page = 1, limit = 8) => {
+  const response = await apiClient.get(`/rooms/logs/history?page=${page}&limit=${limit}`);
+  return response.data;
+};

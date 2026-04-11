@@ -3,8 +3,7 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
 
-// Importamos el componente que me pasaste
-import ImageUploader from "@/components/ImageUploader.vue"; // Ajusta la ruta si es necesario
+import ImageUploader from "@/components/ImageUploader.vue"; 
 
 const fotos = ref([]);
 const isLoading = ref(false);
@@ -13,7 +12,6 @@ const eliminando = ref(null);
 const mostrarFormulario = ref(false);
 const filtroActivo = ref("todos");
 
-// Variables para conectar con ImageUploader
 const archivosParaSubir = ref([]);
 const uploaderRef = ref(null);
 
@@ -23,7 +21,6 @@ const fotoUrl = (url) => `${BASE_URL}${url}`;
 const cargarFotos = async (categoria = "todos") => {
   isLoading.value = true;
   try {
-    // Si no es "todos", le pegamos el parámetro a la URL
     const params = categoria !== "todos" ? `?categoria=${categoria}` : "";
     const { data } = await apiClient.get(`/gallery/${params}`);
     fotos.value = data;
@@ -36,17 +33,15 @@ const cargarFotos = async (categoria = "todos") => {
 
 const cancelarUpload = () => {
   mostrarFormulario.value = false;
-  if (uploaderRef.value) uploaderRef.value.reset(); // Usamos la función reset() que dejaste expuesta en tu componente
+  if (uploaderRef.value) uploaderRef.value.reset(); 
   archivosParaSubir.value = [];
 };
 
-// Como tu componente permite múltiples fotos y el backend recibe 1 a 1, iteramos
 const subirFotosBatch = async () => {
   if (archivosParaSubir.value.length === 0) return;
   isUploading.value = true;
 
   try {
-    // 1. Creamos un array de "promesas" (tareas a ejecutar al mismo tiempo)
     const peticiones = archivosParaSubir.value.map(file => {
       const formData = new FormData();
       formData.append("file", file);
@@ -57,19 +52,17 @@ const subirFotosBatch = async () => {
       });
     });
 
-    // 2. Ejecutamos TODAS las subidas al mismo tiempo (Concurrencia)
     await Promise.all(peticiones);
 
-    // 3. Si llega aquí, es porque todas fueron exitosas
-    await Swal.fire({ 
-      icon: "success", 
-      title: `¡${archivosParaSubir.value.length} foto(s) subida(s) a la velocidad de la luz!`, 
-      timer: 2000, 
-      showConfirmButton: false 
+    await Swal.fire({
+      icon: "success",
+      title: `¡${archivosParaSubir.value.length} foto(s) subida(s) a la velocidad de la luz!`,
+      timer: 2000,
+      showConfirmButton: false
     });
     
     cancelarUpload();
-    cargarFotos(filtroActivo.value); // Recargamos manteniendo el filtro actual
+    cargarFotos(filtroActivo.value); 
     
   } catch (error) {
     Swal.fire({ icon: "error", title: "Error al subir", text: "Hubo un problema con una o más fotos.", confirmButtonColor: "#0f3b2a" });
@@ -104,7 +97,7 @@ const confirmarEliminar = async (foto) => {
   }
 };
 
-const categoriaSeleccionada = ref("instalaciones"); // Valor por defecto
+const categoriaSeleccionada = ref("instalaciones"); 
 
 const categorias = [
   { value: "naturaleza",    label: "Naturaleza" },
@@ -114,7 +107,7 @@ const categorias = [
 ];
 const cambiarFiltro = (cat) => {
   filtroActivo.value = cat;
-  cargarFotos(cat); // Recarga la grilla con la nueva categoría
+  cargarFotos(cat); 
 };
 
 onMounted(() => cargarFotos());
@@ -161,10 +154,10 @@ onMounted(() => cargarFotos());
         </select>
       </div>
 
-      <ImageUploader 
+      <ImageUploader
         ref="uploaderRef"
         v-model="archivosParaSubir"
-        :maxFiles="10" 
+        :maxFiles="10"
         :existingCount="0"
         :isEditing="true"
       />
@@ -189,38 +182,39 @@ onMounted(() => cargarFotos());
       <p class="text-muted small">Selecciona otra categoría o sube nuevas imágenes.</p>
     </div>
 
-    <div v-else-if="!mostrarFormulario" class="gallery-grid mt-2">
-      <div v-for="foto in fotos" :key="foto.id" class="gallery-item position-relative mb-2">
-        
-        <img 
-          :src="fotoUrl(foto.url)" 
-          :alt="foto.title" 
-          class="img-fluid rounded-4 shadow-sm w-100 object-fit-cover" 
-          style="height: 220px;" 
-          @error="$event.target.src='https://placehold.co/400x220/f8d7da/842029?text=Archivo+Faltante'"
-        />
-        
-        <div class="acciones-flotantes position-absolute top-0 w-100 p-2 d-flex justify-content-between align-items-start">
-          <span class="badge bg-dark bg-opacity-75 text-white border border-secondary shadow-sm">
-            {{ categorias.find(c => c.value === foto.categoria)?.label || 'General' }}
-          </span>
+    <div v-else-if="!mostrarFormulario" class="row g-3 mt-2">
+      <div v-for="foto in fotos" :key="foto.id" class="col-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="gallery-item position-relative mb-2 h-100">
           
-          <button class="btn btn-danger btn-sm rounded-circle shadow transition-all hover-scale" @click="confirmarEliminar(foto)" :disabled="eliminando === foto.id" title="Eliminar foto">
-            <span v-if="eliminando === foto.id" class="spinner-border spinner-border-sm"></span>
-            <font-awesome-icon v-else :icon="['fas', 'trash']" />
-          </button>
-        </div>
+          <img
+            :src="fotoUrl(foto.url)"
+            :alt="foto.titulo" 
+            class="img-fluid rounded-4 shadow-sm w-100 object-fit-cover"
+            style="height: 220px;"
+            @error="$event.target.src='https://placehold.co/400x220/f8d7da/842029?text=Archivo+Faltante'"
+          />
+          
+          <div class="acciones-flotantes position-absolute top-0 w-100 p-2 d-flex justify-content-between align-items-start" style="left: 0;">
+            <span class="badge bg-dark bg-opacity-75 text-white border border-secondary shadow-sm">
+              {{ categorias.find(c => c.value === foto.categoria)?.label || 'General' }}
+            </span>
+            
+            <button class="btn btn-danger btn-sm rounded-circle shadow transition-all hover-scale" @click="confirmarEliminar(foto)" :disabled="eliminando === foto.id" title="Eliminar foto">
+              <span v-if="eliminando === foto.id" class="spinner-border spinner-border-sm"></span>
+              <font-awesome-icon v-else :icon="['fas', 'trash']" />
+            </button>
+          </div>
 
-        <div class="mt-2 text-truncate small fw-semibold text-secondary text-center px-2">
-          {{ foto.title }}
-        </div>
+          <div class="mt-2 text-truncate small fw-semibold text-secondary text-center px-2">
+            {{ foto.titulo }}
+          </div>
 
+        </div>
       </div>
     </div>
 
   </div>
 </template>
-
 
 
 <style scoped>

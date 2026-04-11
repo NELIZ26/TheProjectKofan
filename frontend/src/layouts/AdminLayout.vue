@@ -11,6 +11,11 @@ const router = useRouter();
 const user = ref();
 const errorMessage = ref("");
 const isLoading = ref(false);
+const sidebarCollapsed = ref(false);
+
+const toggleSidebar = () => {
+  sidebarCollapsed.value = !sidebarCollapsed.value;
+};
 
 const loadProfile = async () => {
   try {
@@ -25,9 +30,13 @@ const loadProfile = async () => {
   }
 };
 
+// 🟢 FUNCIÓN CORREGIDA
 const handleLogout = () => {
+  console.log("Cerrando sesión..."); // Para verificar en consola (F12) que el botón sí se presiona
   auth.logout();
-  router.push({ name: "hospedaje-home" });
+  
+  // 🟢 Lo enviamos a la ruta segura de login en lugar de "hospedaje-home"
+  router.push("/auth/login"); 
 };
 
 onMounted(() => {
@@ -84,11 +93,13 @@ onMounted(() => {
       <main class="p-4 p-lg-4">
         <router-view></router-view>
       </main>
+
     </div>
   </div>
 </template>
 
 <style scoped>
+/* 🟢 Quitamos el min-height: 100vh porque ahora usamos vh-100 fijo */
 .admin-wrapper {
   min-height: 100vh;
   background-color: var(--k-cream);
@@ -108,6 +119,7 @@ onMounted(() => {
   filter: drop-shadow(0 8px 18px rgba(15, 59, 42, 0.18));
 }
 
+/* 🟢 Asegura que el contenido no se pegue al borde */
 .main-container {
   display: flex;
   flex-direction: column;
@@ -126,6 +138,7 @@ onMounted(() => {
   padding: 0 0.45rem;
 }
 
+/* Tus estilos de Nav-Links se mantienen iguales... */
 .nav-link-admin {
   color: rgba(255, 252, 248, 0.92);
   text-decoration: none;

@@ -1,12 +1,12 @@
 from typing import Optional
-
-from fastapi import APIRouter, Depends, Form, File, UploadFile
+from fastapi import APIRouter, Depends, Form, File, UploadFile, HTTPException, status
 from backend.dependencies.auth import get_current_user, required_admin
 from backend.schemas.booking_schema import ReservaCreate, EstadoReserva, UpdateEstadoReserva, ReservaPublicCreate, UpdateReservaDetalles
 from backend.services.booking_service import create_booking_service, get_all_bookings_service, get_user_bookings_service, update_booking_status_service, update_booking_details_service
-from fastapi import HTTPException, status
 from enum import Enum
 from backend.services.media_service import save_image
+from datetime import datetime, timezone
+
 router = APIRouter(
     prefix="/api/reservas", 
     tags=["api/reservas"]
@@ -69,7 +69,7 @@ async def registrar_reserva_publica(
     cliente_email: str = Form(...),
     cliente_celular: str = Form(...),
     observaciones: str = Form(None),
-    comprobante: Optional[UploadFile] = File(None) # 🟢 Recibe la imagen
+    comprobante: Optional[UploadFile] = File(None) 
 ):
     ruta_comprobante = None
     if comprobante:
@@ -101,7 +101,7 @@ async def registrar_reserva_publica(
     }
 
 
-# SOLO ADMIN PUEDE CAMBIAR EL ESTADO DE UNA RESERVA
+# 🟢 SOLO ADMIN PUEDE CAMBIAR EL ESTADO DE UNA RESERVA (AQUÍ ESTÁ LA CORRECCIÓN)
 @router.patch("/{reserva_id}/estado")
 async def cambiar_estado_reserva(
     reserva_id: str, 
@@ -109,10 +109,11 @@ async def cambiar_estado_reserva(
     admin_user = Depends(required_admin) 
 ):
     exito = await update_booking_status_service(
-        reserva_id, 
-        datos_actualizacion.estado.value, 
-        datos_actualizacion.motivo_actualizacion,
-        admin_user["email"]
+        reserva_id=reserva_id, 
+        nuevo_estado=datos_actualizacion.estado.value, 
+        motivo=datos_actualizacion.motivo_actualizacion,
+        admin_email=admin_user["email"],
+        admin_id=str(admin_user["_id"]) # 🟢 LE PASAMOS EL ID AL SERVICIO PARA QUE CREE LA NOTIFICACIÓN
     )
     
     if not exito:
@@ -136,7 +137,6 @@ async def listar_mis_reservas(user = Depends(get_current_user)):
         reservas = await get_user_bookings_service(user_id)
         
         # 3. Validamos que SIEMPRE devuelva una lista (incluso si está vacía)
-        # Esto evita que el frontend se rompa al hacer .map()
         if not reservas:
             return []
             
@@ -144,28 +144,22 @@ async def listar_mis_reservas(user = Depends(get_current_user)):
 
     except Exception as e:
         # 4. Si algo explota en la BD, se lo decimos educadamente al frontend
-        print(f"Error interno al buscar reservas: {e}") # Para que tú lo veas en la consola
+        print(f"Error interno al buscar reservas: {e}") 
         raise HTTPException(
             status_code=500, 
             detail="Tuvimos un problema interno al cargar tus reservas. Intenta de nuevo."
         )
 
 
-
-# 2. En el Router, usamos ese Enum
 @router.get("/admin/todas")
 async def get_all_bookings(
     estados: Optional[str] = None, 
-    page: int = 1,     # 🟢 NUEVO: Qué página queremos ver (por defecto la 1)
-    limit: int = 10,   # 🟢 NUEVO: Cuántos registros por página (por defecto 50)
+    page: int = 1,     
+    limit: int = 10,   
     admin_user = Depends(required_admin)
 ):
     return await get_all_bookings_service(estados_filtro=estados, page=page, limit=limit)
 
-from datetime import datetime, timezone
-from fastapi import HTTPException
-
-# ... (tus otros imports)
 
 @router.put("/{reserva_id}/detalles")
 async def actualizar_detalles_reserva(
@@ -176,9 +170,8 @@ async def actualizar_detalles_reserva(
     # Convertimos el modelo a diccionario
     datos_actualizados = detalles.model_dump()
     
-    # 🟢 EL FIX REAL: Convertimos los strings del frontend a datetime UTC para MongoDB
+    # Convertimos los strings del frontend a datetime UTC para MongoDB
     try:
-        # Extraemos las fechas (asumiendo que el frontend envía "YYYY-MM-DD")
         entrada_dt = datetime.strptime(datos_actualizados["fecha_entrada"], "%Y-%m-%d")
         salida_dt = datetime.strptime(datos_actualizados["fecha_salida"], "%Y-%m-%d")
         
@@ -187,7 +180,6 @@ async def actualizar_detalles_reserva(
         datos_actualizados["fecha_salida"] = salida_dt.replace(tzinfo=timezone.utc)
         
     except ValueError:
-        # Si el frontend envía algo como "12/05/2023" o texto basura, atrapamos el error
         raise HTTPException(
             status_code=400, 
             detail="Formato de fecha inválido. Por favor usa el formato YYYY-MM-DD."
