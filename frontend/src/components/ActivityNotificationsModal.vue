@@ -52,9 +52,9 @@ watch(() => props.show, (newVal) => {
     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
       <div class="modal-content border-0 shadow-lg rounded-4">
         
-        <div class="modal-header bg-dark text-white border-0">
+        <div class="modal-header text-white border-0">
           <h5 class="modal-title fw-bold">
-            <i class="bi bi-bell-fill me-2 text-warning"></i> Historial de Actividad y Avisos
+            <font-awesome-icon :icon="['fas', 'bell']" class="me-2 text-warning" /> Historial de Actividad y Avisos
           </h5>
           <button type="button" class="btn-close btn-close-white" @click="$emit('close')"></button>
         </div>
@@ -114,16 +114,18 @@ watch(() => props.show, (newVal) => {
 </template>
 
 <style scoped>
-.modal-backdrop { background-color: rgba(0, 0, 0, 0.5); }
+.modal-header {
+  background-color: var(--k-forest-soft);
+}
+.modal-backdrop { background-color: var(--k-forest); }
 .modal { display: block; z-index: 1055; }
 
 .icon-circle {
-  width: 40px;
-  height: 40px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.2rem;
 }
 </style>

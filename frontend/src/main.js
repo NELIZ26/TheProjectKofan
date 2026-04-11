@@ -101,7 +101,7 @@ import {
   faUserShield,
   faUsers,
   faWifi,
-  faXmark
+  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Iconos de Marcas (fab)

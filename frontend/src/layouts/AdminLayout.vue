@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import AdminHeader from "@/views/admin/AdminHeader.vue";
 import { useRouter } from "vue-router";
 import { getUserProfile } from "@/services/authServices";
@@ -11,11 +11,6 @@ const router = useRouter();
 const user = ref();
 const errorMessage = ref("");
 const isLoading = ref(false);
-const sidebarCollapsed = ref(false);
-
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value;
-};
 
 const loadProfile = async () => {
   try {
@@ -90,27 +85,28 @@ onMounted(() => {
     <div class="main-container flex-grow-1">
       <AdminHeader />
 
-      <main class="p-4 p-lg-4">
+      <main class="admin-main-content p-4 p-lg-4">
         <router-view></router-view>
       </main>
-
     </div>
   </div>
 </template>
 
 <style scoped>
-/* 🟢 Quitamos el min-height: 100vh porque ahora usamos vh-100 fijo */
 .admin-wrapper {
   min-height: 100vh;
   background-color: var(--k-cream);
+  overflow-x: hidden;
 }
 
 .admin-sidebar {
-  width: 272px;
-  min-height: 100vh;
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 1000;
+  left: 0;
+  width: 272px;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 1030;
   background: linear-gradient(180deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
   border-right: 1px solid rgba(255, 252, 248, 0.08);
 }
@@ -123,7 +119,18 @@ onMounted(() => {
 .main-container {
   display: flex;
   flex-direction: column;
+  min-height: 100vh;
+  min-width: 0;
+  margin-left: 272px;
+  width: calc(100% - 272px);
   background: var(--k-offwhite);
+  scrollbar-gutter: stable;
+}
+
+.admin-main-content {
+  flex: 1;
+  width: 100%;
+  min-width: 0;
 }
 
 .nav {
@@ -195,6 +202,11 @@ onMounted(() => {
 @media (max-width: 768px) {
   .admin-sidebar {
     width: 88px;
+  }
+
+  .main-container {
+    margin-left: 88px;
+    width: calc(100% - 88px);
   }
 
   .admin-sidebar span,

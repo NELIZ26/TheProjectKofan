@@ -86,7 +86,7 @@ const navbarClasses = computed(() => {
             <router-link :to="{ name: 'about' }" class="nav-link" active-class="active-link">Nosotros</router-link>
           </li>
           <li class="nav-item">
-            <router-link :to="{ name: 'rooms' }" class="nav-link" active-class="active-link">Servicios</router-link>
+            <router-link :to="{ name: 'rooms' }" class="nav-link" active-class="active-link">Alojamientos</router-link>
           </li>
           <li class="nav-item">
             <router-link :to="{ name: 'gallery' }" class="nav-link" active-class="active-link">Galería</router-link>
