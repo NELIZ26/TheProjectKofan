@@ -45,6 +45,18 @@ const marcarTodosLeidos = async () => {
     console.error("Error al marcar leídos:", error);
   }
 };
+
+const resolverIconoAviso = (icono) => {
+  const valor = String(icono || '').toLowerCase();
+
+  if (valor.includes('check')) return 'fa-solid fa-circle-check';
+  if (valor.includes('info')) return 'fa-solid fa-circle-info';
+  if (valor.includes('house') || valor.includes('door')) return 'fa-solid fa-house-chimney';
+  if (valor.includes('x') || valor.includes('ban') || valor.includes('cancel')) return 'fa-solid fa-ban';
+  if (valor.includes('bell')) return 'fa-solid fa-bell';
+
+  return 'fa-solid fa-bell';
+};
 </script>
 
 <template>
@@ -56,14 +68,14 @@ const marcarTodosLeidos = async () => {
         <p class="text-muted mb-0 small">Mantente al tanto de tus reservas y promociones exclusivas.</p>
       </div>
       <button @click="marcarTodosLeidos" class="btn btn-outline-dark rounded-pill px-4 shadow-sm fw-medium">
-        <i class="bi bi-check2-all me-2"></i> Marcar como leídos
+        <font-awesome-icon icon="fa-solid fa-circle-check" class="me-2" /> Marcar como leídos
       </button>
     </div>
 
     <div class="d-flex flex-column gap-3">
       
       <div v-if="avisos.length === 0" class="text-center py-5">
-        <i class="bi bi-bell-slash display-4 mb-3 d-block text-light"></i>
+        <font-awesome-icon icon="fa-solid fa-bell-slash" class="display-4 mb-3 d-block text-light" />
         <h6 class="text-muted fw-bold">No tienes avisos recientes</h6>
         <p class="text-muted small">Aquí aparecerán las actualizaciones de tus reservas.</p>
       </div>
@@ -81,13 +93,13 @@ const marcarTodosLeidos = async () => {
             :class="`bg-${aviso.colorTheme} bg-opacity-10 text-${aviso.colorTheme}`" 
             style="width: 50px; height: 50px;"
           >
-            <i :class="aviso.icono" class="fs-4"></i>
+            <font-awesome-icon :icon="resolverIconoAviso(aviso.icono)" class="fs-4" />
           </div>
           
           <div class="flex-grow-1">
             <div class="d-flex justify-content-between align-items-center mb-1">
               <h6 class="fw-bold mb-0 text-dark">{{ aviso.titulo }}</h6>
-              <small class="text-muted"><i class="bi bi-clock me-1"></i> {{ aviso.fecha }}</small>
+              <small class="text-muted"><font-awesome-icon icon="fa-solid fa-clock" class="me-1" /> {{ aviso.fecha }}</small>
             </div>
             <p class="mb-0 text-secondary small">{{ aviso.mensaje }}</p>
           </div>

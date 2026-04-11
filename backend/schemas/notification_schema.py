@@ -16,4 +16,4 @@ class NotificationCreate(BaseModel):
     titulo: str
     mensaje: str
     tipo: Optional[str] = "success"
-    icono: Optional[str] = "bi-check-circle-fill"
+    icono: Optional[str] = "fa-solid fa-circle-check"

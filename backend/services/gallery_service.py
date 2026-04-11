@@ -6,6 +6,32 @@ from fastapi import UploadFile, HTTPException
 from fastapi.concurrency import run_in_threadpool # 🟢 IMPORTANTE
 import uuid, os, shutil
 
+LEGACY_IMAGES_DIR = os.path.join(os.path.dirname(UPLOAD_DIR), "images")
+
+def build_gallery_file_url(stored_url: str | None) -> str | None:
+    if not stored_url:
+        return None
+
+    filename = os.path.basename(stored_url)
+    upload_public_url = f"/static/uploads/{filename}"
+    legacy_public_url = f"/static/images/{filename}"
+    upload_path = os.path.join(UPLOAD_DIR, filename)
+    legacy_path = os.path.join(LEGACY_IMAGES_DIR, filename)
+
+    if stored_url.startswith("/static/uploads/") and os.path.exists(upload_path):
+        return upload_public_url
+
+    if stored_url.startswith("/static/images/") and os.path.exists(legacy_path):
+        return legacy_public_url
+
+    if os.path.exists(upload_path):
+        return upload_public_url
+
+    if os.path.exists(legacy_path):
+        return legacy_public_url
+
+    return upload_public_url
+
 # Esta función la usaremos dentro del threadpool
 def save_physical_file(file: UploadFile) -> str:
     os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -16,15 +42,20 @@ def save_physical_file(file: UploadFile) -> str:
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
     
-    # 🟢 Asegúrate de que esta URL coincida con tu main.py (ej: /static/uploads/...)
     return f"/static/uploads/{filename}"
 
 def delete_physical_file(file_url: str):
     try:
         filename = file_url.split("/")[-1]
-        filepath = os.path.join(UPLOAD_DIR, filename)
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        possible_paths = [
+            os.path.join(UPLOAD_DIR, filename),
+            os.path.join(LEGACY_IMAGES_DIR, filename),
+        ]
+
+        for filepath in possible_paths:
+            if os.path.exists(filepath):
+                os.remove(filepath)
+                break
     except Exception as e:
         print(f"Error borrando archivo físico: {e}")
 
@@ -37,12 +68,13 @@ async def get_all_photos(categoria: str = None):
     photos = []
 
     async for photo in cursor:
+        created_at = photo.get("created_at")
         photos.append({
             "id": str(photo["_id"]),
-            "url": photo["url"],
+            "url": build_gallery_file_url(photo.get("url")),
             "titulo": photo.get("titulo", ""),
             "categoria": photo.get("categoria", "general"),
-            "created_at": photo["created_at"].isoformat(),
+            "created_at": created_at.isoformat() if created_at else None,
         })
 
     return photos

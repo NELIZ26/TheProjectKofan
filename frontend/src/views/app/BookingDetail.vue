@@ -140,11 +140,11 @@ const volver = () => router.back();
 
 <style scoped>
 .verde-kofan {
-  color: #0f3b2a;
+  color: var(--k-forest);
 }
 
 .header-detalle {
-  background: linear-gradient(135deg, #0f3b2a 0%, #1a5c43 100%);
+  background: linear-gradient(135deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
 }
 
 .status-pill-detalle {
@@ -158,38 +158,43 @@ const volver = () => router.back();
 }
 
 .badge-servicio {
-  background: #f0fdf4;
-  color: #157347;
+  background: var(--k-apple-soft);
+  color: var(--k-forest-soft);
   padding: 5px 12px;
   border-radius: 8px;
   font-size: 0.75rem;
-  border: 1px solid #dcfce7;
+  border: 1px solid rgba(139, 207, 91, 0.35);
 }
 
 .huesped-card {
   transition: all 0.2s;
 }
 .huesped-card:hover {
-  border-color: #2ecc71 !important;
-  background-color: #f9fdfb;
+  border-color: var(--k-apple) !important;
+  background-color: rgba(139, 207, 91, 0.08);
 }
 
 .huesped-icon {
   width: 35px;
   height: 35px;
-  background: #e9ecef;
+  background: rgba(15, 59, 42, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #0f3b2a;
+  color: var(--k-forest);
 }
 
 .btn-kofan-primary {
-  background-color: #0f3b2a;
-  color: white;
+  background-color: var(--k-forest);
+  color: var(--k-cream);
   border: none;
   border-radius: 8px;
   font-weight: 600;
+}
+
+.btn-kofan-primary:hover {
+  background-color: var(--k-apple);
+  color: var(--k-forest);
 }
 </style>

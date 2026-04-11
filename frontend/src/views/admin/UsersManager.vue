@@ -121,7 +121,7 @@ onMounted(() => { cargarUsuarios(); });
         <p class="text-muted small">Administra los accesos de clientes y personal del hotel.</p>
       </div>
       <button class="btn btn-dark shadow-sm rounded-pill px-4" @click="abrirNuevo">
-        <i class="bi bi-person-plus-fill me-2"></i>
+        <font-awesome-icon icon="fa-solid fa-user-plus" class="me-2" />
         Nuevo Usuario
       </button>
     </div>
@@ -149,7 +149,7 @@ onMounted(() => { cargarUsuarios(); });
 
             <tr v-else-if="usuarios.length === 0">
                <td colspan="6" class="text-center py-5 text-muted">
-                 <i class="bi bi-person-x display-4 mb-3 d-block text-light"></i>
+                 <font-awesome-icon icon="fa-solid fa-ban" class="display-4 mb-3 d-block text-light" />
                  No se encontraron usuarios registrados.
                </td>
             </tr>
@@ -171,10 +171,11 @@ onMounted(() => { cargarUsuarios(); });
                     class="badge rounded-pill px-3 py-2 border" 
                     :class="user.role === USER_ROLES.ADMIN ? 'bg-dark text-white border-dark' : 'bg-light text-secondary'"
                   >
-                    <i 
-                      :class="user.role === USER_ROLES.ADMIN ? 'bi bi-shield-lock-fill text-success' : 'bi bi-person-fill text-secondary'" 
-                      class="me-1" 
-                    ></i>
+                    <font-awesome-icon 
+                      :icon="user.role === USER_ROLES.ADMIN ? 'fa-solid fa-user-shield' : 'fa-solid fa-user'" 
+                      class="me-1"
+                      :class="user.role === USER_ROLES.ADMIN ? 'text-success' : 'text-secondary'"
+                    />
                     {{ user.role === USER_ROLES.ADMIN ? 'Administrador' : 'Cliente' }}
                   </span>
                 </td>
@@ -184,7 +185,7 @@ onMounted(() => { cargarUsuarios(); });
                     class="badge rounded-pill px-3 py-2" 
                     :class="user.is_active !== false ? 'bg-success bg-opacity-10 text-success border border-success' : 'bg-danger bg-opacity-10 text-danger border border-danger'"
                   >
-                    <i :class="user.is_active !== false ? 'bi bi-check-circle-fill' : 'bi bi-x-circle-fill'" class="me-1"></i>
+                    <font-awesome-icon :icon="user.is_active !== false ? 'fa-solid fa-circle-check' : 'fa-solid fa-ban'" class="me-1" />
                     {{ user.is_active !== false ? 'Activo' : 'Suspendido' }}
                   </span>
                 </td>
@@ -197,7 +198,7 @@ onMounted(() => { cargarUsuarios(); });
                       style="width: 35px; height: 35px;"
                       title="Editar"
                     >
-                      <i class="bi bi-pencil-square fs-6"></i>
+                      <font-awesome-icon :icon="['far', 'pen-to-square']" class="fs-6" />
                     </button>
                     
                     <button 
@@ -207,7 +208,7 @@ onMounted(() => { cargarUsuarios(); });
                       :class="user.is_active !== false ? 'btn-outline-danger' : 'btn-outline-success'"
                       :title="user.is_active !== false ? 'Suspender' : 'Reactivar'"
                     >
-                      <i :class="user.is_active !== false ? 'bi bi-lock-fill fs-6' : 'bi bi-arrow-repeat fs-6'"></i>
+                      <font-awesome-icon :icon="user.is_active !== false ? 'fa-solid fa-lock' : 'fa-solid fa-rotate'" class="fs-6" />
                     </button>
                   </div>
                 </td>
@@ -226,14 +227,14 @@ onMounted(() => { cargarUsuarios(); });
             :disabled="paginaActual === 1 || cargando" 
             @click="cambiarPagina(-1)"
           >
-            <i class="bi bi-chevron-left me-1"></i> Anterior
+            <font-awesome-icon icon="fa-solid fa-chevron-left" class="me-1" /> Anterior
           </button>
           <button 
             class="btn btn-sm btn-white border bg-white" 
             :disabled="!hayMasRegistros || cargando" 
             @click="cambiarPagina(1)"
           >
-            Siguiente <i class="bi bi-chevron-right ms-1"></i>
+            Siguiente <font-awesome-icon icon="fa-solid fa-chevron-right" class="ms-1" />
           </button>
         </div>
       </div>

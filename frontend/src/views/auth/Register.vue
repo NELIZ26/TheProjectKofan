@@ -12,6 +12,13 @@ const auth = useAuthStore();
 const router = useRouter();
 const isLoading = ref(false);
 
+const getBrandColor = (token, fallback) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_FOREST = getBrandColor("--k-forest", "#0f3b2a");
+
 // 2. 🟢 ESTA FUNCIÓN ATRAPA LOS DATOS CUANDO EL FORMULARIO HACE EL "EMIT"
 const registrarCliente = async (datosDelFormulario) => {
   isLoading.value = true;
@@ -56,15 +63,15 @@ const registrarCliente = async (datosDelFormulario) => {
     const detail = error.response?.data?.detail || "";
 
     if (detail.toLowerCase().includes("correo")) {
-      Swal.fire({ icon: "warning", title: "Correo ya registrado", text: detail, confirmButtonColor: "#0f3b2a" });
+      Swal.fire({ icon: "warning", title: "Correo ya registrado", text: detail, confirmButtonColor: COLOR_FOREST });
     } else if (detail.toLowerCase().includes("documento")) {
-      Swal.fire({ icon: "warning", title: "Documento ya registrado", text: detail, confirmButtonColor: "#0f3b2a" });
+      Swal.fire({ icon: "warning", title: "Documento ya registrado", text: detail, confirmButtonColor: COLOR_FOREST });
     } else {
       Swal.fire({
         icon: "error",
         title: "Error al registrarse",
         text: detail || "No pudimos crear tu cuenta. Por favor intenta de nuevo.",
-        confirmButtonColor: "#0f3b2a",
+        confirmButtonColor: COLOR_FOREST,
       });
     }
   } finally {
@@ -76,13 +83,13 @@ const registrarCliente = async (datosDelFormulario) => {
 <template>
   <main class="auth-page py-5 mt-3">
     <div class="container d-flex justify-content-center">
-      
-      <div class="register-card shadow-lg row g-0">
+      <div class="register-card row g-0">
 
-        <div class="col-lg-4 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 sidebar-kofan text-white">
+        <div class="col-lg-4 d-none d-lg-flex flex-column justify-content-between p-4 p-xl-5 sidebar-kofan">
           <div>
-            <h2 class="handlee-font">Únete a la familia</h2>
-            <p class="small mb-0">Regístrate para vivir experiencias únicas en el corazón del Putumayo.</p>
+            <p class="sidebar-kicker mb-2">Comunidad Kofán</p>
+            <h2 class="sidebar-title">Únete a nuestra comunidad y gestiona con armonía</h2>
+            <p class="sidebar-copy mb-0">Crea tu cuenta para organizar cada experiencia con calma y claridad.</p>
           </div>
           
           <div class="text-center mt-auto pb-3">
@@ -90,11 +97,10 @@ const registrarCliente = async (datosDelFormulario) => {
           </div>
         </div>
 
-        <div class="col-lg-8 p-4 p-md-5 bg-white">
-          
+        <div class="col-lg-8 p-4 p-md-5 form-panel">
           <div class="text-center mb-4">
-            <h2 class="fw-bold verde-kofan mb-1">Crear Cuenta</h2>
-            <div class="divider mx-auto"></div>
+            <h2 class="register-title mb-2">Crear Cuenta</h2>
+            <p class="register-copy mb-0">Tu acceso al ecosistema Kofán comienza aquí.</p>
           </div>
 
           <FormularioRegistro 
@@ -104,9 +110,9 @@ const registrarCliente = async (datosDelFormulario) => {
           />
 
           <div class="col-12 text-center mt-3">
-            <p class="text-muted small mb-0">
+            <p class="helper-copy mb-0">
               ¿Ya tienes una cuenta?
-              <router-link :to="{ name: 'login' }" class="verde-kofan fw-bold text-decoration-none">Inicia Sesión</router-link>
+              <router-link :to="{ name: 'login' }" class="auth-link text-decoration-none">Inicia Sesión</router-link>
             </p>
           </div>
 
@@ -118,96 +124,134 @@ const registrarCliente = async (datosDelFormulario) => {
 </template>
 
 <style scoped>
-/* Fondo general */
 .auth-page {
-  background-color: #f8f9fa;
+  background-color: var(--k-cream);
   min-height: 100vh;
+  color: var(--k-forest);
 }
 
-/* Tarjeta principal - Bordes MUY redondos (25px) */
 .register-card {
-  border-radius: 25px; /* Aumentado significativamente */
-  overflow: hidden; /* Importante para que las columnas respeten el redondeo */
+  border-radius: 22px;
+  overflow: hidden;
   max-width: 950px;
   width: 100%;
+  background: var(--k-cream) !important;
+  border: 1px solid var(--k-border);
+  box-shadow: 0 12px 30px rgba(15, 59, 42, 0.08);
 }
 
-/* Sidebar verde */
 .sidebar-kofan {
-  background-color: #0f3b2a !important;
+  background-color: var(--k-sky-soft);
+  color: var(--k-forest);
+  border-right: 1px solid rgba(52, 152, 219, 0.16);
 }
 
-/* Logo */
+.sidebar-title,
+.register-title,
+:deep(.form-label) {
+  font-family: "Forum", serif;
+  color: var(--k-forest) !important;
+}
+
+.sidebar-kicker,
+.sidebar-copy,
+.register-copy,
+.helper-copy,
+.auth-link,
+:deep(.custom-input),
+:deep(.custom-input::placeholder),
+:deep(.form-control::placeholder),
+:deep(.form-select),
+:deep(.invalid-feedback),
+:deep(.btn-kofan),
+:deep(.input-group-text) {
+  font-family: "Handlee", cursive;
+}
+
 .kofan-logo-sidebar {
   max-height: 220px;
   object-fit: contain;
 }
 
-/* Botón - Bordes redondos (15px) */
-.btn-kofan {
-  background-color: #0f3b2a !important;
-  border-color: #0f3b2a !important;
-  color: white !important;
-  border-radius: 15px; /* Aumentado */
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
+.form-panel {
+  background: var(--k-cream);
 }
 
-.btn-kofan:hover {
-  background-color: #0a291d !important;
-  border-color: #0a291d !important;
+.sidebar-title {
+  font-size: 2rem;
+  line-height: 1.15;
 }
 
-.btn-kofan:disabled {
-  background-color: rgba(15, 59, 42, 0.65) !important;
-  border-color: rgba(15, 59, 42, 0.65) !important;
+.register-title {
+  font-size: 2.1rem;
+}
+
+.sidebar-copy,
+.register-copy,
+.helper-copy {
+  color: var(--k-muted);
+}
+
+.auth-link {
+  color: var(--k-forest);
+}
+
+:deep(.custom-input),
+:deep(.form-control),
+:deep(.form-select),
+:deep(.input-group-text) {
+  background-color: var(--k-cream) !important;
+  border-color: var(--k-border) !important;
+  color: var(--k-forest) !important;
+  border-radius: 18px !important;
+}
+
+:deep(.form-control:focus),
+:deep(.form-select:focus) {
+  border-color: var(--k-apple) !important;
+  box-shadow: 0 0 0 0.18rem rgba(139, 207, 91, 0.18) !important;
+}
+
+:deep(.custom-input::placeholder),
+:deep(.form-control::placeholder) {
+  color: rgba(15, 59, 42, 0.58) !important;
   opacity: 1;
 }
 
-/* Inputs y Selects - Bordes MUY redondos (18px) */
-.custom-input {
-  border-radius: 18px; /* Aumentado significativamente */
-  padding: 0.6rem 0.75rem;
-  font-size: 0.9rem;
-  border-color: #dee2e6;
+:deep(.btn-kofan) {
+  background-color: var(--k-forest) !important;
+  border-color: var(--k-forest) !important;
+  color: var(--k-cream) !important;
+  border-radius: 999px !important;
+  box-shadow: none !important;
+  font-weight: 700;
 }
 
-/* Label de input */
-.form-label {
+:deep(.btn-kofan:hover) {
+  background-color: var(--k-apple) !important;
+  border-color: var(--k-apple) !important;
+  color: var(--k-forest) !important;
+}
+
+:deep(.btn-kofan:disabled) {
+  background-color: rgba(139, 207, 91, 0.65) !important;
+  border-color: rgba(139, 207, 91, 0.65) !important;
+  opacity: 1;
+}
+
+:deep(.invalid-feedback) {
   font-size: 0.85rem;
 }
 
-/* Elementos visuales */
-.divider {
-  width: 50px;
-  height: 2px;
-  background-color: #0f3b2a;
-}
-
-.handlee-font {
-  font-family: 'Handlee', cursive;
-}
-
-.verde-kofan {
-  color: #0f3b2a !important;
-}
-
-/* Estilos de error para PasswordInput */
-:deep(.is-invalid input) {
-  border-color: #dc3545 !important;
-}
-:deep(.invalid-feedback) {
-  font-size: 0.8rem;
-}
-
-/* Para aplicar el mismo redondeo al componente PasswordInput */
 :deep(.custom-input-p .input-group) {
   border-radius: 18px !important;
   overflow: hidden !important;
 }
+
 :deep(.custom-input-p .form-control) {
   border-radius: 18px 0 0 18px !important;
 }
+
 :deep(.custom-input-p .input-group-text) {
   border-radius: 0 18px 18px 0 !important;
 }

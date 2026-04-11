@@ -84,18 +84,27 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 </template>
 
 <style scoped>
-/* AÑADIDO: Estilo para que el logo dinámico se vea bien */
 .footer-img-logo {
   max-height: 80px;
   object-fit: contain;
   margin-bottom: 20px;
 }
 
-/* --- TUS ESTILOS ORIGINALES INTACTOS --- */
 .kofan-footer {
-  background-color: #0f3b2a; /* Verde oscuro "Noche" */
-  color: #e0eee0;
+  background-color: var(--k-forest) !important;
+  color: rgba(255, 252, 248, 0.88);
   padding: 80px 20px 20px 20px;
+}
+
+.kofan-footer,
+.kofan-footer p,
+.kofan-footer span,
+.kofan-footer a {
+  color: rgba(255, 252, 248, 0.88);
+}
+
+.kofan-footer .text-white {
+  color: var(--k-cream) !important;
 }
 
 .footer-grid {
@@ -109,7 +118,7 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 .footer-logo {
   font-family: "Handlee", cursive;
   font-size: 2.5rem;
-  color: #fff;
+  color: var(--k-cream);
   margin-bottom: 20px;
 }
 
@@ -139,7 +148,8 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 }
 
 .social-icon:hover {
-  background: #1a5c43;
+  background: var(--k-forest-soft);
+  color: var(--k-cream);
   transform: translateY(-5px);
 }
 
@@ -159,7 +169,7 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   bottom: -8px;
   width: 40px;
   height: 2px;
-  background: #1a5c43;
+  background: var(--k-apple);
 }
 
 .footer-links ul {
@@ -174,14 +184,14 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
 .footer-links a {
   color: #e0eee0;
   text-decoration: none;
-  opacity: 0.7;
+  opacity: 0.85;
   transition: 0.3s;
 }
 
 .footer-links a:hover {
   opacity: 1;
   padding-left: 5px;
-  color: #82a994;
+  color: var(--k-apple);
 }
 
 .footer-contact p {
@@ -190,18 +200,18 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   gap: 15px;
   margin-bottom: 15px;
   font-size: 0.95rem;
-  opacity: 0.8;
+  opacity: 0.9;
 }
+
 .social-icon.whatsapp-icon:hover {
-  background: #25D366; /* Verde oficial de WhatsApp */
+  background: #25D366;
   color: white;
   transform: translateY(-5px);
 }
 
-/* --- BOTTOM --- */
 .footer-line {
   border: 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
   margin: 40px 0 20px 0;
 }
 
@@ -210,12 +220,11 @@ const base = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000';
   justify-content: space-between;
   align-items: center;
   font-size: 0.85rem;
-  opacity: 0.6;
+  opacity: 0.8;
   flex-wrap: wrap;
   gap: 10px;
 }
 
-/* Ajustes para móviles */
 @media (max-width: 768px) {
   .footer-grid {
     text-align: center;

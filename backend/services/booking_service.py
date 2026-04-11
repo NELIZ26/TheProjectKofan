@@ -120,7 +120,7 @@ async def update_booking_status_service(reserva_id: str, nuevo_estado: str, moti
                 titulo = "Actualización de Reserva"
                 mensaje = f"Tu reserva para '{nombre_hab}' ha cambiado de estado a: {estado_str}."
                 tipo = "primary"
-                icono = "bi-info-circle-fill"
+                icono = "fa-solid fa-circle-info"
                 
                 # Personalizamos el mensaje según el estado exacto
                 estado_lower = estado_str.lower()
@@ -129,25 +129,25 @@ async def update_booking_status_service(reserva_id: str, nuevo_estado: str, moti
                     titulo = "¡Reserva Confirmada!"
                     mensaje = f"Tu estancia en '{nombre_hab}' ha sido aprobada. ¡Te esperamos con los brazos abiertos!"
                     tipo = "success"
-                    icono = "bi-check-circle-fill"
+                    icono = "fa-solid fa-circle-check"
                     
                 elif estado_lower == "ocupada":
                     titulo = "¡Check-in Realizado!"
                     mensaje = f"Tu registro en '{nombre_hab}' fue exitoso. Esperamos que disfrutes al máximo tu descanso en la selva."
                     tipo = "info"
-                    icono = "bi-house-door-fill"
+                    icono = "fa-solid fa-house-chimney"
                     
                 elif estado_lower == "finalizada":
                     titulo = "¡Check-out Exitoso!"
                     mensaje = f"Tu cuenta de '{nombre_hab}' ha sido cerrada. Gracias por visitarnos, ¡esperamos verte pronto de regreso!"
                     tipo = "secondary"
-                    icono = "bi-check2-all"
+                    icono = "fa-solid fa-circle-check"
                     
                 elif estado_lower == "cancelada":
                     titulo = "Reserva Cancelada"
                     mensaje = f"Tu reserva para '{nombre_hab}' ha sido cancelada. Si crees que esto es un error, por favor contáctanos."
                     tipo = "danger"
-                    icono = "bi-x-circle-fill"
+                    icono = "fa-solid fa-ban"
                     
                 # Disparamos la creación de la notificación en la base de datos
                 await crear_notificacion_panel(

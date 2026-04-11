@@ -1,21 +1,18 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
-// --- IMPORTACIONES ESTÁTICAS ---
-import PublicLayout from "@/layouts/PublicLayout.vue";
-import LandingPortal from "@/views/public/LandingPortal.vue";
-import HomeView from "@/views/public/Home.vue";
-import AboutUs from "@/views/public/AboutUs.vue";
-import ContactUs from "@/views/public/ContactUs.vue";
-import PhotoGallery from "@/views/public/PhotosGallery.vue";
-import Catalog from "@/views/public/Catalog.vue";
-import ConfiguracionAdmin from '@/views/admin/config.vue';
+const PublicLayout = () => import("@/layouts/PublicLayout.vue");
+const LandingPortal = () => import("@/views/public/LandingPortal.vue");
+const HomeView = () => import("@/views/public/Home.vue");
+const AboutUs = () => import("@/views/public/AboutUs.vue");
+const ContactUs = () => import("@/views/public/ContactUs.vue");
+const PhotoGallery = () => import("@/views/public/PhotosGallery.vue");
+const Catalog = () => import("@/views/public/Catalog.vue");
+const ConfiguracionAdmin = () => import("@/views/admin/config.vue");
 
-
-// Layouts Privados
-import AppLayout from "@/layouts/AppLayout.vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
-import AuthLayout from "@/layouts/AuthLayout.vue";
+const AppLayout = () => import("@/layouts/AppLayout.vue");
+const AdminLayout = () => import("@/layouts/AdminLayout.vue");
+const AuthLayout = () => import("@/layouts/AuthLayout.vue");
 
 const routes = [
   // ZONA PÚBLICA
@@ -23,7 +20,7 @@ const routes = [
     path: "/",
     name: "landing-portal",
     component: LandingPortal, 
-    meta: { hideNavbar: true }
+    meta: { hideNav: true }
   },
 
   {
@@ -35,11 +32,6 @@ const routes = [
       { path: "gallery", name: "gallery", component: PhotoGallery },
       { path: "rooms", name: "rooms", component: Catalog },
       { path: "contact", name: "contact", component: ContactUs },
-      {
-        path: "servicios",
-        name: "servicios",
-        component: () => import("@/views/ServiceSelection.vue"),
-      }
     ],
   },
 
@@ -105,7 +97,7 @@ const routes = [
   {
     path: "/admin",
     component: AdminLayout,
-    meta: { requiresAuth: true, isAdmin: true },
+    meta: { requiresAuth: true, isAdmin: true, hideNav: true },
     children: [
       {
         path: "",
@@ -150,6 +142,7 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
+    meta: { hideNav: true },
     component: () => import("@/views/NotFound.vue"),
   },
 ];

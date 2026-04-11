@@ -21,6 +21,10 @@
         :habitacion="c" 
         @reservar="reserva.openModal($event)" 
       />
+
+      <div v-if="cabanasIndependientes.length === 0" class="text-center py-4 text-muted rounded-4 bg-white shadow-sm border">
+        Aún no hay cabañas visibles en esta categoría.
+      </div>
     </section>
 
     <section class="container pb-5" id="seccionHabitaciones">
@@ -35,6 +39,10 @@
         :habitacion="h" 
         @reservar="reserva.openModal($event)" 
       />
+
+      <div v-if="habitacionesMaloka.length === 0" class="text-center py-4 text-muted rounded-4 bg-white shadow-sm border">
+        Aún no hay habitaciones visibles en esta categoría.
+      </div>
     </section>
   </div>
 </template>
@@ -64,28 +72,50 @@ onMounted(() => {
   cargarCatalogo();
 });
 
+const normalizarTipoAlojamiento = (type = "") => {
+  const tipo = String(type)
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  if (["cabana", "cabanas", "cabin", "cabins"].includes(tipo) || tipo.includes("cab")) {
+    return "cabana";
+  }
+
+  if (["habitacion", "habitaciones", "individual", "family", "suite", "room", "rooms"].includes(tipo)) {
+    return "habitacion";
+  }
+
+  return "habitacion";
+};
+
+const alojamientosActivos = computed(() =>
+  allAccommodations.value.filter((a) => a.active !== false)
+);
+
 const cabanasIndependientes = computed(() =>
-  allAccommodations.value.filter((a) => a.type === "cabana" && a.active === true)
+  alojamientosActivos.value.filter((a) => normalizarTipoAlojamiento(a.type) === "cabana")
 );
 
 const habitacionesMaloka = computed(() =>
-  allAccommodations.value.filter((a) => a.type === "habitacion" && a.active === true)
+  alojamientosActivos.value.filter((a) => normalizarTipoAlojamiento(a.type) === "habitacion")
 );
 </script>
 
 <style scoped>
 .bg-light-kofan {
-  background-color: #f8fcf9;
+  background-color: rgba(139, 207, 91, 0.06);
   min-height: 100vh;
   margin-top: 60px;
 }
 .verde-kofan {
-  color: #0f3b2a;
+  color: var(--k-forest);
 }
 .linea-verde {
   height: 4px;
   width: 50px;
-  background-color: #2ecc71;
+  background-color: var(--k-apple);
   border-radius: 2px;
 }
 </style>

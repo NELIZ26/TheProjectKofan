@@ -36,9 +36,9 @@ const handleLogoUpload = async (event) => {
   try {
     const res = await uploadLogo(formData);
     config.value.logo_url = res.logo_url;
-    message.value = { text: 'Logo subido correctamente', type: 'success' };
+    message.value = { text: 'Perfecto, la imagen del hotel ya está actualizada.', type: 'success' };
   } catch (error) {
-    message.value = { text: 'Error al subir el logo', type: 'danger' };
+    message.value = { text: 'No pudimos actualizar la imagen por ahora. Inténtalo nuevamente.', type: 'danger' };
   }
 };
 
@@ -59,12 +59,12 @@ const handleSave = async () => {
   
   try {
     await saveConfig(config.value);
-    message.value = { text: 'Configuración actualizada con éxito', type: 'success' };
+    message.value = { text: 'Listo 🌿 Los cambios quedaron guardados correctamente.', type: 'success' };
   } catch (error) {
-    message.value = { text: 'Error al guardar los cambios', type: 'danger' };
+    message.value = { text: 'No pudimos guardar por ahora. Tus datos siguen seguros; intentemos nuevamente.', type: 'danger' };
   } finally {
     isSaving.value = false;
-    setTimeout(() => message.value.text = '', 3000);
+    setTimeout(() => message.value.text = '', 3500);
   }
 };
 
@@ -73,41 +73,44 @@ onMounted(loadSettings);
 
 <template>
   <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-      <h2 class="fw-bold verde-kofan"><i class="bi bi-gear-fill me-2"></i>Configuración del Sistema</h2>
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+      <div>
+        <p class="brand-handmade mb-1">Detalles que acompañan cada bienvenida</p>
+        <h2 class="fw-bold section-title text-kofan mb-0"><font-awesome-icon icon="fa-solid fa-hotel" class="me-2" />Configuración del Hotel</h2>
+      </div>
       <button 
         @click="handleSave" 
         class="btn btn-kofan px-4 shadow-sm" 
         :disabled="isSaving || isLoading"
       >
         <span v-if="isSaving" class="spinner-border spinner-border-sm me-2"></span>
-        <i v-else class="bi bi-cloud-check me-2"></i>
-        Guardar Cambios
+        <font-awesome-icon v-else icon="fa-solid fa-circle-check" class="me-2" />
+        Guardar cambios del hotel
       </button>
     </div>
 
-    <div v-if="message.text" :class="['alert alert-dismissible fade show shadow-sm', `alert-${message.type}`]" style="border-radius: 12px;">
+    <div v-if="message.text" :class="['alert alert-dismissible fade show shadow-sm alert-handmade', `alert-${message.type}`]" style="border-radius: 12px;">
       {{ message.text }}
     </div>
 
     <div v-if="isLoading" class="text-center py-5">
       <div class="spinner-border verde-kofan" role="status"></div>
-      <p class="mt-2 text-muted">Cargando parámetros...</p>
+      <p class="mt-2 text-muted brand-handmade">Preparando los detalles del hotel...</p>
     </div>
 
-    <div v-else class="card config-card shadow-sm border-0">
+    <div v-else class="card config-card eco-card shadow-sm border-0">
       <div class="card-body p-0">
         <div class="row g-0">
           <div class="col-md-3 border-end bg-light p-3 sidebar-config">
             <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
               <button class="nav-link active text-start mb-2" data-bs-toggle="pill" data-bs-target="#general">
-                <i class="bi bi-info-circle me-2"></i>General
+                <font-awesome-icon icon="fa-solid fa-circle-info" class="me-2" />Esencia del hotel
               </button>
               <button class="nav-link text-start mb-2" data-bs-toggle="pill" data-bs-target="#hotel">
-                <i class="bi bi-building me-2"></i>Operaciones
+                <font-awesome-icon icon="fa-solid fa-hotel" class="me-2" />Operación diaria
               </button>
               <button class="nav-link text-start mb-2" data-bs-toggle="pill" data-bs-target="#social">
-                <i class="bi bi-share me-2"></i>Redes Sociales
+                <font-awesome-icon icon="fa-solid fa-share-nodes" class="me-2" />Canales de contacto
               </button>
             </div>
           </div>
@@ -131,7 +134,7 @@ onMounted(loadSettings);
                       </div>
                       <input type="file" ref="fileInput" @change="handleLogoUpload" class="d-none" accept="image/*">
                       <button type="button" class="btn btn-outline-secondary btn-sm" style="border-radius: 10px;" @click="fileInput.click()">
-                        <i class="bi bi-camera me-2"></i>Cambiar Logo
+                        <font-awesome-icon icon="fa-solid fa-camera" class="me-2" />Cambiar Logo
                       </button>
                     </div>
                     
@@ -186,7 +189,7 @@ onMounted(loadSettings);
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Facebook URL</label>
                       <div class="position-relative">
-                        <i class="bi bi-facebook text-primary position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <font-awesome-icon :icon="['fab', 'facebook-f']" class="text-primary position-absolute top-50 translate-middle-y ms-3 fs-5" />
                         <input v-model="config.social_facebook" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://facebook.com/...">
                       </div>
                     </div>
@@ -194,7 +197,7 @@ onMounted(loadSettings);
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Instagram URL</label>
                       <div class="position-relative">
-                        <i class="bi bi-instagram text-danger position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <font-awesome-icon :icon="['fab', 'instagram']" class="text-danger position-absolute top-50 translate-middle-y ms-3 fs-5" />
                         <input v-model="config.social_instagram" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://instagram.com/...">
                       </div>
                     </div>
@@ -202,7 +205,7 @@ onMounted(loadSettings);
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">TikTok URL</label>
                       <div class="position-relative">
-                        <i class="bi bi-tiktok text-dark position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <font-awesome-icon :icon="['fab', 'tiktok']" class="text-dark position-absolute top-50 translate-middle-y ms-3 fs-5" />
                         <input v-model="config.social_tiktok" type="url" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="https://tiktok.com/@...">
                       </div>
                     </div>
@@ -210,7 +213,7 @@ onMounted(loadSettings);
                     <div class="col-md-12">
                       <label class="form-label fw-semibold small ms-1">Número de WhatsApp</label>
                       <div class="position-relative">
-                        <i class="bi bi-whatsapp text-success position-absolute top-50 translate-middle-y ms-3 fs-5"></i>
+                        <font-awesome-icon :icon="['fab', 'whatsapp']" class="text-success position-absolute top-50 translate-middle-y ms-3 fs-5" />
                         <input v-model="config.whatsapp_number" type="text" class="form-control custom-input ps-5 py-2" style="border-radius: 12px;" placeholder="Ej: 573224225925">
                       </div>
                       <div class="form-text small ms-2 mt-1 opacity-75">
@@ -231,9 +234,8 @@ onMounted(loadSettings);
 </template>
 
 <style scoped>
-/* Estilos adaptados a Kofán */
 .verde-kofan {
-  color: #0f3b2a !important;
+  color: var(--k-forest) !important;
 }
 
 .config-card {
@@ -243,53 +245,43 @@ onMounted(loadSettings);
 
 .sidebar-config {
   min-height: 400px;
+  background: linear-gradient(180deg, #f8fcfe 0%, var(--k-forest-soft) 100%);
 }
-
+ 
 .nav-pills .nav-link {
-  color: #495057;
-  border-radius: 12px;
+  color: var(--k-text);
+  border-radius: 14px;
   padding: 0.8rem 1rem;
   transition: all 0.2s ease;
+  border: 1px solid transparent;
 }
 
-/* Cambiamos el azul genérico de Bootstrap por el verde Kofán */
 .nav-pills .nav-link.active {
-  background-color: #0f3b2a;
-  color: white;
+  background-color: rgba(139, 207, 91, 0.22);
+  color: var(--k-forest);
+  border-color: rgba(139, 207, 91, 0.45);
 }
 
 .nav-pills .nav-link:hover:not(.active) {
-  background-color: #e9ecef;
+  background-color: rgba(255, 255, 255, 0.75);
+  border-color: #d6edf7;
 }
 
-/* Estilo de inputs redondos como en el registro */
 .custom-input {
   border-radius: 18px !important;
-  padding: 0.6rem 1rem;
+  padding: 0.65rem 1rem;
   font-size: 0.95rem;
-  border-color: #dee2e6;
+  border-color: var(--k-border);
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .custom-input:focus {
-  border-color: #0f3b2a;
-  box-shadow: 0 0 0 0.25rem rgba(15, 59, 42, 0.25);
-}
-
-/* Botón principal */
-.btn-kofan {
-  background-color: #0f3b2a !important;
-  border-color: #0f3b2a !important;
-  color: white !important;
-  border-radius: 15px;
-  transition: all 0.3s ease;
-}
-
-.btn-kofan:hover {
-  background-color: #0a291d !important;
+  border-color: var(--k-sky-strong);
+  box-shadow: 0 0 0 0.25rem rgba(143, 211, 255, 0.28);
 }
 
 .btn-kofan:disabled {
-  background-color: rgba(15, 59, 42, 0.65) !important;
-  border-color: rgba(15, 59, 42, 0.65) !important;
+  background-color: rgba(139, 207, 91, 0.55) !important;
+  border-color: rgba(139, 207, 91, 0.55) !important;
 }
 </style>

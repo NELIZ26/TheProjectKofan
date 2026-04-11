@@ -27,17 +27,17 @@ const imagenes = computed(() => {
 const fotoPrincipal = computed(() => imagenes.value[indiceFotoActiva.value]);
 
 const mapaIconos = {
-  "Aire Acondicionado": "bi bi-snow2",
-  "Ventilador": "bi bi-fan",
-  "Televisión": "bi bi-tv",
-  "Wifi": "bi bi-wifi",
-  "Baño Privado": "bi bi-droplet",
-  "Nevera / Minibar": "bi bi-cup-straw",
-  "Zonas Verdes": "bi bi-tree",
-  "Vista a la Selva": "bi bi-binoculars",
-  "Malla Catamarán": "bi bi-grid-3x3",
-  "Tina / Jacuzzi": "bi bi-water",
-  "Balcón": "bi bi-house-door"
+  "Aire Acondicionado": ["fas", "snowflake"],
+  "Ventilador": ["fas", "fan"],
+  "Televisión": ["fas", "tv"],
+  "Wifi": ["fas", "wifi"],
+  "Baño Privado": ["fas", "droplet"],
+  "Nevera / Minibar": ["fas", "martini-glass"],
+  "Zonas Verdes": ["fas", "tree"],
+  "Vista a la Selva": ["fas", "binoculars"],
+  "Malla Catamarán": ["fas", "table-cells-large"],
+  "Tina / Jacuzzi": ["fas", "hot-tub-person"],
+  "Balcón": ["fas", "door-open"]
 };
 
 const amenidadesSeguras = computed(() => props.habitacion.amenities || []);
@@ -82,15 +82,15 @@ const cerrarLightbox = () => { mostrarLightbox.value = false; };
           </div>
 
           <button v-if="imagenes.length > 1" @click.stop="anteriorFoto" class="btn-desplazador-fino position-absolute top-50 start-0 translate-middle-y ms-3 z-1">
-            <i class="bi bi-arrow-left-short fs-2"></i>
+            <font-awesome-icon :icon="['fas', 'chevron-left']" class="fs-4" />
           </button>
           
           <button v-if="imagenes.length > 1" @click.stop="siguienteFoto" class="btn-desplazador-fino position-absolute top-50 end-0 translate-middle-y me-3 z-1">
-            <i class="bi bi-arrow-right-short fs-2"></i>
+            <font-awesome-icon :icon="['fas', 'chevron-right']" class="fs-4" />
           </button>
 
           <div class="position-absolute bottom-0 end-0 m-3 z-1 lupa-icono pointer-cursor" @click="abrirLightbox">
-            <i class="bi bi-search fs-5 lupa-tono-suave"></i>
+            <font-awesome-icon :icon="['fas', 'magnifying-glass']" class="fs-5 lupa-tono-suave" />
           </div>
         </div>
 
@@ -103,12 +103,12 @@ const cerrarLightbox = () => { mostrarLightbox.value = false; };
               
               <div v-if="habitacion.num_cuartos || habitacion.tipo_camas" class="info-distribucion mt-2 d-flex align-items-center flex-wrap text-muted" style="font-size: 0.9rem;">
                 <span v-if="habitacion.num_cuartos" class="d-flex align-items-center">
-                  <i class="bi bi-door-open text-success opacity-75 me-1 fs-6"></i> 
+                  <font-awesome-icon :icon="['fas', 'door-open']" class="text-success opacity-75 me-1 fs-6" /> 
                   <span class="fw-medium">{{ habitacion.num_cuartos }} Hab.</span>
                 </span>
                 <span v-if="habitacion.num_cuartos && habitacion.tipo_camas" class="mx-2 opacity-50">•</span>
                 <span v-if="habitacion.tipo_camas" class="d-flex align-items-center">
-                  <i class="bi bi-moon-stars text-success opacity-75 me-1"></i> 
+                  <font-awesome-icon :icon="['fas', 'moon']" class="text-success opacity-75 me-1" /> 
                   <span>{{ habitacion.tipo_camas }}</span>
                 </span>
               </div>
@@ -118,7 +118,7 @@ const cerrarLightbox = () => { mostrarLightbox.value = false; };
               <div class="row row-cols-2 row-cols-md-3 g-3">
                 <template v-if="amenidadesSeguras.length > 0">
                   <div v-for="(amenidad, index) in amenidadesSeguras" :key="index" class="col amenidad-item">
-                    <i :class="[mapaIconos[amenidad] || 'bi bi-check']" class="icono-fino"></i>
+                    <font-awesome-icon :icon="mapaIconos[amenidad] || ['fas', 'check']" class="icono-fino" />
                     <span class="small">{{ amenidad }}</span>
                   </div>
                 </template>
@@ -138,7 +138,7 @@ const cerrarLightbox = () => { mostrarLightbox.value = false; };
               </div>
               <div>
                 <button @click="handleReservar" class="btn btn-reservar-pequeno">
-                  Reservar <i class="bi bi-arrow-right ms-1 icono-flecha"></i>
+                  Reservar <font-awesome-icon :icon="['fas', 'arrow-right']" class="ms-1 icono-flecha" />
                 </button>
               </div>
             </div>
@@ -154,14 +154,14 @@ const cerrarLightbox = () => { mostrarLightbox.value = false; };
         <img :src="fotoPrincipal" class="img-fluid rounded lightbox-image shadow-lg">
         
         <button v-if="imagenes.length > 1" @click="anteriorFoto" class="btn-lightbox-nav btn-lightbox-prev position-absolute top-50 start-0 translate-middle-y ms-3">
-          <i class="bi bi-chevron-left fs-2 text-white"></i>
+          <font-awesome-icon :icon="['fas', 'chevron-left']" class="fs-2 text-white" />
         </button>
         <button v-if="imagenes.length > 1" @click="siguienteFoto" class="btn-lightbox-nav btn-lightbox-next position-absolute top-50 end-0 translate-middle-y me-3">
-          <i class="bi bi-chevron-right fs-2 text-white"></i>
+          <font-awesome-icon :icon="['fas', 'chevron-right']" class="fs-2 text-white" />
         </button>
 
         <button @click="cerrarLightbox" class="position-absolute top-0 end-0 m-3 btn-close-lightbox border-0 bg-transparent">
-          <i class="bi bi-x-lg fs-4 text-white p-2 rounded-circle bg-dark bg-opacity-25 shadow"></i>
+          <font-awesome-icon :icon="['fas', 'xmark']" class="fs-4 text-white p-2 rounded-circle bg-dark bg-opacity-25 shadow" />
         </button>
       </div>
     </div>

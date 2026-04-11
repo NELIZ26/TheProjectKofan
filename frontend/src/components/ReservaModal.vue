@@ -84,7 +84,7 @@ const handleConfirmarReserva = async () => {
                 </div>
 
                 <div class="bg-white p-2 rounded-3 border text-start d-flex gap-2 shadow-sm align-items-center" style="border-color: #bbf7d0 !important;">
-                  <i class="bi bi-shield-check text-success fs-4"></i>
+                  <font-awesome-icon :icon="['fas', 'shield-halved']" class="tone-forest fs-4" />
                   <span style="font-size: 0.75rem; color: #4a4a4a; line-height: 1.3;">
                     <strong>Reserva segura:</strong> Por favor adjunta tu comprobante. Una vez lo envíes, bloquearemos tus fechas y verificaremos el pago para confirmarte.
                   </span>
@@ -113,7 +113,7 @@ const handleConfirmarReserva = async () => {
             </div>
 
             <div class="col-md-12 mt-3">
-              <label class="form-label-kofan text-success fw-bold"><i class="bi bi-camera me-1"></i> Adjuntar Comprobante de Pago</label>
+              <label class="form-label-kofan text-success fw-bold"><font-awesome-icon :icon="['fas', 'camera']" class="me-1 tone-forest" /> Adjuntar Comprobante de Pago</label>
               
               <div v-if="!store.form.comprobantePreview" 
                    class="border border-2 rounded-3 p-4 text-center bg-light transition-all hover-shadow" 
@@ -122,7 +122,7 @@ const handleConfirmarReserva = async () => {
                    @drop.prevent="store.handleFileUpload"
                    @click="$refs.fileInput.click()">
                 
-                <i class="bi bi-cloud-arrow-up fs-1 text-success mb-2"></i>
+                <font-awesome-icon :icon="['fas', 'cloud-arrow-up']" class="upload-drop-icon tone-forest mb-2" />
                 <h6 class="mb-1 fw-bold text-dark">Haz clic o arrastra tu comprobante aquí</h6>
                 <p class="text-muted small mb-0">Formatos aceptados: JPG, PNG o PDF (Opcional si pagas al llegar)</p>
                 
@@ -137,7 +137,7 @@ const handleConfirmarReserva = async () => {
                      style="max-height: 180px; object-fit: contain;" />
                 
                 <div v-else class="py-4">
-                  <i class="bi bi-file-earmark-pdf-fill text-danger" style="font-size: 4rem;"></i>
+                  <font-awesome-icon :icon="['fas', 'file-pdf']" class="pdf-preview-icon text-danger" />
                   <h6 class="mt-2 text-dark">{{ store.form.comprobante.name }}</h6>
                 </div>
 
@@ -146,7 +146,7 @@ const handleConfirmarReserva = async () => {
                         style="width: 35px; height: 35px;"
                         title="Quitar comprobante"
                         @click.stop="store.removerComprobante">
-                  <i class="bi bi-trash fs-6"></i>
+                  <font-awesome-icon :icon="['fas', 'trash']" />
                 </button>
               </div>
               
@@ -174,7 +174,7 @@ const handleConfirmarReserva = async () => {
                 style="color: #1d9e4c; font-weight: 400; font-size: 0.85rem; letter-spacing: 0.3px; transition: opacity 0.2s;"
                 onmouseover="this.style.opacity='0.7'"
                 onmouseout="this.style.opacity='1'">
-               <i class="bi bi-whatsapp align-middle me-1" style="font-size: 1rem; opacity: 0.8;"></i> 
+               <font-awesome-icon :icon="['fab', 'whatsapp']" class="contact-link-icon align-middle me-1" /> 
                ¿Tienes dudas? Escríbenos
              </a>
           </div>
@@ -325,6 +325,24 @@ const handleConfirmarReserva = async () => {
   background: #1a5c43;
   transform: translateY(-2px);
   box-shadow: 0 20px 25px -5px rgba(15, 59, 42, 0.4);
+}
+
+/* Tonos utilitarios para iconografía */
+.tone-forest {
+  color: #0f3b2a;
+}
+
+.upload-drop-icon {
+  font-size: 2.5rem;
+}
+
+.pdf-preview-icon {
+  font-size: 4rem;
+}
+
+.contact-link-icon {
+  font-size: 1rem;
+  opacity: 0.8;
 }
 
 /* 🟢 NUEVOS ESTILOS PARA EL CALENDARIO */

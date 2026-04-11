@@ -1,9 +1,16 @@
 <script setup>
-import { ref, computed, reactive, watch } from 'vue';
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue';
 import Swal from 'sweetalert2';
 import apiClient from "@/api/apiClient";
 import { DatePicker as VDatePicker } from 'v-calendar';
 import 'v-calendar/style.css';
+
+const getBrandColor = (token, fallback) =>
+  typeof window !== 'undefined'
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_FOREST = getBrandColor('--k-forest', '#0f3b2a');
 
 const props = defineProps({
   show: Boolean,
@@ -15,6 +22,15 @@ const emit = defineEmits(['close', 'reservaCreada']);
 const pasoActual = ref(1);
 const guardando = ref(false);
 const reservasOcupadas = ref([]); // Aquí guardaremos las reservas reales de la BD
+const minDate = ref(new Date());
+const columnasCalendario = ref(window.innerWidth >= 768 ? 2 : 1);
+
+const actualizarColumnas = () => {
+  columnasCalendario.value = window.innerWidth >= 768 ? 2 : 1;
+};
+
+onMounted(() => window.addEventListener('resize', actualizarColumnas));
+onUnmounted(() => window.removeEventListener('resize', actualizarColumnas));
 
 // Objeto reactivo para el rango seleccionado en el calendario
 const range = ref({
@@ -52,6 +68,17 @@ watch(range, (newRange) => {
 // Cargar fechas ocupadas cuando se abre el modal para una habitación
 watch(() => props.show, (newVal) => {
   if (newVal && props.habitacion) {
+    cargarFechasOcupadas();
+  }
+
+  if (!newVal) {
+    range.value = { start: null, end: null };
+    reservasOcupadas.value = [];
+  }
+});
+
+watch(() => props.habitacion, (newHabitacion) => {
+  if (props.show && newHabitacion) {
     cargarFechasOcupadas();
   }
 });
@@ -162,7 +189,7 @@ const crearReservaAdmin = async () => {
       title: 'Error de Datos',
       text: 'No se pudo detectar el ID de la cabaña. Por favor, presiona F12, ve a la Consola y envíame lo que dice "Habitación seleccionada".',
       icon: 'warning',
-      confirmButtonColor: "#0f3b2a"
+      confirmButtonColor: COLOR_FOREST
     });
     guardando.value = false;
     return; // Detenemos la función aquí, no molestamos a FastAPI
@@ -198,7 +225,7 @@ const crearReservaAdmin = async () => {
       title: '¡Reserva Confirmada!',
       text: 'La habitación ha sido bloqueada exitosamente.',
       icon: 'success',
-      confirmButtonColor: "#0f3b2a",
+      confirmButtonColor: COLOR_FOREST,
     });
     
     emit('reservaCreada');
@@ -221,7 +248,7 @@ const crearReservaAdmin = async () => {
       title: 'Validación Fallida',
       html: mensajeError,
       icon: 'error',
-      confirmButtonColor: "#0f3b2a"
+      confirmButtonColor: COLOR_FOREST
     });
   } finally {
     guardando.value = false;
@@ -229,9 +256,15 @@ const crearReservaAdmin = async () => {
 };
 const cerrar = () => {
   pasoActual.value = 1;
-  // Limpiamos rango y formulario
   range.value = { start: null, end: null };
-  Object.assign(formularioAdmin, { nombre_cliente: '', telefono: '', monto_total: null });
+  reservasOcupadas.value = [];
+  Object.assign(formularioAdmin, {
+    cliente_nombre: '',
+    cliente_email: '',
+    cliente_celular: '',
+    monto_total: null,
+    observaciones: ''
+  });
   emit('close');
 };
 </script>
@@ -258,15 +291,16 @@ const cerrar = () => {
 
           <div class="p-3 d-flex justify-content-center calendar-container">
             <VDatePicker
-                v-model.range="store.selectedDateRange" 
-                is-range
-                :min-date="store.minDate"
-                :disabled-dates="store.disabledDates"
-                color="green"
-                title-position="left"
-                :columns="columnasCalendario"
-                :trim-weeks="true" 
-              />
+              v-model.range="range"
+              is-range
+              :min-date="minDate"
+              :disabled-dates="reservasOcupadas"
+              :attributes="attributes"
+              color="green"
+              title-position="left"
+              :columns="columnasCalendario"
+              :trim-weeks="true"
+            />
           </div>
 
           <div class="p-3 bg-light border-top d-flex justify-content-between align-items-center">
@@ -360,16 +394,16 @@ const cerrar = () => {
 
 /* Clases de utilidad personalizadas */
 .bg-success-light {
-  background-color: #f1f8f5;
+  background-color: rgba(139, 207, 91, 0.12);
 }
 
 .hover-danger:hover {
-  background-color: #dc3545 !important;
-  color: white !important;
+  background-color: var(--k-danger) !important;
+  color: var(--k-offwhite) !important;
 }
 
 .hover-dark:hover {
-  color: #000 !important;
+  color: var(--k-forest) !important;
 }
 
 .form-label-kofan {
@@ -380,7 +414,7 @@ const cerrar = () => {
 /* Ajustes para el contenedor del calendario */
 .calendar-container :deep(.vc-container) {
   width: 100%;
-  --vc-accent-green: #0f3b2a; /* Color verde corporativo Kofán */
+  --vc-accent-green: var(--k-forest); /* Color verde corporativo Kofán */
 }
 
 .calendar-container :deep(.vc-pane-container) {

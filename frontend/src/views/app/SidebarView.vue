@@ -50,16 +50,16 @@ watch(route, () => {
 
     <nav class="nav flex-column gap-2">
       <router-link :to="{ name: 'account-profile' }" class="nav-link-kofan">
-        <i class="bi bi-person-vcard-fill me-3 fs-5 icon-kofan"></i> Mi Panel
+        <font-awesome-icon icon="fa-solid fa-id-card" class="me-3 fs-5 icon-kofan" /> Mi Panel
       </router-link>
       
       <router-link :to="{ name: 'account-bookings' }" class="nav-link-kofan">
-        <i class="bi bi-calendar-check-fill me-3 fs-5 icon-kofan"></i> Mis Reservas
+        <font-awesome-icon icon="fa-solid fa-calendar-check" class="me-3 fs-5 icon-kofan" /> Mis Reservas
       </router-link>
       
       <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan d-flex justify-content-between align-items-center">
         <div>
-          <i class="bi bi-bell-fill me-3 fs-5 icon-kofan transition-all" :class="avisosSinLeer > 0 ? 'text-warning' : ''"></i> 
+          <font-awesome-icon icon="fa-solid fa-bell" class="me-3 fs-5 icon-kofan transition-all" :class="avisosSinLeer > 0 ? 'text-warning' : ''" /> 
           Todos los Avisos
         </div>
         <span v-if="avisosSinLeer > 0" class="badge bg-warning text-dark rounded-pill shadow-sm">
@@ -70,15 +70,15 @@ watch(route, () => {
       <hr class="my-3 opacity-10">
 
       <router-link to="/" class="nav-link-kofan">
-        <i class="bi bi-house-door-fill me-3 fs-5 icon-kofan text-success"></i> Continuar Navegando
+        <font-awesome-icon icon="fa-solid fa-house-chimney" class="me-3 fs-5 icon-kofan text-success" /> Continuar Navegando
       </router-link>
 
       <router-link :to="{ name: 'account-settings' }" class="nav-link-kofan">
-        <i class="bi bi-gear-fill me-3 fs-5 icon-kofan"></i> Configuración
+        <font-awesome-icon icon="fa-solid fa-user-gear" class="me-3 fs-5 icon-kofan" /> Configuración
       </router-link>
 
       <a href="#" @click.prevent="handleLogout" class="nav-link-kofan logout-link">
-        <i class="bi bi-box-arrow-left me-3 fs-5 text-danger"></i> Salir
+        <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="me-3 fs-5 text-danger" /> Salir
       </a>
     </nav>
   </aside>
@@ -86,10 +86,10 @@ watch(route, () => {
 
 <style scoped>
 .sidebar-kofan {
-  background-color: #ffffff;
+  background-color: var(--k-offwhite);
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid #eee;
+  border: 1px solid var(--k-border);
   min-height: 50vh; /* Para que no se vea tan cortita */
 }
 
@@ -109,21 +109,21 @@ watch(route, () => {
 }
 
 .nav-link-kofan:hover {
-  background-color: #f0fdf4;
-  color: #0f3b2a;
+  background-color: var(--k-apple-soft);
+  color: var(--k-forest);
 }
 
 /* Estilo para la ruta activa */
 /* Reemplaza el .router-link-active viejo por este */
 .router-link-active {
-  background-color: #eafaf1 !important; /* Verde muy clarito */
-  color: #0f3b2a !important; /* Texto verde Kofán */
+  background-color: rgba(139, 207, 91, 0.16) !important;
+  color: var(--k-forest) !important;
   font-weight: 700;
 }
 
 .logout-link:hover {
-  background-color: #fff1f1;
-  color: #dc3545;
+  background-color: var(--k-danger-soft);
+  color: var(--k-danger);
 }
 
 .transition-all {

@@ -13,5 +13,5 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7
 
 # --- ARCHIVOS ESTÁTICOS ---
-UPLOAD_DIR = os.path.join(BASE_DIR, "static", "images")
+UPLOAD_DIR = os.path.join(BASE_DIR, "static", "uploads")
 ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"]

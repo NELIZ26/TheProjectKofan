@@ -30,6 +30,18 @@ const cargarAvisosRecientes = async () => {
   }
 };
 
+const resolverIconoAviso = (icono) => {
+  const valor = String(icono || '').toLowerCase();
+
+  if (valor.includes('check')) return 'fa-solid fa-circle-check';
+  if (valor.includes('info')) return 'fa-solid fa-circle-info';
+  if (valor.includes('house') || valor.includes('door')) return 'fa-solid fa-house-chimney';
+  if (valor.includes('x') || valor.includes('ban') || valor.includes('cancel')) return 'fa-solid fa-ban';
+  if (valor.includes('bell')) return 'fa-solid fa-bell';
+
+  return 'fa-solid fa-bell';
+};
+
 // 🟢 Ejecutar al cargar la pantalla
 onMounted(() => {
   cargarAvisosRecientes();
@@ -47,21 +59,21 @@ onMounted(() => {
       
       <div class="card-body p-4 p-md-5 position-relative z-1">
         <span class="badge bg-white text-success rounded-pill mb-3 px-3 py-2 shadow-sm border border-success-subtle">
-          <i class="bi bi-star-fill text-warning me-1"></i> {{ formData.role === 'admin' ? 'Administrador' : 'Cliente Kofán' }}
+          <font-awesome-icon icon="fa-solid fa-star" class="text-warning me-1" /> {{ formData.role === 'admin' ? 'Administrador' : 'Cliente Kofán' }}
         </span>
         <h3 class="fw-bold mb-2 verde-kofan">{{ formData.full_name || 'Usuario Kofán' }}</h3>
         
         <div class="d-flex flex-wrap gap-4 mt-3 verde-kofan opacity-75 fw-medium">
-          <span><i class="bi bi-envelope-fill me-2"></i> {{ formData.email }}</span>
-          <span><i class="bi bi-person-vcard-fill me-2"></i> {{ formData.number_document }}</span>
-          <span v-if="formData.phone"><i class="bi bi-telephone-fill me-2"></i> {{ formData.phone }}</span>
+          <span><font-awesome-icon icon="fa-solid fa-envelope" class="me-2" /> {{ formData.email }}</span>
+          <span><font-awesome-icon icon="fa-solid fa-id-card" class="me-2" /> {{ formData.number_document }}</span>
+          <span v-if="formData.phone"><font-awesome-icon icon="fa-solid fa-phone" class="me-2" /> {{ formData.phone }}</span>
         </div>
       </div>
     </div>
 
     <div class="mt-5">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="fw-bold text-dark"><i class="bi bi-bell-fill text-muted me-2"></i> Avisos Recientes</h5>
+        <h5 class="fw-bold text-dark"><font-awesome-icon icon="fa-solid fa-bell" class="text-muted me-2" /> Avisos Recientes</h5>
         <router-link :to="{ name: 'account-notifications' }" class="btn btn-sm btn-link text-decoration-none text-success fw-bold">
           Ver todos
         </router-link>
@@ -69,14 +81,14 @@ onMounted(() => {
 
       <div class="d-flex flex-column gap-3">
         <div v-if="avisosRecientes.length === 0" class="text-center py-4 bg-white rounded-4 shadow-sm border">
-          <i class="bi bi-bell-slash text-muted fs-1 mb-2 d-block"></i>
+          <font-awesome-icon icon="fa-solid fa-bell-slash" class="text-muted fs-1 mb-2 d-block" />
           <p class="text-muted small mb-0">No tienes alertas nuevas.</p>
         </div>
 
         <div v-for="aviso in avisosRecientes" :key="aviso.id" class="card border-0 shadow-sm rounded-4 aviso-card" :class="`border-start border-4 border-${aviso.colorTheme}`">
           <div class="card-body p-3 d-flex align-items-center gap-3">
             <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0" :class="`bg-${aviso.colorTheme} bg-opacity-10 text-${aviso.colorTheme}`" style="width: 45px; height: 45px;">
-              <i :class="aviso.icono" class="fs-5"></i>
+              <font-awesome-icon :icon="resolverIconoAviso(aviso.icono)" class="fs-5" />
             </div>
             <div class="flex-grow-1">
               <div class="d-flex justify-content-between align-items-center">
@@ -93,12 +105,12 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.verde-kofan { color: #0f3b2a !important; }
+.verde-kofan { color: var(--k-forest) !important; }
 
 /* 🟢 Estilo exacto para el fondo verde suave */
 .tarjeta-kofan-suave {
-  background-color: #eafaf1; /* Verde menta muy suave */
-  border: 1px solid #d4ebd9 !important; /* Borde un poco más oscuro para darle profundidad */
+  background-color: rgba(139, 207, 91, 0.12);
+  border: 1px solid var(--k-border) !important;
 }
 
 .aviso-card { transition: transform 0.2s ease; background-color: white; }

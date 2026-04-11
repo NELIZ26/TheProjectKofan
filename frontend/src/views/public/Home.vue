@@ -55,10 +55,10 @@ onMounted(async () => {
               x2="110%"
               y2="0%"
             >
-              <stop offset="0%" style="stop-color: #1a5c43; stop-opacity: 1" />
+              <stop offset="0%" style="stop-color: var(--k-forest-soft); stop-opacity: 1" />
               <stop
                 offset="100%"
-                style="stop-color: #0f3b2a; stop-opacity: 1"
+                style="stop-color: var(--k-forest); stop-opacity: 1"
               />
             </linearGradient>
           </defs>
@@ -114,15 +114,6 @@ onMounted(async () => {
             <p>Habitaciones diseñadas para el bienestar físico y espiritual.</p>
           </div>
         </div>
-      </div>
-
-      <div class="custom-shape-divider-botto arco-transicion">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path
-            d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#fffdfc"
-          ></path>
-        </svg>
       </div>
     </section>
 
@@ -229,7 +220,7 @@ onMounted(async () => {
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#fffdfc"
+            fill="var(--k-cream)"
           ></path>
         </svg>
       </div>
@@ -240,7 +231,7 @@ onMounted(async () => {
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#1a5c43"
+            fill="var(--k-forest-soft)"
           ></path>
         </svg>
       </div>
@@ -287,6 +278,20 @@ onMounted(async () => {
 
 <style scoped>
 /* --- GLOBALES Y HOME --- */
+main {
+  background: var(--k-cream);
+  color: var(--k-forest-soft);
+  font-family: "Forum", serif;
+}
+
+button,
+.btn,
+.subtitulo,
+.subtitulo-blanco,
+.btn-whatsapp {
+  font-family: "Handlee", cursive;
+}
+
 #home {
   position: relative;
   display: flex;
@@ -296,7 +301,7 @@ onMounted(async () => {
   gap: 30px;
   min-height: 90vh;
   padding: 110px 50px 100px 50px;
-  background: linear-gradient(135deg, #0f3b2a 0%, #1a5c43 100%);
+  background: linear-gradient(135deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
   overflow: hidden;
 }
 
@@ -321,7 +326,7 @@ onMounted(async () => {
   /* Controla qué tan pronunciada es la curva */
   transform: rotate(180deg);
   /* Voltea la curva para que quede hacia abajo */
-  background: #fffdfc;
+  background: var(--k-cream);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -346,7 +351,7 @@ onMounted(async () => {
   /* Controla qué tan pronunciada es la curva */
   transform: rotate(180deg);
   /* Voltea la curva para que quede hacia abajo */
-  background: #1a5c43;
+  background: var(--k-forest-soft);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -354,18 +359,31 @@ onMounted(async () => {
   flex: 1;
   color: white;
   animation: slideInLeft 1.2s ease-out;
+  position: relative;
+  z-index: 2;
 }
 
 .home-content h1 {
   font-size: 3.5rem;
-  font-family: "Handlee", cursive;
+  font-family: "Forum", serif;
   font-weight: 700;
+  color: var(--k-cream) !important;
+  line-height: 1.1;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.home-content p {
+  color: rgba(255, 252, 248, 0.94) !important;
+  max-width: 640px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 .home-image {
   flex: 1;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .img {
@@ -373,6 +391,39 @@ onMounted(async () => {
   max-height: 500px;
   border-radius: 20px;
   animation: float 6s ease-in-out infinite;
+}
+
+.home-content .btn-primary {
+  background: var(--k-apple);
+  border-color: var(--k-apple);
+  color: var(--k-forest);
+  border-radius: 999px;
+  padding: 0.8rem 1.6rem;
+  box-shadow: 0 10px 24px rgba(139, 207, 91, 0.2);
+}
+
+.home-content .btn-primary:hover {
+  background: var(--k-cream);
+  border-color: var(--k-cream);
+  color: var(--k-forest);
+}
+
+.galeria-preview {
+  background-color: var(--k-cream);
+  /* Fondo suave para contraste */
+  padding: 60px 20px;
+}
+
+.galeria-preview .btn-outline-success {
+  border-color: var(--k-forest-soft);
+  color: var(--k-cream);
+  border-radius: 999px;
+  background: var(--k-forest-soft);
+}
+
+.galeria-preview .btn-outline-success:hover {
+  background: var(--k-apple);
+  color: var(--k-forest);
 }
 
 /* --- SECCIÓN EXPERIENCIAS --- */
@@ -386,14 +437,14 @@ onMounted(async () => {
 .titulo-seccion {
   font-family: "Handlee", cursive;
   font-size: 2.8rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin: 15px 0;
 }
 
 .subtitulo {
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   font-weight: 700;
 }
 
@@ -414,13 +465,13 @@ onMounted(async () => {
 .icono-wrapper {
   width: 80px;
   height: 80px;
-  background-color: #f0f7f4;
+  background-color: var(--k-apple-soft);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   font-size: 2rem;
 }
 
@@ -433,8 +484,8 @@ onMounted(async () => {
   align-items: center;
   padding: 100px 20px 150px 20px;
   /* Dale mucho espacio abajo para que se vea */
-  background: #1a5c43;
-  color: white;
+  background: var(--k-forest-soft);
+  color: var(--k-cream);
   z-index: 1;
   /* Crea un contexto de apilamiento */
 }
@@ -475,7 +526,7 @@ onMounted(async () => {
 }
 
 .subtitulo-blanco {
-  color: #82a994;
+  color: var(--k-apple-light);
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 2px;
@@ -564,8 +615,8 @@ onMounted(async () => {
 
 .kofan-btn-primary {
   flex: 1;
-  background: #1a5c43;
-  color: white;
+  background: var(--k-forest-soft);
+  color: var(--k-cream);
   border: none;
   padding: 10px;
   border-radius: 20px;
@@ -590,8 +641,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100px 20px 150px 20px;
-  background-color: #fffdfc;
+  padding: 20px 20px 150px 20px;
+  background-color: var(--k-cream);
   /* Fondo suave para contraste */
   z-index: 1;
   /* Crea un contexto de apilamiento para el divisor */
@@ -620,7 +671,7 @@ onMounted(async () => {
   /* Que ocupe todo el contenedor de 100px */
   transform: rotate(180deg);
   /*fill: #4c2b1a; /* El color de la sección de abajo (Información) */
-  background: #1a5c43;
+  background: var(--k-forest-soft);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -636,7 +687,7 @@ onMounted(async () => {
   background: white;
   padding: 40px;
   border-radius: 30px;
-  border-left: 6px solid #1a5c43;
+  border-left: 6px solid var(--k-forest-soft);
   /* Detalle de marca en el borde */
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -652,13 +703,13 @@ onMounted(async () => {
 
 .info-icon {
   font-size: 1.6rem;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
 }
 
 .info-header h3 {
   font-family: "Handlee", cursive;
   font-size: 1.8rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin: 0;
 }
 
@@ -725,10 +776,10 @@ onMounted(async () => {
 /* --- SECCIÓN UBICACIÓN --- */
 .ubicacion {
   position: relative;
-  background-color: #1a5c43;
+  background-color: var(--k-forest-soft);
   /* Volvemos al verde Kofán */
   padding: 100px 20px;
-  color: white;
+  color: var(--k-cream);
   margin-top: -1px;
   /* Evita grietas visuales */
 }
@@ -790,7 +841,7 @@ onMounted(async () => {
 
 .icon-llegada {
   font-size: 1.5rem;
-  color: #82a994;
+  color: var(--k-apple-light);
 }
 
 .item-llegada p {
@@ -864,7 +915,7 @@ onMounted(async () => {
   }
 
   .kofan-card-title {
-    color: #0f3b2a;
+    color: var(--k-forest);
     margin-bottom: 10px;
   }
 
@@ -879,8 +930,8 @@ onMounted(async () => {
   }
 
   .kofan-btn-icon {
-    background: #eee;
-    color: #1a5c43;
+    background: rgba(15, 59, 42, 0.08);
+    color: var(--k-forest-soft);
   }
 
   .kofan-card-details {
@@ -972,14 +1023,14 @@ onMounted(async () => {
 .preview-item:hover .preview-overlay { opacity: 1; }
 
 .preview-item-cta {
-  background: #0f3b2a;
+  background: var(--k-forest);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cta-content {
-  color: #c8e6c9;
+  color: var(--k-apple-soft);
   text-align: center;
   transition: transform 0.3s;
 }

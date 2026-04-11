@@ -1,6 +1,6 @@
 <script setup>
 import { useAuthStore } from "@/stores/auth";
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue";
 import AdminHeader from "@/views/admin/AdminHeader.vue";
 import { useRouter } from "vue-router";
 import { getUserProfile } from "@/services/authServices";
@@ -8,15 +8,9 @@ import { getUserProfile } from "@/services/authServices";
 const auth = useAuthStore();
 const router = useRouter();
 
-const user = ref()
-const errorMessage = ref("")
-const isLoading = ref(false)
-
-const sidebarCollapsed = ref(false)
-
-const toggleSidebar = () => {
-  sidebarCollapsed.value = !sidebarCollapsed.value
-}
+const user = ref();
+const errorMessage = ref("");
+const isLoading = ref(false);
 
 const loadProfile = async () => {
   try {
@@ -24,11 +18,7 @@ const loadProfile = async () => {
     user.value = profile;
   } catch (error) {
     errorMessage.value = "Sesión expirada o inválida";
-
-    // Limpieza controlada
     auth.logout();
-
-    // Redirección usando router (NO window.location)
     router.push("/auth/login");
   } finally {
     isLoading.value = false;
@@ -37,7 +27,7 @@ const loadProfile = async () => {
 
 const handleLogout = () => {
   auth.logout();
-  router.push({ name: "hospedaje-home" }); 
+  router.push({ name: "hospedaje-home" });
 };
 
 onMounted(() => {
@@ -47,51 +37,51 @@ onMounted(() => {
 
 <template>
   <div class="admin-wrapper d-flex">
-    <aside class="admin-sidebar bg-dark text-white p-3 shadow">
-      <div class="text-center mb-4">
-        <img src="@/img/Kofan.png" width="100" alt="Logo" class="filter-white" />
-        <h5 class="mt-2 fw-bold text-success">Kofán Admin</h5>
+    <aside class="admin-sidebar p-3 shadow-sm">
+      <div class="text-center mb-4 sidebar-brand">
+        <img src="@/img/Kofan.png" width="150" alt="Logo" class="brand-logo" />
+        <p class="brand-handmade mt-2 mb-1 text-white">Hospitalidad Serena</p>
+        <h5 class="section-title mb-0 text-white">Kofán Admin</h5>
       </div>
 
       <nav class="nav flex-column gap-2">
+        <small class="nav-group-label">Operación diaria</small>
+
         <router-link :to="{ name: 'admin-dashboard' }" class="nav-link-admin">
-          <i class="fa fa-chart-line me-2"></i> <span>Dashboard</span>
-        </router-link>
-        <router-link :to="{ name: 'admin-rooms' }" class="nav-link-admin">
-          <i class="fa fa-bed me-2"></i> <span>Habitaciones</span>
-        </router-link>
-        <router-link :to="{ name: 'admin-users' }" class="nav-link-admin">
-          <i class="fa fa-users me-2"></i> <span>Usuarios</span>
+          <font-awesome-icon icon="fa-solid fa-seedling" class="me-2" /> <span>Inicio</span>
         </router-link>
         <router-link :to="{ name: 'admin-bookings' }" class="nav-link-admin">
-          <i class="fa fa-calendar-check me-2"></i> <span>Reservas</span>
+          <font-awesome-icon icon="fa-solid fa-calendar-check" class="me-2" /> <span>Reservas</span>
         </router-link>
+        <router-link :to="{ name: 'admin-rooms' }" class="nav-link-admin">
+          <font-awesome-icon icon="fa-solid fa-bed" class="me-2" /> <span>Habitaciones</span>
+        </router-link>
+        <router-link :to="{ name: 'admin-users' }" class="nav-link-admin">
+          <font-awesome-icon icon="fa-solid fa-users" class="me-2" /> <span>Usuarios</span>
+        </router-link>
+
+        <small class="nav-group-label mt-3">Apoyo y ajustes</small>
+
         <router-link :to="{ name: 'admin-gallery' }" class="nav-link-admin">
-          <i class="fa fa-images me-2"></i> <span>Galería</span>
+          <font-awesome-icon icon="fa-solid fa-images" class="me-2" /> <span>Galería</span>
         </router-link>
-        
         <router-link :to="{ name: 'admin-config' }" class="nav-link-admin">
-          <i class="fa fa-cog me-2"></i> <span>Configuración</span>
+          <font-awesome-icon icon="fa-solid fa-hotel" class="me-2" /> <span>Configuración</span>
         </router-link>
-        
-        <hr class="border-secondary opacity-25">
-        
-        <button @click="handleLogout" class="btn btn-outline-danger w-100 mt-2 border-0 shadow-sm">
-          <i class="fa fa-sign-out-alt me-2"></i> <span>Salir</span>
+
+        <button
+          @click="handleLogout"
+          class="btn btn-logout-soft w-100 mt-3 shadow-sm"
+        >
+          <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="me-2" /> <span>Salir</span>
         </button>
       </nav>
     </aside>
 
-    <div class="main-container flex-grow-1 bg-light">
+    <div class="main-container flex-grow-1">
       <AdminHeader />
-      
-      <main class="p-4">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-           <h3 class="text-dark fw-bold text-capitalize">
-             {{ $route.name?.replace('admin-', '') }}
-           </h3>
-        </div>
 
+      <main class="p-4 p-lg-4">
         <router-view></router-view>
       </main>
     </div>
@@ -101,56 +91,112 @@ onMounted(() => {
 <style scoped>
 .admin-wrapper {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--k-cream);
 }
 
 .admin-sidebar {
-  width: 260px;
+  width: 272px;
   min-height: 100vh;
   position: sticky;
   top: 0;
   z-index: 1000;
+  background: linear-gradient(180deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
+  border-right: 1px solid rgba(255, 252, 248, 0.08);
+}
+
+.brand-logo {
+  filter: drop-shadow(0 8px 18px rgba(15, 59, 42, 0.18));
 }
 
 .main-container {
   display: flex;
   flex-direction: column;
+  background: var(--k-offwhite);
+}
+
+.nav {
+  color: var(--k-cream);
+}
+
+.nav-group-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 252, 248, 0.7);
+  padding: 0 0.45rem;
 }
 
 .nav-link-admin {
-  color: #adb5bd;
+  color: rgba(255, 252, 248, 0.92);
   text-decoration: none;
   padding: 12px 15px;
-  border-radius: 10px;
+  border-radius: 14px;
   transition: all 0.3s ease;
   font-weight: 500;
+  border: 1px solid transparent;
 }
 
 .nav-link-admin:hover {
-  background: rgba(46, 204, 113, 0.1);
-  color: #2ecc71;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--k-cream);
+  border-color: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 10px 22px rgba(15, 59, 42, 0.12);
+  transform: translateX(2px);
 }
 
 .router-link-active {
-  background: #0f3b2a !important;
-  color: white !important;
-  box-shadow: 0 4px 12px rgba(15, 59, 42, 0.3);
+  background: var(--k-apple-soft) !important;
+  color: var(--k-forest) !important;
+  border-color: rgba(139, 207, 91, 0.55);
+  box-shadow: 0 8px 20px rgba(139, 207, 91, 0.18);
 }
 
+.page-intro {
+  padding-left: 0.25rem;
+}
 
+.btn-logout-soft {
+  background-color: var(--k-danger-soft);
+  color: var(--k-danger);
+  border: 1px solid var(--k-danger-border);
+  font-family: 'Handlee', cursive;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-logout-soft:hover {
+  background-color: var(--k-danger-strong);
+  color: var(--k-offwhite);
+  border-color: var(--k-danger);
+  box-shadow: 0 4px 12px rgba(224, 49, 49, 0.25) !important;
+}
+
+.btn-logout-soft:hover :deep(svg) {
+  transform: translateX(3px);
+  transition: transform 0.2s ease;
+}
 
 @media (max-width: 768px) {
   .admin-sidebar {
-    width: 85px;
+    width: 88px;
   }
-  .admin-sidebar span, .admin-sidebar h5 {
+
+  .admin-sidebar span,
+  .admin-sidebar h5,
+  .admin-sidebar .brand-handmade,
+  .nav-group-label {
     display: none;
   }
+
   .nav-link-admin {
     text-align: center;
     padding: 15px;
   }
-  .nav-link-admin i {
+
+  .nav-link-admin :deep(svg) {
     margin: 0 !important;
     font-size: 1.2rem;
   }

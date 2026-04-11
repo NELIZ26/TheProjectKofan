@@ -1,7 +1,3 @@
-/* 1. Importamos la fuente moderna desde Google Fonts al inicio del archivo */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
-
-/* Tus fuentes locales originales (las conservamos) */
 @font-face {
   font-family: "Forum";
   src: url(../fonts/Forum-Regular.ttf);
@@ -9,6 +5,7 @@
   font-style: normal;
   font-display: swap;
 }
+
 @font-face {
   font-family: "Handlee";
   src: url(../fonts/Handlee-Regular.ttf);
@@ -17,51 +14,155 @@
   font-display: swap;
 }
 
-/* 🟢 APLICAMOS EL CAMBIO AL CONTENEDOR PRINCIPAL */
-body, html, #page {
-  /* Cambiamos "Forum" por "Poppins" */
-  font-family: 'Poppins', sans-serif !important; 
-  /* Te sugiero 16px. Como Poppins es más ancha, 18px se puede ver gigante */
-  font-size: 16px; 
-  background: #fffdfc !important;
-  /* Suaviza los bordes de la letra */
-  -webkit-font-smoothing: antialiased; 
+:root {
+  --k-apple: #8BCF5B;
+  --k-apple-light: #b4e28e;
+  --k-apple-soft: rgba(139, 207, 91, 0.18);
+  --k-forest: #0f3b2a;
+  --k-forest-soft: #1a5c43;
+  --k-cream: #fffcf8;
+  --k-sky: #3498db;
+  --k-sky-light: #8fd3ff;
+  --k-sky-soft: rgba(52, 152, 219, 0.14);
+  --k-sand: #d4af37;
+  --k-sand-soft: rgba(212, 175, 55, 0.16);
+  --k-border: #e1d7cc;
+  --k-text: #35524a;
+  --k-muted: #6b7b74;
+  --k-offwhite: #ffffff;
+  --k-sky-strong: #2f86c7;
+  --k-danger: #c92a2a;
+  --k-danger-soft: #fff1f0;
+  --k-danger-border: #ffcfcc;
+  --k-danger-strong: #e03131;
+  --k-shadow: 0 12px 28px rgba(15, 59, 42, 0.08);
 }
 
-#content {
-  width: 100%;
-  height: 100%;
-  padding: 0;
+* {
   margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
-/* Para que los títulos tengan ese peso profesional de la imagen que me enviaste */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 600;
-  letter-spacing: -0.3px;
+html,
+body,
+#app,
+#page {
+  min-height: 100%;
 }
 
-
-.btn-round-action {
-  width: 36px !important;  /* Tamaño uniforme y cómodo */
-  height: 36px !important;
-  border-radius: 50% !important; /* Círculo perfecto */
-  padding: 0 !important;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-width: 1px !important; /* 🟢 CLAVE: Borde fino, no grueso */
-  background-color: transparent !important; /* Transparente inicialmente */
-  transition: all 0.2s ease-in-out;
+body {
+  font-family: "Forum", serif;
+  line-height: 1.5;
+  background: var(--k-cream);
+  color: var(--k-forest);
 }
 
-/* Efecto hover suave al pasar el mouse */
-.btn-round-action:hover {
-  transform: translateY(-2px); /* Ligero levante */
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08); /* Sombra muy sutil */
+#app,
+#page {
+  background: var(--k-cream);
 }
 
-/* Ajuste fino para el icono interno */
-.btn-round-action .fa-solid, .btn-round-action .fa-regular {
-  font-size: 0.9rem; /* Icono sutil, no gigante */
+.section-title {
+  font-family: "Forum", serif;
+  color: var(--k-forest);
+  letter-spacing: -0.02em;
+}
+
+.brand-handmade {
+  font-family: "Handlee", cursive;
+  color: var(--k-muted);
+}
+
+.text-kofan,
+.verde-kofan {
+  color: var(--k-forest) !important;
+}
+
+.eco-card {
+  background: var(--k-offwhite);
+  border: 1px solid var(--k-border);
+  border-radius: 20px;
+  box-shadow: var(--k-shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+.eco-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(15, 59, 42, 0.1);
+}
+
+.btn-kofan,
+.btn-soft-sky,
+.btn-soft-apple,
+.btn-soft-sand,
+.btn-white {
+  transition: all 0.3s ease;
+}
+
+.btn-kofan {
+  background: var(--k-forest) !important;
+  border: 1px solid var(--k-forest) !important;
+  color: var(--k-cream) !important;
+}
+
+.btn-kofan:hover,
+.btn-kofan:focus-visible {
+  background: var(--k-apple) !important;
+  border-color: var(--k-apple) !important;
+  color: var(--k-forest) !important;
+  filter: brightness(1.02);
+  box-shadow: 0 10px 24px rgba(139, 207, 91, 0.22);
+  transform: translateY(-1px);
+}
+
+.btn-soft-sky {
+  background: var(--k-sky-soft) !important;
+  border: 1px solid rgba(52, 152, 219, 0.22) !important;
+  color: var(--k-forest) !important;
+}
+
+.btn-soft-sky:hover,
+.btn-soft-sky:focus-visible {
+  background: var(--k-sky) !important;
+  border-color: var(--k-sky) !important;
+  color: var(--k-cream) !important;
+  box-shadow: 0 10px 20px rgba(52, 152, 219, 0.18);
+  transform: translateY(-1px);
+}
+
+.btn-soft-apple {
+  background: var(--k-apple-soft) !important;
+  border: 1px solid rgba(139, 207, 91, 0.3) !important;
+  color: var(--k-forest) !important;
+}
+
+.btn-soft-apple:hover,
+.btn-soft-apple:focus-visible {
+  box-shadow: 0 10px 20px rgba(139, 207, 91, 0.18);
+  transform: translateY(-1px);
+}
+
+.btn-soft-sand {
+  background: var(--k-sand-soft) !important;
+  border: 1px solid rgba(212, 175, 55, 0.25) !important;
+  color: var(--k-forest) !important;
+}
+
+.btn-soft-sand:hover,
+.btn-soft-sand:focus-visible {
+  box-shadow: 0 10px 20px rgba(212, 175, 55, 0.16);
+  transform: translateY(-1px);
+}
+
+.btn-white {
+  background: var(--k-offwhite) !important;
+  color: var(--k-forest) !important;
+}
+
+.btn-white:hover,
+.btn-white:focus-visible {
+  border-color: var(--k-border) !important;
+  box-shadow: 0 8px 18px rgba(15, 59, 42, 0.08);
+  transform: translateY(-1px);
 }

@@ -29,17 +29,36 @@ const logout = () => {
   router.push({ name: 'landing-portal' });
 };
 
+const isAuthRoute = computed(() => {
+  return ["login", "register"].includes(String(route.name)) || ["/login", "/register", "/auth/login", "/auth/register", "/hospedaje/rooms"].includes(route.path);
+});
+
+const isPublicHospedajeRoute = computed(() => route.path.startsWith("/hospedaje"));
+
 const navbarSolid = computed(() => {
-  if (isScrolled.value) return true;
-  const nombresSolid = ["login", "register", "account-profile", "rooms", "account-bookings", "account-notifications", "account-booking-detail"];
-  return nombresSolid.includes(route.name) || route.path.startsWith("/app") || route.path.startsWith("/admin");
+  if (isAuthRoute.value || route.path.startsWith("/app") || route.path.startsWith("/admin")) {
+    return true;
+  }
+
+  if (isPublicHospedajeRoute.value) {
+    return isScrolled.value;
+  }
+
+  return isScrolled.value;
+});
+
+const navbarClasses = computed(() => {
+  if (isAuthRoute.value) return "navbar-dark navbar-solid navbar-auth shadow-sm";
+  return navbarSolid.value
+    ? "navbar-dark navbar-solid shadow-sm"
+    : "navbar-dark bg-transparent";
 });
 </script>
 
 <template>
   <header
     class="navbar navbar-expand-lg fixed-top transition-navbar"
-    :class="navbarSolid ? 'navbar-dark bg-kofan shadow-sm' : 'navbar-dark bg-transparent'"
+    :class="navbarClasses"
   >
     <div class="container-fluid px-lg-5">
       <router-link :to="{ name: 'hospedaje-home' }" class="navbar-brand d-flex align-items-center">
@@ -49,7 +68,7 @@ const navbarSolid = computed(() => {
         alt="Logo Kofán" 
         style="max-height: 50px; object-fit: contain;"
       />
-      <span v-else class="text-white fw-bold fs-4 ms-2 handlee-font">
+      <span v-else class="brand-name fw-bold fs-4 ms-2 handlee-font">
         {{ configStore.data.hotel_name || 'Kofán' }}
       </span>
       </router-link>
@@ -117,38 +136,113 @@ const navbarSolid = computed(() => {
 </template>
 
 <style scoped>
-.transition-navbar { transition: all 0.4s ease-in-out; padding: 1rem 0; }
-.bg-kofan { background-color: #0f3b2a !important; padding: 0.5rem 0; }
+.transition-navbar {
+  transition: all 0.4s ease-in-out;
+  padding: 1rem 0;
+}
 
+.navbar-solid,
+.bg-kofan {
+  background-color: var(--k-forest) !important;
+}
+
+.bg-transparent {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.navbar-auth {
+  background-color: var(--k-forest) !important;
+  box-shadow: 0 4px 16px rgba(15, 59, 42, 0.18);
+}
+
+.navbar-solid {
+  padding: 0.5rem 0;
+  box-shadow: 0 4px 16px rgba(15, 59, 42, 0.18);
+}
+
+.navbar {
+  font-family: "Forum", serif;
+}
+
+.brand-name,
+.handlee-font,
+.navbar .btn,
+.btn-ingresar-kofan {
+  font-family: "Handlee", cursive;
+}
+
+.brand-name,
 .nav-link {
-  color: white !important;
+  color: var(--k-cream) !important;
+}
+
+.nav-link,
+.dropdown-item {
   margin: 0 10px;
   position: relative;
   text-decoration: none;
 }
 
+.dropdown-menu {
+  background: var(--k-cream);
+  border: 1px solid rgba(15, 59, 42, 0.12);
+}
+
+.dropdown-item {
+  color: var(--k-forest-soft) !important;
+}
+
+.dropdown-item:hover {
+  background: var(--k-sky-soft);
+  color: var(--k-forest) !important;
+}
+
 .nav-link::after {
-  content: ''; position: absolute; width: 0; height: 2px;
-  bottom: -2px; left: 50%; background: #2ecc71;
-  transition: all 0.3s ease; transform: translateX(-50%);
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 2px;
+  bottom: -2px;
+  left: 50%;
+  background: var(--k-apple);
+  transition: all 0.3s ease;
+  transform: translateX(-50%);
+}
+
+.navbar .btn-success,
+.navbar .dropdown-toggle {
+  background: var(--k-apple);
+  border-color: var(--k-apple);
+  color: var(--k-forest);
+  border-radius: 999px;
+  box-shadow: none;
+  font-weight: 700;
+}
+
+.navbar .btn-success:hover,
+.navbar .dropdown-toggle:hover {
+  background: var(--k-apple-light);
+  border-color: var(--k-apple-light);
 }
 
 .nav-link:hover::after { width: 60%; }
 .active-link::after { width: 80% !important; }
-.active-link { color: #2ecc71 !important; }
+.active-link { color: var(--k-apple) !important; }
 
 .btn-ingresar-kofan {
-  color: white !important;
+  color: var(--k-cream) !important;
   text-decoration: none;
   font-weight: 500;
   padding: 5px 15px;
   border: 1px solid rgba(255,255,255,0.4);
-  border-radius: 8px;
+  border-radius: 999px;
   transition: all 0.3s;
+  background: transparent;
 }
 
 .btn-ingresar-kofan:hover {
-  border-color: #2ecc71;
+  border-color: var(--k-apple);
   background: rgba(255, 255, 255, 0.1);
 }
 </style>

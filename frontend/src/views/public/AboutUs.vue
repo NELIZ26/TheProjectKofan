@@ -368,8 +368,8 @@
 /* Hero de la página About */
 .about-hero {
   position: relative;
-  background: linear-gradient(135deg, #0f3b2a 0%, #1a5c43 100%);
-  color: white;
+  background: linear-gradient(135deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
+  color: var(--k-cream);
   padding: 120px 20px 100px;
   text-align: center;
 }
@@ -404,12 +404,12 @@
 }
 
 .shape-fill {
-  fill: #fffdfc; /* Debe coincidir con el fondo de la siguiente sección */
+  fill: var(--k-cream); /* Debe coincidir con el fondo de la siguiente sección */
 }
 
 /* Tarjetas de Misión y Visión */
 .mision-vision {
-  background-color: #fffdfc;
+  background-color: var(--k-cream);
 }
 
 .about-card {
@@ -417,7 +417,7 @@
   padding: 40px;
   border-radius: 30px;
   text-align: center;
-  border-bottom: 5px solid #1a5c43;
+  border-bottom: 5px solid var(--k-forest-soft);
   transition: transform 0.3s ease;
 }
 
@@ -428,8 +428,8 @@
 .icon-circle {
   width: 70px;
   height: 70px;
-  background-color: #f0f7f4;
-  color: #1a5c43;
+  background-color: var(--k-apple-soft);
+  color: var(--k-forest-soft);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -440,7 +440,7 @@
 
 .about-card h3 {
   font-family: "Handlee", cursive;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin-bottom: 15px;
 }
 
@@ -448,14 +448,14 @@
 .titulo-seccion {
   font-family: "Handlee", cursive;
   font-size: 2.5rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin-bottom: 20px;
 }
 
 .subtitulo-blanco {
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: #82a994;
+  color: var(--k-apple-light);
   font-weight: 700;
 }
 img {
@@ -469,7 +469,7 @@ img {
 .titulo-valores {
   font-family: "Handlee", cursive;
   font-size: 2.2rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   position: relative;
   display: inline-block;
 }
@@ -479,7 +479,7 @@ img {
   position: absolute;
   width: 50%;
   height: 3px;
-  background: #82a994;
+  background: var(--k-apple-light);
   bottom: -10px;
   left: 25%;
   border-radius: 2px;
@@ -507,14 +507,14 @@ img {
 
 .valor-icon-sm {
   font-size: 1.8rem;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   margin-bottom: 15px;
 }
 
 .valor-item h4 {
   font-family: "Handlee", cursive;
   font-size: 1.4rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin-bottom: 10px;
 }
 
@@ -531,79 +531,13 @@ img {
   }
 } 
 
-/* --- SECCIÓN VALORES --- */
-.titulo-valores {
-  font-family: "Handlee", cursive;
-  font-size: 2.2rem;
-  color: #0f3b2a;
-  position: relative;
-  display: inline-block;
-}
-
-.titulo-valores::after {
-  content: "";
-  position: absolute;
-  width: 50%;
-  height: 3px;
-  background: #82a994;
-  bottom: -10px;
-  left: 25%;
-  border-radius: 2px;
-}
-
-.grid-valores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
-  padding-bottom: 40px;
-}
-
-.valor-item {
-  text-align: center;
-  padding: 20px;
-  border-radius: 20px;
-  transition: all 0.3s ease;
-}
-
-.valor-item:hover {
-  background: #ffffff;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-  transform: translateY(-5px);
-}
-
-.valor-icon-sm {
-  font-size: 1.8rem;
-  color: #1a5c43;
-  margin-bottom: 15px;
-}
-
-.valor-item h4 {
-  font-family: "Handlee", cursive;
-  font-size: 1.4rem;
-  color: #0f3b2a;
-  margin-bottom: 10px;
-}
-
-.valor-item p {
-  font-size: 0.9rem;
-  color: #666;
-  line-height: 1.4;
-}
-
-@media (max-width: 768px) {
-  .grid-valores {
-    grid-template-columns: 1fr 1fr; /* Dos columnas en móvil */
-    gap: 15px;
-  }
-}
-
 /* --- FAQ STYLE --- */
 .faq-section {
-  background-color: #f8faf9; /* Un gris verdoso muy tenue */
+  background-color: rgba(15, 59, 42, 0.04); /* Un gris verdoso muy tenue */
 }
 
 .subtitulo-verde {
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
@@ -618,15 +552,15 @@ img {
 
 .custom-accordion .accordion-button {
   font-weight: 600;
-  color: #0f3b2a;
+  color: var(--k-forest);
   padding: 20px;
   background-color: white;
   box-shadow: none;
 }
 
 .custom-accordion .accordion-button:not(.collapsed) {
-  color: #1a5c43;
-  background-color: #f0f7f4;
+  color: var(--k-forest-soft);
+  background-color: var(--k-apple-soft);
 }
 
 .custom-accordion .accordion-button::after {
@@ -642,13 +576,13 @@ img {
 
 /* --- SECCIÓN IMPACTO --- */
 .impacto-local {
-  background-color: #1a5c43; 
+  background-color: var(--k-forest-soft); 
   padding: 100px 20px;
-  color: white;
+  color: var(--k-cream);
 }
 
 .etiqueta-verde {
-  color: #82a994;
+  color: var(--k-apple-light);
   text-transform: uppercase;
   font-weight: 700;
   font-size: 0.85rem;
@@ -683,7 +617,7 @@ img {
 }
 
 .icon-check {
-  color: #82a994;
+  color: var(--k-apple-light);
   font-size: 1.2rem;
 }
 
@@ -701,13 +635,13 @@ img {
 .card-metrica:hover {
   background: rgba(255, 255, 255, 0.1);
   transform: translateY(-5px);
-  border-color: #82a994;
+  border-color: var(--k-apple-light);
 }
 
 .numero {
   font-family: "Handlee", cursive;
   font-size: 2.5rem;
-  color: #82a994;
+  color: var(--k-apple-light);
   margin-bottom: 5px;
 }
 
@@ -734,7 +668,7 @@ img {
 
 /* --- ESTILO CARRUSEL ARTÍSTICO INFINITO --- */
 .gallery-carousel {
-  background-color: #fffdfc;
+  background-color: var(--k-cream);
   padding: 60px 0;
   overflow: hidden;
 }

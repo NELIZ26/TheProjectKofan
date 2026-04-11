@@ -5,9 +5,13 @@ const limitePorPagina = 10;
 import { ref, computed, onMounted, watch } from "vue";
 import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
-import { defineAsyncComponent } from 'vue';
-const ModalEdicionReserva = defineAsyncComponent(() => import('@/components/ModalEdicionReserva.vue'));
-const ModalFactura = defineAsyncComponent(() => import('@/components/ModalFactura.vue'));
+import { defineAsyncComponent } from "vue";
+const ModalEdicionReserva = defineAsyncComponent(
+  () => import("@/components/ModalEdicionReserva.vue"),
+);
+const ModalFactura = defineAsyncComponent(
+  () => import("@/components/ModalFactura.vue"),
+);
 
 // 🟢 1. CONSTANTES (Eliminación de Magic Strings)
 const ESTADOS_RESERVA = {
@@ -15,7 +19,7 @@ const ESTADOS_RESERVA = {
   CONFIRMADA: "confirmada",
   OCUPADA: "ocupada",
   FINALIZADA: "finalizada",
-  CANCELADA: "cancelada"
+  CANCELADA: "cancelada",
 };
 
 const reservas = ref([]);
@@ -26,52 +30,68 @@ let timeoutBuscador = null; // Nuestro reloj temporizador
 // Vigilar cada vez que el usuario teclea en "filtro"
 watch(filtro, (nuevoValor) => {
   clearTimeout(timeoutBuscador); // Cancelar la búsqueda anterior si sigue tecleando
-  
+
   timeoutBuscador = setTimeout(() => {
     filtroAplicado.value = nuevoValor; // Aplicar la búsqueda real después de 300ms (0.3 seg)
   }, 300);
 });
 const cargandoReservas = ref(true);
-const pestanaActiva = ref("proximas"); 
+const pestanaActiva = ref("proximas");
+
+const getBrandColor = (token, fallback) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_APPLE = getBrandColor("--k-apple", "#8BCF5B");
+const COLOR_FOREST = getBrandColor("--k-forest", "#0f3b2a");
 
 const cargarReservas = async () => {
   cargandoReservas.value = true;
   try {
     // 1. Armamos el texto que le vamos a enviar al backend según la pestaña
     let estadosQuery = "";
-    if (pestanaActiva.value === "proximas") estadosQuery = `${ESTADOS_RESERVA.PENDIENTE},${ESTADOS_RESERVA.CONFIRMADA}`;
+    if (pestanaActiva.value === "proximas")
+      estadosQuery = `${ESTADOS_RESERVA.PENDIENTE},${ESTADOS_RESERVA.CONFIRMADA}`;
     if (pestanaActiva.value === "casa") estadosQuery = ESTADOS_RESERVA.OCUPADA;
-    if (pestanaActiva.value === "historial") estadosQuery = `${ESTADOS_RESERVA.FINALIZADA},${ESTADOS_RESERVA.CANCELADA}`;
+    if (pestanaActiva.value === "historial")
+      estadosQuery = `${ESTADOS_RESERVA.FINALIZADA},${ESTADOS_RESERVA.CANCELADA}`;
 
     // 🟢 2. EL FIX ESTÁ AQUÍ: Mira bien que la URL ahora incluye ?estados=${estadosQuery}
-    const response = await apiClient.get(`/api/reservas/admin/todas?estados=${estadosQuery}&page=${paginaActual.value}&limit=${limitePorPagina}`);
-    
-    reservas.value = response.data.reservas || response.data.data || response.data; 
-    
+    const response = await apiClient.get(
+      `/api/reservas/admin/todas?estados=${estadosQuery}&page=${paginaActual.value}&limit=${limitePorPagina}`,
+    );
+
+    reservas.value =
+      response.data.reservas || response.data.data || response.data;
+
     // 3. Sincronizamos la paginación
     if (response.data.resumen) {
       totalPaginas.value = response.data.resumen.total_paginas || 1;
-      paginaActual.value = response.data.resumen.pagina_actual || paginaActual.value;
+      paginaActual.value =
+        response.data.resumen.pagina_actual || paginaActual.value;
     }
   } catch (error) {
     console.error("Error al cargar reservas:", error);
     Swal.fire("Error", "No se pudieron cargar las reservas.", "error");
   } finally {
-    setTimeout(() => { cargandoReservas.value = false; }, 300);
+    setTimeout(() => {
+      cargandoReservas.value = false;
+    }, 300);
   }
 };
 
 // 🟢 Agrega esta nueva función para cambiar de página
 const cambiarPestana = (nuevaPestana) => {
-  pestanaActiva.value = nuevaPestana; 
-  paginaActual.value = 1;             
-  cargarReservas();                 
+  pestanaActiva.value = nuevaPestana;
+  paginaActual.value = 1;
+  cargarReservas();
 };
 const cambiarPagina = (nuevaPagina) => {
   // Solo avanza o retrocede si la página destino existe
   if (nuevaPagina >= 1 && nuevaPagina <= totalPaginas.value) {
     paginaActual.value = nuevaPagina; // Actualiza el número
-    cargarReservas();                 // Llama al backend pidiendo el nuevo bloque de 10
+    cargarReservas(); // Llama al backend pidiendo el nuevo bloque de 10
   }
 };
 
@@ -81,7 +101,7 @@ onMounted(() => {
 
 // FILTRO MAESTRO
 const reservasParaMostrar = computed(() => {
-  let filtradas = reservas.value; 
+  let filtradas = reservas.value;
 
   // Ya no filtramos por pestaña aquí, solo dejamos el buscador de texto
   if (filtroAplicado.value) {
@@ -90,11 +110,15 @@ const reservasParaMostrar = computed(() => {
       const nombre = (res.cliente || res.cliente_nombre || "").toLowerCase();
       const email = (res.cliente_email || "").toLowerCase();
       const idReserva = (res._id || res.id || "").toLowerCase();
-      return nombre.includes(termino) || email.includes(termino) || idReserva.includes(termino);
+      return (
+        nombre.includes(termino) ||
+        email.includes(termino) ||
+        idReserva.includes(termino)
+      );
     });
   }
 
-  return filtradas; 
+  return filtradas;
 });
 
 // 🟢 2. SEPARACIÓN DE LÓGICA: Solo llamadas a la API
@@ -102,7 +126,7 @@ const procesarCambioEstadoAPI = async (id, nuevoEstado, datosReserva) => {
   // 1. Actualizamos el estado de la reserva
   await apiClient.patch(`/api/reservas/${id}/estado`, {
     estado: nuevoEstado,
-    motivo_actualizacion: "Cambio de estado desde el panel"
+    motivo_actualizacion: "Cambio de estado desde el panel",
   });
 
   // 2. SI ES CHECK-IN, CREAMOS EL INVOICE
@@ -113,11 +137,14 @@ const procesarCambioEstadoAPI = async (id, nuevoEstado, datosReserva) => {
       guest_document: datosReserva.cliente_documento || "N/A",
       guest_email: datosReserva.cliente_email || "N/A",
       guest_phone: datosReserva.cliente_celular || "N/A",
-      room_name: datosReserva.habitacion_nombre || datosReserva.habitacion || "Habitación",
+      room_name:
+        datosReserva.habitacion_nombre ||
+        datosReserva.habitacion ||
+        "Habitación",
       check_in_date: datosReserva.fecha_entrada,
       check_out_date: datosReserva.fecha_salida,
       room_subtotal: datosReserva.monto_total || datosReserva.monto || 0,
-      status: "open"
+      status: "open",
     };
     await apiClient.post("/invoices/", payloadInvoice);
   }
@@ -128,7 +155,9 @@ const procesarCambioEstadoAPI = async (id, nuevoEstado, datosReserva) => {
       await apiClient.put(`/invoices/close-by-booking/${id}`);
       console.log("Factura cerrada exitosamente");
     } catch (invoiceError) {
-      console.warn("No se pudo cerrar la factura (quizás ya estaba cerrada o no existía).");
+      console.warn(
+        "No se pudo cerrar la factura (quizás ya estaba cerrada o no existía).",
+      );
     }
   }
 };
@@ -140,20 +169,22 @@ const actualizarEstado = (id, nuevoEstado) => {
   let textoBoton = "Sí, cambiar";
 
   if (nuevoEstado === ESTADOS_RESERVA.CONFIRMADA) {
-    titulo = "¿Aprobar Pago?";
-    texto = "Esto confirmará la reserva oficialmente.";
-    textoBoton = "Sí, aprobar";
+    titulo = "¿Confirmar esta reserva?";
+    texto =
+      "El pago quedará validado y la llegada seguirá su curso normalmente.";
+    textoBoton = "Sí, confirmar";
   } else if (nuevoEstado === ESTADOS_RESERVA.OCUPADA) {
-    titulo = "¿Hacer Check-in?";
-    texto = "¿El huésped ya llegó y se abrió su cuenta?";
-    textoBoton = "Sí, hacer Check-in";
+    titulo = "¿Registrar la llegada?";
+    texto = "Todo quedará preparado para recibir a este viajero.";
+    textoBoton = "Sí, hacer check-in";
   } else if (nuevoEstado === ESTADOS_RESERVA.FINALIZADA) {
-    titulo = "¿Hacer Check-out?";
-    texto = "¿El huésped entregó la cabaña y se cerró su cuenta?";
+    titulo = "¿Cerrar la estancia?";
+    texto =
+      "La salida quedará registrada y la cuenta se cerrará correctamente.";
     textoBoton = "Sí, finalizar";
   } else if (nuevoEstado === ESTADOS_RESERVA.PENDIENTE) {
-    titulo = "¿Restaurar Reserva?";
-    texto = "La reserva volverá a estar activa.";
+    titulo = "¿Restaurar seguimiento?";
+    texto = "La reserva volverá a estar activa para continuar su gestión.";
     textoBoton = "Sí, restaurar";
   }
 
@@ -162,29 +193,35 @@ const actualizarEstado = (id, nuevoEstado) => {
     text: texto,
     icon: "question",
     showCancelButton: true,
-    confirmButtonColor: "#0f3b2a",
-    cancelButtonColor: "#d33",
+    confirmButtonColor: COLOR_APPLE,
+    cancelButtonColor: COLOR_FOREST,
     confirmButtonText: textoBoton,
-    cancelButtonText: "Cancelar"
+    cancelButtonText: "Volver",
   }).then(async (result) => {
     if (result.isConfirmed) {
       try {
-        const datosReserva = reservas.value.find(r => (r.id || r._id) === id);
-        
-        // Llamamos a la función de API separada
+        const datosReserva = reservas.value.find((r) => (r.id || r._id) === id);
+
         await procesarCambioEstadoAPI(id, nuevoEstado, datosReserva);
         await cargarReservas();
-        
+
         Swal.fire({
-          title: "¡Éxito!",
-          text: nuevoEstado === ESTADOS_RESERVA.OCUPADA ? "Check-in realizado y cuenta abierta." : `La reserva ahora está ${nuevoEstado}.`,
+          title: "Movimiento actualizado",
+          text:
+            nuevoEstado === ESTADOS_RESERVA.OCUPADA
+              ? "Todo preparado para la llegada de este viajero"
+              : `La reserva quedó en estado ${nuevoEstado}.`,
           icon: "success",
-          timer: 1500,
-          showConfirmButton: false
+          timer: 1700,
+          showConfirmButton: false,
         });
       } catch (error) {
         console.error("Error al actualizar:", error);
-        Swal.fire("Error", "No se pudo actualizar el estado o crear la factura.", "error");
+        Swal.fire(
+          "No fue posible actualizar esta reserva",
+          "Inténtalo nuevamente en unos segundos.",
+          "error",
+        );
       }
     }
   });
@@ -192,35 +229,35 @@ const actualizarEstado = (id, nuevoEstado) => {
 
 const eliminarReserva = (id) => {
   Swal.fire({
-    title: "¿Cancelar Reserva?",
-    text: "Esta acción marcará la reserva como cancelada y liberará la cabaña.",
+    title: "¿Deseas cancelar esta reserva?",
+    text: "La habitación volverá a quedar disponible para otras llegadas.",
     icon: "warning",
     showCancelButton: true,
-    confirmButtonColor: "#d33",
+    confirmButtonColor: COLOR_APPLE,
+    cancelButtonColor: COLOR_FOREST,
     confirmButtonText: "Sí, cancelar",
-    cancelButtonText: "No, volver"
+    cancelButtonText: "Seguir revisando",
   }).then((result) => {
     if (result.isConfirmed) {
-      actualizarEstado(id, ESTADOS_RESERVA.CANCELADA); 
+      actualizarEstado(id, ESTADOS_RESERVA.CANCELADA);
     }
   });
 };
 
-// 🟢 Función actualizada para el fondo y borde (Estilo Kofán)
 const getBadgeClass = (estado) => {
   switch (estado) {
     case ESTADOS_RESERVA.CONFIRMADA:
-      return 'bg-success bg-opacity-10 text-success border border-success';
+      return "badge-soft-apple";
     case ESTADOS_RESERVA.PENDIENTE:
-      return 'bg-warning bg-opacity-10 text-warning border border-warning';
+      return "badge-soft-sand";
     case ESTADOS_RESERVA.OCUPADA:
-      return 'bg-primary bg-opacity-10 text-primary border border-primary';
+      return "badge-soft-sky";
     case ESTADOS_RESERVA.FINALIZADA:
-      return 'bg-secondary bg-opacity-10 text-secondary border border-secondary';
+      return "badge-soft-neutral";
     case ESTADOS_RESERVA.CANCELADA:
-      return 'bg-danger bg-opacity-10 text-danger border border-danger';
+      return "badge-soft-rose";
     default:
-      return 'bg-light text-dark border border-secondary';
+      return "badge-soft-neutral";
   }
 };
 
@@ -228,17 +265,17 @@ const getBadgeClass = (estado) => {
 const getBadgeIcon = (estado) => {
   switch (estado) {
     case ESTADOS_RESERVA.CONFIRMADA:
-      return 'bi bi-check-circle-fill';
+      return "fa-solid fa-circle-check";
     case ESTADOS_RESERVA.PENDIENTE:
-      return 'bi bi-clock-fill';
+      return "fa-solid fa-clock";
     case ESTADOS_RESERVA.OCUPADA:
-      return 'bi bi-house-door-fill';
+      return "fa-solid fa-house-chimney";
     case ESTADOS_RESERVA.FINALIZADA:
-      return 'bi bi-check2-all';
+      return "fa-solid fa-circle-check";
     case ESTADOS_RESERVA.CANCELADA:
-      return 'bi bi-x-circle-fill';
+      return "fa-solid fa-ban";
     default:
-      return 'bi bi-info-circle-fill';
+      return "fa-solid fa-circle-info";
   }
 };
 
@@ -248,7 +285,7 @@ const esModoCheckIn = ref(false);
 
 const abrirModalEdicion = (reserva, checkIn = false) => {
   reservaAEditar.value = reserva;
-  esModoCheckIn.value = checkIn; 
+  esModoCheckIn.value = checkIn;
   mostrarModalEdicion.value = true;
 };
 
@@ -263,7 +300,7 @@ const cargandoFactura = ref(false);
 
 const abrirModalFactura = async (reserva) => {
   const idReserva = reserva.id || reserva._id;
-  reservaParaFactura.value = reserva; 
+  reservaParaFactura.value = reserva;
   mostrarModalFactura.value = true;
   cargandoFactura.value = true;
   invoiceSeleccionada.value = null;
@@ -281,8 +318,8 @@ const abrirModalFactura = async (reserva) => {
 const totalHuespedesEnCasa = ref(0);
 const cargarHuespedesDelDashboard = async () => {
   try {
-    const response = await apiClient.get('/dashboard');
-    totalHuespedesEnCasa.value = response.data.stats.huespedesHoy; 
+    const response = await apiClient.get("/dashboard");
+    totalHuespedesEnCasa.value = response.data.stats.huespedesHoy;
   } catch (error) {
     console.error("No se pudo traer el dato de huéspedes:", error);
   }
@@ -291,109 +328,167 @@ onMounted(() => {
   cargarReservas();
   cargarHuespedesDelDashboard();
 });
-
 </script>
 
 <template>
   <div class="bookings-manager container-fluid py-4">
-    
-    <div class="row g-3 mb-4">
-      
-      <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Confirmadas</h6>
-              <h3 class="fw-bold mb-1 text-dark">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.CONFIRMADA).length }}</h3>
-              <p class="text-muted small mb-0">Listas para ingreso</p>
-            </div>
-            <div class="icon-box p-3 rounded-3 bg-success-subtle text-success">
-              <i class="bi bi-calendar-check fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Pendientes</h6>
-              <h3 class="fw-bold mb-1 text-dark">{{ reservas.filter((r) => r.estado === ESTADOS_RESERVA.PENDIENTE).length }}</h3>
-              <p class="text-muted small mb-0">Por verificar pago</p>
-            </div>
-            <div class="icon-box p-3 rounded-3 bg-warning-subtle text-warning">
-              <i class="bi bi-clock fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-md-4">
-        <div class="card border-0 shadow-sm p-3 rounded-4" style="border: 1px solid #f8f9fa;">
-          <div class="d-flex align-items-center justify-content-between">
-            <div>
-              <h6 class="text-muted fw-bold mb-2 text-uppercase" style="font-size: 0.75rem; letter-spacing: 0.5px;">Huéspedes Hoy</h6>
-              <h3 class="fw-bold mb-1 text-dark">{{ totalHuespedesEnCasa }}</h3>
-              <p class="text-muted small mb-0">En las instalaciones</p>
-            </div>
-            <div class="icon-box p-3 rounded-3 bg-info-subtle text-info">
-              <i class="bi bi-people-fill fs-3"></i>
-            </div>
-          </div>
-        </div>
-      </div>
-
+    <div class="mb-4">
+      <p class="brand-handmade mb-1">Seguimiento sereno de cada llegada</p>
+      <h2 class="section-title mb-1 d-flex align-items-center gap-2">
+        <font-awesome-icon icon="fa-solid fa-calendar-days" />
+        Gestión de Reservas
+      </h2>
+      <p class="text-muted mb-0">
+        Prioriza llegadas, salidas y estancias activas con una lectura más
+        clara.
+      </p>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-      
-      <div class="card-header bg-white p-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
-        
-        <div class="bg-light p-1 rounded-pill d-flex border shadow-sm">
-          <button 
-            class="btn rounded-pill px-4 fw-bold border-0 transition-all" 
-            :class="pestanaActiva === 'proximas' ? 'btn-dark text-white shadow' : 'text-muted'" 
-            @click="cambiarPestana('proximas')"
-          >
-            <i class="bi bi-calendar-event me-2"></i> Por Llegar
-          </button>
-          
-          <button 
-            class="btn rounded-pill px-4 fw-bold border-0 transition-all" 
-            :class="pestanaActiva === 'casa' ? 'btn-dark text-white shadow' : 'text-muted'" 
-            @click="cambiarPestana('casa')"
-          >
-            <i class="bi bi-house-door me-2"></i> En Casa
-          </button>
-          
-          <button 
-            class="btn rounded-pill px-4 fw-bold border-0 transition-all" 
-            :class="pestanaActiva === 'historial' ? 'btn-dark text-white shadow' : 'text-muted'" 
-            @click="cambiarPestana('historial')"
-          >
-            <i class="bi bi-clock-history me-2"></i> Historial
-          </button>
-        </div>
-
-        <div class="input-group shadow-sm rounded-pill overflow-hidden" style="max-width: 350px;">
-          <span class="input-group-text bg-light border-0 ps-3"><i class="bi bi-search text-muted"></i></span>
-          <input v-model="filtro" type="text" class="form-control bg-light border-0 shadow-none" placeholder="Buscar cliente o ID..." />
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        <div class="eco-card border-0 shadow-sm p-3 rounded-4 stats-card h-100">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase small-label">
+                Confirmadas
+              </h6>
+              <h3 class="fw-bold mb-1 text-kofan">
+                {{
+                  reservas.filter(
+                    (r) => r.estado === ESTADOS_RESERVA.CONFIRMADA,
+                  ).length
+                }}
+              </h3>
+              <p class="text-muted small mb-0">Listas para ingreso</p>
+            </div>
+            <div class="icon-box tone-apple-box">
+              <font-awesome-icon icon="fa-solid fa-leaf" />
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="card-body p-0 position-relative" style="min-height: 300px;">
-        
-        <div v-if="cargandoReservas" class="d-flex flex-column justify-content-center align-items-center h-100 position-absolute w-100 bg-white z-1" style="min-height: 300px;">
-          <div class="spinner-border text-success" style="width: 3rem; height: 3rem;" role="status">
-            <span class="visually-hidden">Cargando...</span>
+      <div class="col-md-4">
+        <div class="eco-card border-0 shadow-sm p-3 rounded-4 stats-card h-100">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase small-label">
+                Pendientes
+              </h6>
+              <h3 class="fw-bold mb-1 text-kofan">
+                {{
+                  reservas.filter((r) => r.estado === ESTADOS_RESERVA.PENDIENTE)
+                    .length
+                }}
+              </h3>
+              <p class="text-muted small mb-0">Por verificar pago</p>
+            </div>
+            <div class="icon-box tone-sky-box">
+              <font-awesome-icon icon="fa-solid fa-calendar-day" />
+            </div>
           </div>
-          <p class="text-muted mt-3 fw-bold">Actualizando reservas...</p>
+        </div>
+      </div>
+
+      <div class="col-md-4">
+        <div class="eco-card border-0 shadow-sm p-3 rounded-4 stats-card h-100">
+          <div class="d-flex align-items-center justify-content-between">
+            <div>
+              <h6 class="text-muted fw-bold mb-2 text-uppercase small-label">
+                Huéspedes Hoy
+              </h6>
+              <h3 class="fw-bold mb-1 text-kofan">
+                {{ totalHuespedesEnCasa }}
+              </h3>
+              <p class="text-muted small mb-0">En las instalaciones</p>
+            </div>
+            <div class="icon-box tone-bed-box">
+              <font-awesome-icon icon="fa-solid fa-bed" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card eco-card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div
+        class="card-header bg-transparent p-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3"
+      >
+        <div class="filter-chip-group">
+          <button
+            class="filter-chip"
+            :class="{ active: pestanaActiva === 'proximas' }"
+            @click="cambiarPestana('proximas')"
+          >
+            <font-awesome-icon icon="fa-solid fa-calendar-days" class="me-2" />
+            Por Llegar
+          </button>
+
+          <button
+            class="filter-chip"
+            :class="{ active: pestanaActiva === 'casa' }"
+            @click="cambiarPestana('casa')"
+          >
+            <font-awesome-icon icon="fa-solid fa-bed" class="me-2" /> En Casa
+          </button>
+
+          <button
+            class="filter-chip"
+            :class="{ active: pestanaActiva === 'historial' }"
+            @click="cambiarPestana('historial')"
+          >
+            <font-awesome-icon icon="fa-solid fa-broom" class="me-2" />
+            Historial
+          </button>
         </div>
 
-        <div v-else-if="reservasParaMostrar.length === 0" class="d-flex flex-column justify-content-center align-items-center h-100 py-5">
-          <i class="bi bi-folder-x display-1 text-light mb-3"></i>
-          <h5 class="text-muted">No hay reservas en esta pestaña</h5>
+        <div
+          class="input-group shadow-sm rounded-pill overflow-hidden search-soft"
+          style="max-width: 360px"
+        >
+          <span class="input-group-text border-0 ps-3"
+            ><font-awesome-icon icon="fa-solid fa-magnifying-glass" class="text-muted" />
+          </span>
+          <input
+            v-model="filtro"
+            type="text"
+            class="form-control border-0 shadow-none"
+            placeholder="Buscar viajero o reserva..."
+          />
+        </div>
+      </div>
+
+      <div class="card-body p-0 position-relative" style="min-height: 300px">
+        <div
+          v-if="cargandoReservas"
+          class="d-flex flex-column justify-content-center align-items-center h-100 position-absolute w-100 bg-white z-1"
+          style="min-height: 300px"
+        >
+          <div
+            class="spinner-border"
+            style="width: 3rem; height: 3rem; color: var(--k-apple)"
+            role="status"
+          >
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+          <p class="brand-handmade mt-3 mb-0">
+            Actualizando las reservas del día...
+          </p>
+        </div>
+
+        <div
+          v-else-if="reservasParaMostrar.length === 0"
+          class="d-flex flex-column justify-content-center align-items-center h-100 py-5 empty-state-copy"
+        >
+          <font-awesome-icon
+            icon="fa-solid fa-leaf"
+            class="display-6 mb-3"
+            style="color: var(--k-apple)"
+          />
+          <h5 class="mb-1">No hay reservas en esta vista por ahora</h5>
+          <p class="text-muted small mb-0">
+            Cuando aparezcan nuevos movimientos, los verás aquí.
+          </p>
         </div>
 
         <div v-else class="table-responsive">
@@ -405,159 +500,276 @@ onMounted(() => {
                 <th class="py-3 text-muted small fw-bold">FECHAS (IN - OUT)</th>
                 <th class="py-3 text-muted small fw-bold">TOTAL</th>
                 <th class="py-3 text-muted small fw-bold">ESTADO</th>
-                <th class="text-center py-3 text-muted small fw-bold">ACCIONES</th>
+                <th class="text-center py-3 text-muted small fw-bold">
+                  ACCIONES
+                </th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="res in reservasParaMostrar" :key="res._id || res.id">
                 <td class="ps-4">
-                    <div class="fw-bold text-dark">RES-{{ (res.id || res._id || '').slice(-6).toUpperCase() }}</div>
-                    <div class="text-dark fw-bold" style="font-size: 0.9rem;">{{ res.cliente || res.cliente_nombre }}</div>
-                    <div class="text-muted mt-1" style="font-size: 0.75rem;">
-                    <i class="bi bi-telephone-fill me-1"></i> {{ res.cliente_celular || 'Sin celular' }} <br>
-                    <i class="bi bi-envelope-fill me-1"></i> {{ res.cliente_email || 'Sin correo' }}
+                  <div class="fw-bold text-dark">
+                    RES-{{ (res.id || res._id || "").slice(-6).toUpperCase() }}
+                  </div>
+                  <div class="text-dark fw-bold" style="font-size: 0.9rem">
+                    {{ res.cliente || res.cliente_nombre }}
+                  </div>
+                  <div class="text-muted mt-1" style="font-size: 0.75rem">
+                    <font-awesome-icon icon="fa-solid fa-phone" class="me-1" />
+                    {{ res.cliente_celular || "Sin celular" }} <br />
+                    <font-awesome-icon icon="fa-solid fa-envelope" class="me-1" />
+                    {{ res.cliente_email || "Sin correo" }}
                   </div>
                 </td>
-                <td>{{ res.habitacion || res.habitacion_nombre || 'N/A' }}</td>
+                <td>{{ res.habitacion || res.habitacion_nombre || "N/A" }}</td>
                 <td>
-                  <div class="small text-muted"><strong>Entra:</strong> {{ res.fecha_entrada }}</div>
-                  <div class="small text-muted"><strong>Sale:</strong> {{ res.fecha_salida }}</div>
+                  <div class="small text-muted">
+                    <strong>Entra:</strong> {{ res.fecha_entrada }}
+                  </div>
+                  <div class="small text-muted">
+                    <strong>Sale:</strong> {{ res.fecha_salida }}
+                  </div>
                 </td>
                 <td class="fw-bold text-success">
                   ${{ (res.monto_total || res.monto || 0).toLocaleString() }}
                 </td>
                 <td>
-                <span 
-                  class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center fw-normal text-capitalize" 
-                  :class="getBadgeClass(res.estado)"
-                >
-                  <i :class="getBadgeIcon(res.estado)" class="me-2"></i>
-                  {{ res.estado }}
-                </span>
-              </td>
+                  <span
+                    class="badge rounded-pill px-3 py-2 d-inline-flex align-items-center fw-normal text-capitalize"
+                    :class="getBadgeClass(res.estado)"
+                  >
+                    <font-awesome-icon :icon="getBadgeIcon(res.estado)" class="me-2" />
+                    {{ res.estado }}
+                  </span>
+                </td>
                 <td class="text-center align-middle">
-                
-                <div class="d-flex justify-content-center gap-2">
-                  
-                  <a v-if="res.comprobante_url" 
-                     :href="`http://127.0.0.1:8000${res.comprobante_url}`" 
-                     target="_blank"
-                     class="btn btn-sm btn-outline-info rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                     style="width: 35px; height: 35px;" title="Ver Comprobante de Pago">
-                    <i class="bi bi-file-earmark-image fs-6"></i>
-                  </a>
+                  <div class="d-flex justify-content-center gap-2">
+                    <a
+                      v-if="res.comprobante_url"
+                      :href="`http://127.0.0.1:8000${res.comprobante_url}`"
+                      target="_blank"
+                      class="btn btn-sm btn-outline-info rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Ver Comprobante de Pago"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-images" class="fs-6" />
+                    </a>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.PENDIENTE" 
-                          @click="actualizarEstado(res.id || res._id, ESTADOS_RESERVA.CONFIRMADA)" 
-                          class="btn btn-sm btn-outline-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                          style="width: 35px; height: 35px;" title="Confirmar Pago">
-                    <i class="bi bi-check-lg fs-6"></i>
-                  </button>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.PENDIENTE"
+                      @click="
+                        actualizarEstado(
+                          res.id || res._id,
+                          ESTADOS_RESERVA.CONFIRMADA,
+                        )
+                      "
+                      class="btn btn-sm btn-outline-success rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Confirmar Pago"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-check" class="fs-6" />
+                    </button>
 
-                  <button v-if="[ESTADOS_RESERVA.PENDIENTE, ESTADOS_RESERVA.CONFIRMADA].includes(res.estado)" 
-                          @click="eliminarReserva(res.id || res._id)" 
-                          class="btn btn-sm btn-outline-danger rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                          style="width: 35px; height: 35px;" title="Cancelar Reserva">
-                    <i class="bi bi-x-lg fs-6"></i>
-                  </button>
+                    <button
+                      v-if="
+                        [
+                          ESTADOS_RESERVA.PENDIENTE,
+                          ESTADOS_RESERVA.CONFIRMADA,
+                        ].includes(res.estado)
+                      "
+                      @click="eliminarReserva(res.id || res._id)"
+                      class="btn btn-sm btn-outline-danger rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Cancelar Reserva"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-xmark" class="fs-6" />
+                    </button>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.CANCELADA" 
-                      @click="actualizarEstado(res.id || res._id, ESTADOS_RESERVA.PENDIENTE)" 
-                      class="btn btn-sm btn-outline-warning rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                      style="width: 35px; height: 35px;" title="Restaurar Reserva">
-                      <i class="bi bi-arrow-counterclockwise fs-6"></i> 
-                  </button>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.CANCELADA"
+                      @click="
+                        actualizarEstado(
+                          res.id || res._id,
+                          ESTADOS_RESERVA.PENDIENTE,
+                        )
+                      "
+                      class="btn btn-sm btn-outline-warning rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Restaurar Reserva"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-rotate-left" class="fs-6" />
+                    </button>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.CONFIRMADA" 
-                          @click="abrirModalEdicion(res, true)" 
-                          class="btn btn-sm btn-outline-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                          style="width: 35px; height: 35px;" title="Hacer Check-in">
-                    <i class="bi bi-door-open fs-6"></i>
-                  </button>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.CONFIRMADA"
+                      @click="abrirModalEdicion(res, true)"
+                      class="btn btn-sm btn-outline-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Hacer Check-in"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-door-open" class="fs-6" />
+                    </button>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.OCUPADA" 
-                          @click="abrirModalEdicion(res, false)" 
-                          class="btn btn-sm btn-outline-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                          style="width: 35px; height: 35px;" title="Editar Detalles o Agregar Consumos">
-                    <i class="bi bi-pencil-square fs-6"></i>
-                  </button>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.OCUPADA"
+                      @click="abrirModalEdicion(res, false)"
+                      class="btn btn-sm btn-outline-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Editar Detalles o Agregar Consumos"
+                    >
+                      <font-awesome-icon :icon="['far', 'pen-to-square']" class="fs-6" />
+                    </button>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.OCUPADA" 
-                          @click="actualizarEstado(res.id || res._id, ESTADOS_RESERVA.FINALIZADA)" 
-                          class="btn btn-sm btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                          style="width: 35px; height: 35px;" title="Hacer Check-out">
-                    <i class="bi bi-box-arrow-right fs-6"></i>
-                  </button>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.OCUPADA"
+                      @click="
+                        actualizarEstado(
+                          res.id || res._id,
+                          ESTADOS_RESERVA.FINALIZADA,
+                        )
+                      "
+                      class="btn btn-sm btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Hacer Check-out"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="fs-6" />
+                    </button>
 
-                  <button v-if="res.estado === ESTADOS_RESERVA.FINALIZADA" 
-                    @click="abrirModalFactura(res)" 
-                    class="btn btn-sm btn-outline-info rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
-                    style="width: 35px; height: 35px;" title="Ver Estado de Cuenta / Factura">
-                    <i class="bi bi-receipt fs-6"></i>
-                  </button>
-
-                </div>
-              </td>
+                    <button
+                      v-if="res.estado === ESTADOS_RESERVA.FINALIZADA"
+                      @click="abrirModalFactura(res)"
+                      class="btn btn-sm btn-outline-info rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm"
+                      style="width: 35px; height: 35px"
+                      title="Ver Estado de Cuenta / Factura"
+                    >
+                      <font-awesome-icon icon="fa-solid fa-receipt" class="fs-6" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
-        
-        <div v-if="totalPaginas > 1" class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 bg-light border-top">
+
+        <div
+          v-if="totalPaginas > 1"
+          class="d-flex flex-column flex-md-row justify-content-between align-items-center p-3 bg-light border-top"
+        >
           <span class="text-muted small fw-bold mb-2 mb-md-0">
             Mostrando página {{ paginaActual }} de {{ totalPaginas }}
           </span>
           <div class="btn-group shadow-sm">
-            <button 
-              @click="cambiarPagina(paginaActual - 1)" 
-              :disabled="paginaActual === 1" 
-              class="btn btn-sm btn-white border">
-              <i class="bi bi-chevron-left me-1"></i> Anterior
+            <button
+              @click="cambiarPagina(paginaActual - 1)"
+              :disabled="paginaActual === 1"
+              class="btn btn-sm btn-white border"
+            >
+              <font-awesome-icon icon="fa-solid fa-chevron-left" class="me-1" /> Anterior
             </button>
-            <button 
-              @click="cambiarPagina(paginaActual + 1)" 
-              :disabled="paginaActual === totalPaginas" 
-              class="btn btn-sm btn-white border">
-              Siguiente <i class="bi bi-chevron-right ms-1"></i>
+            <button
+              @click="cambiarPagina(paginaActual + 1)"
+              :disabled="paginaActual === totalPaginas"
+              class="btn btn-sm btn-white border"
+            >
+              Siguiente <font-awesome-icon icon="fa-solid fa-chevron-right" class="ms-1" />
             </button>
           </div>
         </div>
       </div>
     </div>
-    
-    <ModalEdicionReserva 
-      :show="mostrarModalEdicion" 
-      :reserva="reservaAEditar" 
+
+    <ModalEdicionReserva
+      :show="mostrarModalEdicion"
+      :reserva="reservaAEditar"
       :modoCheckIn="esModoCheckIn"
-      @close="mostrarModalEdicion = false" 
-      @actualizado="refrescarTabla" 
+      @close="mostrarModalEdicion = false"
+      @actualizado="refrescarTabla"
     />
-    <ModalFactura 
-      :show="mostrarModalFactura" 
-      :reserva="reservaParaFactura" 
-      @close="mostrarModalFactura = false" 
+    <ModalFactura
+      :show="mostrarModalFactura"
+      :reserva="reservaParaFactura"
+      @close="mostrarModalFactura = false"
     />
   </div>
 </template>
 
 <style scoped>
 
-.bg-success-subtle {
-  background-color: #d1e7dd;
+.eco-card {
+  background: linear-gradient(
+    135deg,
+    rgba(139, 207, 91, 0.08) 0%,
+    var(--k-cream) 100%
+  );
+  border: 1px solid var(--k-border);
 }
-.bg-warning-subtle {
-  background-color: #fff3cd;
-}
-.bg-primary-subtle {
-  background-color: #cfe2ff;
+
+.eco-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(15, 59, 42, 0.08);
 }
 
 .icon-box {
-  width: 50px;
-  height: 50px;
+  width: 52px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 14px;
+  font-size: 1.2rem;
+}
+
+.tone-apple-box {
+  background: rgba(139, 207, 91, 0.2);
+  color: var(--k-forest);
+}
+
+.tone-sky-box {
+  background: var(--k-sky-soft);
+  color: var(--k-sky);
+}
+
+.tone-bed-box {
+  background: rgba(36, 64, 58, 0.1);
+  color: var(--k-forest);
+}
+
+.small-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.filter-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.filter-chip {
+  border: 1px solid var(--k-border);
+  background: var(--k-offwhite);
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  background: var(--k-apple-soft);
+  border-color: rgba(139, 207, 91, 0.35);
+}
+
+.filter-chip.active {
+  background: rgba(139, 207, 91, 0.2);
+  color: var(--k-forest);
+  border-color: rgba(139, 207, 91, 0.45);
+  box-shadow: 0 8px 18px rgba(139, 207, 91, 0.14);
+}
+
+.search-soft,
+.search-soft .input-group-text,
+.search-soft .form-control {
+  background: var(--k-offwhite);
 }
 
 .table thead th {
@@ -566,27 +778,46 @@ onMounted(() => {
   letter-spacing: 1px;
 }
 
+.table tbody tr:hover {
+  background: rgba(238, 248, 253, 0.32);
+}
+
 .btn-group .btn:hover {
   background-color: #f8f9fa;
 }
 
-/* 🟢 ESTILOS PARA LAS PESTAÑAS (Nav-Pills) */
-.custom-tabs .nav-link {
-  color: #6c757d;
-  background-color: transparent;
-  border-radius: 50px;
-  padding: 0.5rem 1.2rem;
-  transition: all 0.3s ease;
-  border: 1px solid transparent;
-}
-.custom-tabs .nav-link:hover {
-  background-color: #f8f9fa;
-  color: #0f3b2a;
-}
-.custom-tabs .nav-link.active {
-  background-color: #e8f5e9; /* Un verde súper suave */
-  color: #0f3b2a; /* Verde oscuro Kofán */
-  border-color: #0f3b2a;
+.empty-state-copy {
+  font-family: "Handlee", cursive;
+  color: var(--k-forest);
 }
 
+.badge-soft-apple {
+  background: rgba(139, 207, 91, 0.18);
+  color: var(--k-forest);
+  border: 1px solid rgba(139, 207, 91, 0.45);
+}
+
+.badge-soft-sand {
+  background: var(--k-sand-soft);
+  color: var(--k-sand);
+  border: 1px solid rgba(212, 175, 55, 0.32);
+}
+
+.badge-soft-sky {
+  background: var(--k-sky-soft);
+  color: var(--k-sky);
+  border: 1px solid rgba(52, 152, 219, 0.25);
+}
+
+.badge-soft-neutral {
+  background: rgba(36, 64, 58, 0.08);
+  color: var(--k-forest);
+  border: 1px solid rgba(36, 64, 58, 0.18);
+}
+
+.badge-soft-rose {
+  background: rgba(229, 184, 184, 0.2);
+  color: #8a4c4c;
+  border: 1px solid rgba(229, 184, 184, 0.5);
+}
 </style>

@@ -14,6 +14,7 @@ class DocumentType(str, Enum):
     CC = "CC"
     CE = "CE"
     PASAPORTE = "PASAPORTE"
+    NIT = "NIT"
 
 class UserCreate(BaseModel):
     tipo_persona: str
@@ -55,4 +56,4 @@ class UserUpdate(BaseModel):
 
 class AdminUserUpdate(UserUpdate):
     tipo_persona: Optional[str] = None 
-    type_document: Optional[str] = None 
+    type_document: Optional[DocumentType] = None 

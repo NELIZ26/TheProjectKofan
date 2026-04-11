@@ -2,8 +2,9 @@ import apiClient from "@/api/apiClient";
 
 // Obtener todos los usuarios con paginación
 export const getAllUsers = async (page = 1, limit = 10) => {
+  const skip = (page - 1) * limit;
   const response = await apiClient.get("/users", {
-    params: { page, limit },
+    params: { skip, limit },
   });
   return response.data;
 };
@@ -22,7 +23,7 @@ export const createUser = async (userData) => {
 
 // Actualizar datos de un usuario
 export const updateUser = async (id, userData) => {
-  const response = await apiClient.put(`/users/${id}`, userData);
+  const response = await apiClient.patch(`/users/${id}`, userData);
   return response.data;
 };
 
@@ -32,8 +33,8 @@ export const toggleUserStatus = async (id) => {
   return response.data;
 };
 
-// Eliminar un usuario
+// Suspender o reactivar un usuario (el backend no elimina físicamente)
 export const deleteUser = async (id) => {
-  const response = await apiClient.delete(`/users/${id}`);
+  const response = await apiClient.patch(`/users/${id}/toggle-status`);
   return response.data;
 };

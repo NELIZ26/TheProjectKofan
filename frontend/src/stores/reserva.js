@@ -4,6 +4,14 @@ import Swal from "sweetalert2";
 import apiClient from "@/api/apiClient";
 import { useAuthStore } from "@/stores/auth";
 
+const getBrandColor = (token, fallback) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_FOREST = getBrandColor("--k-forest", "#0f3b2a");
+const COLOR_DANGER = getBrandColor("--k-danger", "#e74c3c");
+
 export const useReservaStore = defineStore("reserva", () => {
   const isModalOpen = ref(false);
   const isSubmitting = ref(false);
@@ -66,10 +74,10 @@ export const useReservaStore = defineStore("reserva", () => {
   const openModal = async (habitacion = null) => {
     isModalOpen.value = true;
     clearErrors();
-    selectedDateRange.value = null; 
-    
+    selectedDateRange.value = null;
+
     if (habitacion) {
-      habitacionSeleccionada.value = habitacion;
+      habitacionSeleccionada.value = { ...habitacion };
       await fetchDisabledDates(habitacion.id || habitacion._id);
     }
   };
@@ -111,6 +119,7 @@ export const useReservaStore = defineStore("reserva", () => {
 
   const closeModal = () => {
     isModalOpen.value = false;
+    resetForm();
   };
 
   const clearErrors = () => {
@@ -159,7 +168,7 @@ export const useReservaStore = defineStore("reserva", () => {
         icon: "error",
         title: "Faltan datos",
         text: "Verifica que hayas seleccionado fechas, llenado tus datos y/o subido el comprobante.",
-        confirmButtonColor: "#0f3b2a",
+        confirmButtonColor: COLOR_FOREST,
       });
       return false; 
     }
@@ -222,11 +231,10 @@ export const useReservaStore = defineStore("reserva", () => {
         icon: "success",
         title: "¡Reserva Solicitada!",
         text: `Hemos recibido tu comprobante, ${form.nombreCompleto.split(' ')[0]}. Lo verificaremos y te contactaremos pronto.`,
-        confirmButtonColor: "#0f3b2a",
+        confirmButtonColor: COLOR_FOREST,
       });
 
       closeModal();
-      resetForm();
       return true;
 
     } catch (error) {
@@ -235,7 +243,7 @@ export const useReservaStore = defineStore("reserva", () => {
         icon: "error",
         title: "Ups, algo salió mal",
         text: "No pudimos enviar tu reserva ni el comprobante. Intenta de nuevo.",
-        confirmButtonColor: "#e74c3c",
+        confirmButtonColor: COLOR_DANGER,
       });
       return false;
     } finally {

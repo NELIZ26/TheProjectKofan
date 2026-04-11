@@ -8,7 +8,36 @@ import  RoomCalendarModal from '@/components/RoomCalendarModal.vue';
 const API_BASE_URL = "http://127.0.0.1:8000";
 const isLoading = ref(true);
 const habitaciones = ref([]);
+const roomFilter = ref("all");
 const isSubmitting = ref(false);
+
+const habitacionesFiltradas = computed(() => {
+  if (roomFilter.value === "available") {
+    return habitaciones.value.filter((hab) => hab.active);
+  }
+
+  if (roomFilter.value === "maintenance") {
+    return habitaciones.value.filter((hab) => !hab.active);
+  }
+
+  return habitaciones.value;
+});
+
+const roomCounts = computed(() => ({
+  all: habitaciones.value.length,
+  available: habitaciones.value.filter((hab) => hab.active).length,
+  maintenance: habitaciones.value.filter((hab) => !hab.active).length,
+}));
+
+const getBrandColor = (token, fallback) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_APPLE = getBrandColor("--k-apple", "#8BCF5B");
+const COLOR_FOREST = getBrandColor("--k-forest", "#0f3b2a");
+const COLOR_DANGER = getBrandColor("--k-danger", "#e74c3c");
+
 const uploaderRef = ref(null);
 const isEditing = ref(false);
 
@@ -118,7 +147,7 @@ const guardarHabitacion = async () => {
   const { room_number, name, price, type, tipo_camas } = roomForm.value;
 
   if (!room_number || !name || !price || !type || !tipo_camas || (!isEditing.value && imagenesParaCargar.value.length === 0)) {
-    Swal.fire({ icon: "error", title: "Campos incompletos", text: "Verifica los datos obligatorios, incluyendo la distribución de camas." });
+    Swal.fire({ icon: "error", title: "Faltan algunos datos", text: "Completa la información principal y la distribución de camas para continuar." });
     return;
   }
 
@@ -131,10 +160,22 @@ const guardarHabitacion = async () => {
       if (arrayDeArchivos.length > 0) {
         await addRoomImages(currentRoomId.value, arrayDeArchivos);
       }
-      Swal.fire({ icon: "success", title: "¡Actualizada!", timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: "Espacio actualizado",
+        text: "La habitación ahora está lista para recibir huéspedes 🌿",
+        timer: 1800,
+        showConfirmButton: false
+      });
     } else {
       await createRoom(roomForm.value, arrayDeArchivos);
-      Swal.fire({ icon: "success", title: "¡Creada!", timer: 1500, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: "Espacio registrado",
+        text: "La habitación ahora está lista para recibir huéspedes 🌿",
+        timer: 1800,
+        showConfirmButton: false
+      });
     }
 
     resetForm();
@@ -143,7 +184,7 @@ const guardarHabitacion = async () => {
 
   } catch (error) {
     console.error("Error al guardar:", error);
-    Swal.fire({ icon: "error", title: "Error", text: "Verifica los datos o tu conexión." });
+    Swal.fire({ icon: "error", title: "No pudimos guardar este espacio", text: "Verifica los datos o tu conexión e inténtalo nuevamente." });
   } finally {
     isSubmitting.value = false;
   }
@@ -151,18 +192,18 @@ const guardarHabitacion = async () => {
 
 const eliminarHabitacion = async (id) => {
   const result = await Swal.fire({
-    title: '¿Estás seguro?', text: "Esta acción es irreversible.", icon: 'warning',
-    showCancelButton: true, confirmButtonColor: '#0f3b2a', cancelButtonColor: '#d33',
-    confirmButtonText: 'Sí, eliminar', cancelButtonText: 'Cancelar'
+    title: '¿Deseas retirar esta habitación del inventario?', text: "Podrás registrar un espacio similar nuevamente cuando lo necesites.", icon: 'warning',
+    showCancelButton: true, confirmButtonColor: COLOR_APPLE, cancelButtonColor: COLOR_FOREST,
+    confirmButtonText: 'Sí, retirarla', cancelButtonText: 'Conservar'
   });
 
   if (result.isConfirmed) {
     try {
       await deleteRoom(id);
-      Swal.fire({ icon: 'success', title: 'Eliminada', timer: 1500, showConfirmButton: false });
+      Swal.fire({ icon: 'success', title: 'Espacio retirado', text: 'La lista quedó actualizada correctamente.', timer: 1600, showConfirmButton: false });
       await cargarHabitaciones(); 
     } catch (error) {
-      Swal.fire('Error', 'No se pudo eliminar.', 'error');
+      Swal.fire('No fue posible completar la acción', 'Inténtalo nuevamente en unos segundos.', 'error');
     }
   }
 };
@@ -170,7 +211,7 @@ const eliminarHabitacion = async (id) => {
 const eliminarImagenExistente = async (index, imageUrl) => {
   const result = await Swal.fire({
     title: '¿Borrar esta foto?', text: "Se eliminará permanentemente.", icon: 'warning',
-    showCancelButton: true, confirmButtonColor: '#d33', cancelButtonColor: '#0f3b2a',
+    showCancelButton: true, confirmButtonColor: COLOR_DANGER, cancelButtonColor: COLOR_FOREST,
     confirmButtonText: 'Sí, borrar', cancelButtonText: 'Cancelar'
   });
 
@@ -199,8 +240,14 @@ const seleccionarPrincipal = (imgUrl) => {
 };
 
 const abrirCalendario = (habitacion) => {
-  habitacionSeleccionada.value = habitacion;
+  if (!habitacion) return;
+  habitacionSeleccionada.value = { ...habitacion };
   modalVisible.value = true;
+};
+
+const cerrarCalendario = () => {
+  modalVisible.value = false;
+  habitacionSeleccionada.value = null;
 };
 
 const listaAmenidades = [
@@ -220,22 +267,44 @@ const listaAmenidades = [
 
 <template>
   <div class="container-fluid py-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
       <div>
-        <h2 class="fw-bold text-dark mb-1">Gestión de Habitaciones</h2>
-        <p class="text-muted mb-0">Administra y organiza la oferta de alojamiento de Kofán.</p>
+        <p class="brand-handmade mb-1">Espacios listos para recibir viajeros</p>
+        <h2 class="section-title mb-1 d-flex align-items-center gap-2">
+          <font-awesome-icon icon="fa-solid fa-bed" />
+          Gestión de Habitaciones
+        </h2>
+        <p class="text-muted mb-0">Organiza disponibilidad, mantenimiento y calendario con una vista clara y serena.</p>
       </div>
       
-      <button @click="prepararCreacion" class="btn btn-dark shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
-        <i class="bi bi-plus-circle-fill me-2"></i>
+      <button @click="prepararCreacion" class="btn btn-kofan shadow-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#modalHabitacion">
+        <font-awesome-icon icon="fa-solid fa-leaf" class="me-2" />
         Nueva Habitación
       </button>
     </div>
 
-    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="filter-chip-group mb-4">
+      <button class="filter-chip" :class="{ active: roomFilter === 'all' }" @click="roomFilter = 'all'">
+        <font-awesome-icon icon="fa-solid fa-bed" class="me-2" />
+        Todas
+        <span class="chip-count">{{ roomCounts.all }}</span>
+      </button>
+      <button class="filter-chip" :class="{ active: roomFilter === 'available' }" @click="roomFilter = 'available'">
+        <font-awesome-icon icon="fa-solid fa-leaf" class="me-2" />
+        Disponibles
+        <span class="chip-count">{{ roomCounts.available }}</span>
+      </button>
+      <button class="filter-chip" :class="{ active: roomFilter === 'maintenance' }" @click="roomFilter = 'maintenance'">
+        <font-awesome-icon icon="fa-solid fa-broom" class="me-2" />
+        Mantenimiento
+        <span class="chip-count">{{ roomCounts.maintenance }}</span>
+      </button>
+    </div>
+
+    <div class="card eco-card border-0 shadow-sm rounded-4 overflow-hidden">
       <div class="table-responsive p-0">
-        <table class="table table-hover align-middle mb-0">
-          <thead class="table-light">
+        <table class="table table-hover align-middle mb-0 table-serene">
+          <thead class="table-soft">
             <tr>
               <th class="ps-4 py-3 text-muted small fw-bold">NOMBRE</th>
               <th class="py-3 text-muted small fw-bold">PRECIO/NOCHE</th>
@@ -246,14 +315,22 @@ const listaAmenidades = [
             </tr>
           </thead>
           <tbody>
-            <tr v-if="habitaciones.length === 0 && !isLoading">
+            <tr v-if="isLoading">
+              <td colspan="6" class="text-center py-5">
+                <div class="spinner-border" style="color: var(--k-apple);" role="status"></div>
+                <p class="brand-handmade mt-3 mb-0">Preparando los espacios del hotel...</p>
+              </td>
+            </tr>
+
+            <tr v-else-if="habitacionesFiltradas.length === 0">
               <td colspan="6" class="text-center text-muted py-5">
-                <i class="bi bi-door-closed display-4 mb-3 d-block text-light"></i>
-                No hay habitaciones registradas
+                <font-awesome-icon icon="fa-solid fa-leaf" class="display-6 mb-3 d-block" style="color: var(--k-apple);" />
+                <p class="empty-state-copy mb-1">Aún no hay habitaciones para este filtro.</p>
+                <small>Cuando registres un nuevo espacio, aparecerá aquí.</small>
               </td>
             </tr>
             
-            <tr v-for="hab in habitaciones" :key="hab.id || hab._id" class="align-middle">
+            <tr v-for="hab in habitacionesFiltradas" :key="hab.id || hab._id" class="align-middle">
               <td class="ps-4">
                 <div class="d-flex align-items-center">
                   <img 
@@ -263,13 +340,13 @@ const listaAmenidades = [
                     @error="manejarErrorImagen"
                   >
                   <div>
-                    <div class="fw-bold text-dark">{{ hab.name }}</div>
+                    <div class="fw-bold text-kofan">{{ hab.name }}</div>
                     <small class="text-muted">N° {{ hab.room_number }}</small>
                   </div>
                 </div>
               </td>
 
-              <td class="fw-semibold text-dark">
+              <td class="fw-semibold text-kofan">
                 ${{ hab.price.toLocaleString('es-CO') }}
               </td>
 
@@ -278,15 +355,15 @@ const listaAmenidades = [
               </td>
 
               <td>
-                <span :class="hab.active ? 'badge bg-success bg-opacity-10 text-success border border-success px-3 py-2 rounded-pill' : 'badge bg-warning bg-opacity-10 text-warning border border-warning px-3 py-2 rounded-pill'">
-                  <i :class="hab.active ? 'bi bi-check-circle-fill' : 'bi bi-tools'" class="me-1"></i>
-                  {{ hab.active ? 'Activa' : 'Mantenimiento' }}
+                <span :class="hab.active ? 'badge badge-soft-success px-3 py-2 rounded-pill' : 'badge badge-soft-maintenance px-3 py-2 rounded-pill'">
+                  <font-awesome-icon :icon="hab.active ? 'fa-solid fa-leaf' : 'fa-solid fa-broom'" class="me-1" />
+                  {{ hab.active ? 'Disponible' : 'Mantenimiento' }}
                 </span>
               </td>
 
               <td class="text-center align-middle">
-                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-outline-primary rounded-pill px-3 fw-medium shadow-sm" style="font-size: 0.82rem;">
-                  <i class="bi bi-calendar-range me-1"></i> Ver Fechas
+                <button @click="abrirCalendario(hab)" class="btn btn-sm btn-soft-sky rounded-pill px-3 fw-medium shadow-sm" style="font-size: 0.82rem;">
+                  <font-awesome-icon icon="fa-solid fa-calendar-days" class="me-1" /> Ver Fechas
                 </button>
               </td>
 
@@ -294,23 +371,23 @@ const listaAmenidades = [
                 <div class="d-flex justify-content-center gap-2">
                   
                   <button 
-                    class="btn btn-sm btn-outline-dark rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
+                    class="btn btn-sm btn-outline-secondary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
                     style="width: 35px; height: 35px;"
                     data-bs-toggle="modal" 
                     data-bs-target="#modalHabitacion"
                     @click="prepararEdicion(hab)"
                     title="Editar habitación"
                   >
-                    <i class="bi bi-pencil-square fs-6"></i>
+                    <font-awesome-icon :icon="['far', 'pen-to-square']" class="fs-6" />
                   </button>
                   
                   <button 
                     class="btn btn-sm btn-outline-danger rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm" 
                     style="width: 35px; height: 35px;"
                     @click="eliminarHabitacion(hab.id || hab._id)"
-                    title="Eliminar habitación"
+                    title="Retirar habitación"
                   >
-                    <i class="bi bi-trash fs-6"></i>
+                    <font-awesome-icon icon="fa-solid fa-trash" class="fs-6" />
                   </button>
                 </div>
               </td>
@@ -322,13 +399,13 @@ const listaAmenidades = [
 
     <div class="modal fade" id="modalHabitacion" tabindex="-1" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content border-0 shadow-lg">
-          <div class="modal-header bg-dark text-white border-0">
-            <h5 class="modal-title fw-bold">
-              <i :class="isEditing ? 'bi bi-pencil-square' : 'bi bi-door-open-fill'" class="me-2"></i>
+        <div class="modal-content border-0 shadow-lg eco-card">
+          <div class="modal-header modal-soft-header border-0">
+            <h5 class="modal-title section-title mb-0">
+              <font-awesome-icon :icon="isEditing ? 'fa-solid fa-bed' : 'fa-solid fa-leaf'" class="me-2" />
               {{ isEditing ? 'Editar Habitación' : 'Registrar Habitación' }}
             </h5>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" @click="resetForm"></button>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" @click="resetForm"></button>
           </div>
 
           <form @submit.prevent="guardarHabitacion">
@@ -405,7 +482,7 @@ const listaAmenidades = [
 
                 <div class="col-12 mt-4" v-if="isEditing && roomForm.images && roomForm.images.length">
                   <label class="form-label fw-bold mb-1">Fotos Actuales de la Cabaña</label>
-                  <p class="text-muted small mb-3">Haz clic en la <i class="bi bi-star-fill text-warning"></i> para elegir la foto principal.</p>
+                  <p class="text-muted small mb-3">Haz clic en la <font-awesome-icon icon="fa-solid fa-star" class="tone-sand" /> para elegir la foto principal.</p>
                   
                   <div class="row g-2">
                     <div v-for="(imgUrl, index) in roomForm.images" :key="index" class="col-4 col-md-3">
@@ -426,7 +503,7 @@ const listaAmenidades = [
                           @click.stop="eliminarImagenExistente(index, imgUrl)"
                           title="Eliminar foto"
                         >
-                          <i class="bi bi-trash-fill" style="font-size: 0.8rem;"></i>
+                          <font-awesome-icon icon="fa-solid fa-trash" class="image-action-icon" />
                         </button>
 
                         <button 
@@ -437,7 +514,7 @@ const listaAmenidades = [
                           @click.stop="seleccionarPrincipal(imgUrl)"
                           title="Hacer foto principal"
                         >
-                          <i class="bi bi-star-fill text-warning" style="font-size: 0.8rem;"></i>
+                          <font-awesome-icon icon="fa-solid fa-star" class="image-action-icon tone-sand" />
                         </button>
                       </div>
                     </div>
@@ -460,8 +537,8 @@ const listaAmenidades = [
               <button type="button" class="btn btn-light border px-4 rounded-pill" data-bs-dismiss="modal" ref="closeBtnRef" @click="resetForm">
                 Cancelar
               </button>
-              <button type="submit" class="btn btn-dark px-4 rounded-pill shadow-sm" :disabled="isSubmitting">
-                {{ isSubmitting ? 'Guardando...' : (isEditing ? 'Guardar Cambios' : 'Guardar Habitación') }}
+              <button type="submit" class="btn btn-kofan px-4 rounded-pill shadow-sm" :disabled="isSubmitting">
+                {{ isSubmitting ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Guardar habitación') }}
               </button>
             </div>
           </form>
@@ -471,64 +548,131 @@ const listaAmenidades = [
     </div>
 
     <RoomCalendarModal 
-    :show="modalVisible" 
-    :habitacion="habitacionSeleccionada"
-    @close="modalVisible = false"
-    @reservaCreada="cargarHabitaciones" 
+      v-if="modalVisible && habitacionSeleccionada"
+      :show="modalVisible" 
+      :habitacion="habitacionSeleccionada"
+      @close="cerrarCalendario"
+      @reservaCreada="cargarHabitaciones" 
     />
   </div>
 </template>
 
 <style scoped>
-/* Tus estilos se mantienen intactos */
-.btn-kofan {
-  background-color: #0f3b2a;
-  color: white;
-  border-radius: 10px;
-  font-weight: 500;
-  transition: 0.3s;
+.filter-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 }
+
 .btn-kofan:hover {
-  background-color: #1a5c43;
-  color: white;
-  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(139, 207, 91, 0.18);
 }
+
+.filter-chip {
+  border: 1px solid var(--k-border);
+  background: var(--k-offwhite);
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.filter-chip:hover {
+  background: var(--k-apple-soft);
+  border-color: rgba(139, 207, 91, 0.4);
+}
+
+.filter-chip.active {
+  background: rgba(139, 207, 91, 0.2);
+  color: var(--k-forest);
+  border-color: rgba(139, 207, 91, 0.45);
+  box-shadow: 0 8px 18px rgba(139, 207, 91, 0.14);
+}
+
+.chip-count {
+  margin-left: 0.45rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  font-size: 0.75rem;
+}
+
+.tone-sand {
+  color: var(--k-sand);
+}
+
+.image-action-icon {
+  font-size: 0.8rem;
+}
+
+.table-soft th {
+  background: rgba(52, 152, 219, 0.08) !important;
+}
+
+.table-serene tbody tr:hover {
+  background: rgba(52, 152, 219, 0.1);
+}
+
+.empty-state-copy {
+  font-size: 1.1rem;
+}
+
+.badge-soft-success {
+  background: rgba(139, 207, 91, 0.18);
+  color: var(--k-forest);
+  border: 1px solid rgba(139, 207, 91, 0.45);
+}
+
+.badge-soft-maintenance {
+  background: var(--k-sky-soft);
+  color: var(--k-sky);
+  border: 1px solid rgba(52, 152, 219, 0.25);
+}
+
+.modal-soft-header {
+  background: linear-gradient(135deg, var(--k-sky-soft) 0%, var(--k-offwhite) 100%);
+}
+
 .border-dashed {
   border-style: dashed !important;
 }
 
-/* 🟢 Estilos para las Fotos Actuales */
 .photo-card {
   overflow: hidden;
 }
 
 .principal-highlight {
-  background-color: #f0fdf4; /* Fondo verde clarito */
+  background-color: rgba(139, 207, 91, 0.12);
 }
 
 .principal-badge {
-  top: -6px; 
-  left: -6px; 
-  font-size: 0.65rem; 
-  font-weight: 700; 
-  padding: 3px 8px; 
+  top: -6px;
+  left: -6px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 3px 8px;
   z-index: 5;
 }
 
 .action-btn {
-  bottom: 8px; 
-  opacity: 0; 
-  transform: scale(0.8); 
-  width: 28px; height: 28px; padding: 0; display: flex; align-items: center; justify-content: center; z-index: 10;
+  bottom: 8px;
+  opacity: 0;
+  transform: scale(0.8);
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
   transition: all 0.2s ease-in-out;
 }
 
 .btn-trash { right: 8px; }
-.btn-star { right: 42px; } 
+.btn-star { right: 42px; }
 
 .photo-card:hover .action-btn {
   opacity: 1;
   transform: scale(1);
 }
-
 </style>

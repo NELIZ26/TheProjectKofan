@@ -15,7 +15,7 @@
         @click="toggle"
         title="Mostrar/Ocultar contraseña"
       >
-        <i :class="icon" class="text-muted"></i>
+        <font-awesome-icon :icon="icon" class="text-muted" />
       </span>
     </div>
 
@@ -50,7 +50,7 @@ const visible = ref(false)
 const inputType = computed(() => visible.value ? 'text' : 'password')
 
 /* UX correcta */
-const icon = computed(() => visible.value ? 'bi bi-eye-slash' : 'bi bi-eye')
+const icon = computed(() => visible.value ? ['fas', 'eye-slash'] : ['fas', 'eye'])
 
 const toggle = () => {
   visible.value = !visible.value

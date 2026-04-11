@@ -1,6 +1,5 @@
 <script setup>
 import { ref, watch } from 'vue';
-import html2pdf from 'html2pdf.js';
 import apiClient from '@/api/apiClient'; // Importamos el cliente para hacer la petición
 
 const props = defineProps({
@@ -41,23 +40,28 @@ const cerrar = () => {
   emit('close');
 };
 
-const descargarPDF = () => {
+const descargarPDF = async () => {
   if (!factura.value) return;
   generando.value = true;
-  
-  const elemento = document.getElementById('documento-factura');
-  
-  const opciones = {
-    margin:       10,
-    filename:     `Cuenta_Cobro_Kofan_${factura.value.guest_name || 'Cliente'}.pdf`,
-    image:        { type: 'jpeg', quality: 0.98 },
-    html2canvas:  { scale: 2, useCORS: true },
-    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-  };
 
-  html2pdf().set(opciones).from(elemento).save().then(() => {
+  try {
+    const { default: html2pdf } = await import('html2pdf.js');
+    const elemento = document.getElementById('documento-factura');
+
+    const opciones = {
+      margin: 10,
+      filename: `Cuenta_Cobro_Kofan_${factura.value.guest_name || 'Cliente'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+
+    await html2pdf().set(opciones).from(elemento).save();
+  } catch (error) {
+    console.error('No se pudo generar el PDF:', error);
+  } finally {
     generando.value = false;
-  });
+  }
 };
 
 const formatoDinero = (valor) => {
@@ -70,9 +74,9 @@ const formatoDinero = (valor) => {
     <div class="modal-box bg-white rounded-4 shadow-lg overflow-hidden" style="max-width: 800px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
       
       <div class="bg-dark text-white p-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold"><i class="bi bi-file-earmark-pdf text-danger me-2"></i> Estado de Cuenta</h5>
+        <h5 class="mb-0 fw-bold"><font-awesome-icon :icon="['fas', 'file-pdf']" class="text-danger me-2" /> Estado de Cuenta</h5>
         <button @click="cerrar" class="btn btn-sm text-white fs-5 border-0 hover-danger">
-          <font-awesome-icon icon="fa-solid fa-times" />
+          <font-awesome-icon icon="fa-solid fa-xmark" />
         </button>
       </div>
 
@@ -84,7 +88,7 @@ const formatoDinero = (valor) => {
         </div>
 
         <div v-else-if="errorMensaje" class="text-center py-5 bg-white rounded shadow-sm border">
-          <i class="bi bi-receipt display-1 text-muted opacity-50 mb-3"></i>
+          <font-awesome-icon :icon="['fas', 'receipt']" class="display-1 text-muted opacity-50 mb-3" />
           <h5 class="fw-bold text-dark">Cuenta no encontrada</h5>
           <p class="text-muted w-75 mx-auto">{{ errorMensaje }}</p>
         </div>
@@ -160,7 +164,7 @@ const formatoDinero = (valor) => {
         <button type="button" class="btn btn-secondary me-2" @click="cerrar">Cerrar</button>
         <button type="button" class="btn btn-danger px-4" @click="descargarPDF" :disabled="generando || !factura">
           <span v-if="generando" class="spinner-border spinner-border-sm me-2"></span>
-          <i v-else class="bi bi-file-earmark-pdf-fill me-2"></i> Descargar PDF
+          <font-awesome-icon v-else :icon="['fas', 'file-pdf']" class="me-2" /> Descargar PDF
         </button>
       </div>
 

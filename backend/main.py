@@ -46,18 +46,19 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 # 🟢 2. PROTECCIÓN DE DIRECTORIOS ESTÁTICOS Y MONTAJE
-# Definimos las rutas de las carpetas
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
-IMAGES_DIR = os.path.join(STATIC_DIR, "images") # Específico para las fotos que fallaban
+UPLOADS_DIR = UPLOAD_DIR
+IMAGES_DIR = os.path.join(STATIC_DIR, "images")
 
 # Creamos las carpetas si no existen (evita que el servidor explote al arrancar)
-os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(STATIC_DIR, exist_ok=True)
+os.makedirs(UPLOADS_DIR, exist_ok=True)
 os.makedirs(IMAGES_DIR, exist_ok=True)
 
 # Montamos las rutas para que el frontend las pueda ver
-app.mount("/static/uploads", StaticFiles(directory=UPLOAD_DIR), name="static_uploads")
+app.mount("/static/uploads", StaticFiles(directory=UPLOADS_DIR), name="static_uploads")
+app.mount("/static/images", StaticFiles(directory=IMAGES_DIR), name="static_images")
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 # 🟢 3. CONFIGURACIÓN CORS

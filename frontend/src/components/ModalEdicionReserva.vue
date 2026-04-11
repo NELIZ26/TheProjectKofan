@@ -247,7 +247,7 @@ const cerrar = () => {
           <h6 class="fw-bold text-success mb-3 border-bottom pb-2">Estadía y Cobro</h6>
           <div class="row g-3 mb-4 bg-light p-3 rounded border">
             <div class="col-md-4">
-              <label class="form-label small fw-bold text-muted">Ingreso <i class="bi bi-lock-fill text-warning"></i></label>
+              <label class="form-label small fw-bold text-muted">Ingreso <font-awesome-icon :icon="['fas', 'lock']" class="text-warning" /></label>
               <input type="date" class="form-control bg-white text-muted" v-model="form.fecha_entrada" disabled readonly>
             </div>
             <div class="col-md-4">
@@ -328,7 +328,7 @@ const cerrar = () => {
               <input type="text" class="form-control form-control-sm" :class="{'bg-white': acomp.bloqueado}" placeholder="Parentesco (Ej: Hijo, Esposa)" v-model="acomp.parentesco" :disabled="acomp.bloqueado" required>
             </div>
             <div v-if="acomp.bloqueado" class="col-12 mt-1">
-              <small class="text-success"><i class="bi bi-shield-check"></i> Huésped registrado en el sistema</small>
+              <small class="text-success"><font-awesome-icon :icon="['fas', 'shield-halved']" class="me-1" /> Huésped registrado en el sistema</small>
             </div>
           </div>
 
@@ -356,7 +356,7 @@ const cerrar = () => {
               <input type="number" class="form-control form-control-sm" :class="{'bg-white': extra.bloqueado}" placeholder="Ej: 15000" v-model="extra.valor" :disabled="extra.bloqueado" required min="0">
             </div>
             <div v-if="extra.bloqueado" class="col-12 mt-1">
-              <small class="text-success"><i class="bi bi-check-circle-fill"></i> Registrado en cuenta</small>
+              <small class="text-success"><font-awesome-icon :icon="['fas', 'circle-check']" class="me-1" /> Registrado en cuenta</small>
             </div>
           </div>
 
@@ -367,7 +367,7 @@ const cerrar = () => {
         <button type="button" class="btn btn-secondary me-2" @click="cerrar">Cancelar</button>
         <button type="submit" form="formEdicionReserva" class="btn btn-dark px-4" :disabled="guardando">
         <span v-if="guardando" class="spinner-border spinner-border-sm me-2"></span>
-        <font-awesome-icon v-else :icon="modoCheckIn ? 'fa-solid fa-check-circle' : 'fa-solid fa-save'" class="me-2" /> 
+        <font-awesome-icon v-else :icon="modoCheckIn ? 'fa-solid fa-circle-check' : 'fa-solid fa-save'" class="me-2" /> 
         {{ modoCheckIn ? 'Confirmar Check-in' : 'Guardar y Continuar' }}
       </button>
       </div>

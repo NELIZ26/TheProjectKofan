@@ -18,6 +18,13 @@ const form = ref({
 
 const confirmPassword = ref("");
 
+const getBrandColor = (token, fallback) =>
+  typeof window !== "undefined"
+    ? getComputedStyle(document.documentElement).getPropertyValue(token).trim() || fallback
+    : fallback;
+
+const COLOR_FOREST = getBrandColor("--k-forest", "#0f3b2a");
+
 // Detectamos si estamos en modo edición
 const isEditing = computed(() => !!props.usuarioEditando);
 
@@ -57,7 +64,7 @@ const isFormInvalid = computed(() => {
 const procesarFormulario = () => {
   if (!isEditing.value) {
     if (form.value.password.length < 8) {
-      return Swal.fire({ icon: "warning", title: "Seguridad", text: "La clave debe tener 8+ caracteres.", confirmButtonColor: "#0f3b2a" });
+      return Swal.fire({ icon: "warning", title: "Seguridad", text: "La clave debe tener 8+ caracteres.", confirmButtonColor: COLOR_FOREST });
     }
   }
 
@@ -176,8 +183,9 @@ watch(() => props.usuarioEditando, (newVal) => {
   color: #6c757d;
 }
 .btn-kofan {
-  background-color: #0f3b2a;
-  color: white;
+  background-color: var(--k-forest);
+  color: var(--k-cream);
   border-radius: 10px;
+  border-color: var(--k-forest);
 }
 </style>

@@ -3,7 +3,7 @@ from datetime import datetime
 from backend.db.client import db
 from datetime import datetime, timedelta
 
-async def crear_notificacion_panel(user_id: str, titulo: str, mensaje: str, tipo: str = "success", icono: str = "bi-check-circle-fill"):
+async def crear_notificacion_panel(user_id: str, titulo: str, mensaje: str, tipo: str = "success", icono: str = "fa-solid fa-circle-check"):
     notificacion = {
         "user_id": ObjectId(user_id),
         "titulo": titulo,
@@ -39,7 +39,7 @@ async def get_notificaciones_usuario(user_id: str):
             "titulo": doc.get("titulo", "Aviso"),
             "mensaje": doc.get("mensaje", ""),
             "colorTheme": doc.get("colorTheme", "success"),
-            "icono": doc.get("icono", "bi-bell"),
+            "icono": doc.get("icono", "fa-solid fa-bell"),
             "leida": doc.get("leida", False),
             "fecha": fecha_formateada # 🟢 La mandamos a Vue lista para mostrarse
         })

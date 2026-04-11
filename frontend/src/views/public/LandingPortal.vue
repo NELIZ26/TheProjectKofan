@@ -1,210 +1,153 @@
-<script setup>
-</script>
-
 <template>
-  <div class="split-landing">
-    <div class="hero-header">
-      <p class="eyebrow">Experiencia premium en la selva</p>
-    </div>
+  <div class="service-selection">
+    <div class="overlay-kofan">
+      <div class="container text-center py-5">
+        <font-awesome-icon
+          icon="fa-solid fa-leaf"
+          class="leaf-icon mb-3 fs-1"
+        />
+        <h1 class="display-4 fw-bold text-white mb-2 title-kofan">Experiencias Kofán</h1>
+        <p class="text-light lead mb-5 subtitle-kofan">
+          Elige el tipo de experiencia que deseas vivir en el corazón del Putumayo
+        </p>
 
-    <div class="cards-grid">
-      <router-link :to="{ name: 'rooms' }" class="split-card hospedaje-side">
-        <div class="overlay"></div>
-        <div class="card-content">
-          <span class="card-label">Hospedaje</span>
-          <h2 class="title">Hospedaje Ancestral</h2>
-          <p class="subtitle">Confort natural y conexión directa con la selva</p>
-          <span class="btn-ingresar">Explorar Hospedaje</span>
-        </div>
-      </router-link>
+        <div class="row g-4 justify-content-center">
+          <div class="col-md-5">
+            <div class="card-selection shadow-lg" @click="goToHospedaje">
+              <div class="card-image hospedaje-bg"></div>
+              <div class="card-content">
+                <h2 class="fw-bold">Hospedaje</h2>
+                <p>
+                  Cabañas privadas y habitaciones diseñadas para el descanso
+                  profundo y la conexión con la naturaleza.
+                </p>
+                <button class="btn btn-kofan rounded-pill px-4">
+                  Explorar Cabañas
+                </button>
+              </div>
+            </div>
+          </div>
 
-      <router-link to="/eventos" class="split-card eventos-side">
-        <div class="overlay"></div>
-        <div class="card-content">
-          <span class="card-label">Eventos</span>
-          <h2 class="title">Salón de Eventos</h2>
-          <p class="subtitle">Espacios inspiradores para momentos únicos</p>
-          <span class="btn-ingresar">Cotizar Eventos</span>
+          <div class="col-md-5">
+            <div class="card-selection shadow-lg inactive-card">
+              <div class="card-image eventos-bg"></div>
+              <div class="card-content">
+                <h2 class="fw-bold">Eventos y Bodas</h2>
+                <p>
+                  Celebra tus momentos especiales rodeado de la magia ancestral
+                  y paisajes inolvidables.
+                </p>
+                <span class="badge bg-warning text-dark badge-kofan">Próximamente</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </router-link>
+      </div>
     </div>
   </div>
 </template>
 
+<script setup>
+import { useRouter } from "vue-router";
+
+const router = useRouter();
+
+// Cambiamos la ruta para que coincida con la que tenías (rooms)
+const goToHospedaje = () => {
+  router.push({ name: 'rooms' });
+};
+</script>
+
 <style scoped>
-.split-landing {
+/* ELIMINADO el margin-top para que empiece desde arriba del todo */
+.service-selection {
   min-height: 100vh;
-  width: 100%;
-  padding: 3.5rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 2.75rem;
-  background:
-    radial-gradient(circle at top, rgba(212, 175, 55, 0.08), transparent 36%),
-    radial-gradient(circle at bottom right, rgba(255, 255, 255, 0.04), transparent 30%),
-    linear-gradient(180deg, #081711 0%, #04100b 100%);
-  overflow: hidden;
-}
-
-.hero-header {
-  text-align: center;
-  color: #fff;
-  width: 100%;
-  max-width: 820px;
-  margin: 0 auto;
-}
-
-.eyebrow {
-  display: inline-block;
-  margin: 0 0 1rem;
-  padding: 0.45rem 1rem;
-  border-radius: 999px;
-  background: rgba(212, 175, 55, 0.12);
-  border: 1px solid rgba(212, 175, 55, 0.25);
-  color: #d8b95a;
-  font-size: 0.82rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-
-.hero-text {
-  margin: 1rem auto 0;
-  max-width: 680px;
-  font-size: 1.05rem;
-  line-height: 1.7;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.cards-grid {
-  width: min(1200px, 100%);
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.split-card {
-  position: relative;
-  min-height: 540px;
-  border-radius: 30px;
-  overflow: hidden;
-  text-decoration: none;
-  display: flex;
-  align-items: flex-end;
-  padding: 2.5rem;
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.34);
-  transform: translateY(0);
-  transition: transform 0.35s ease, box-shadow 0.35s ease, filter 0.35s ease;
-  isolation: isolate;
-}
-
-.split-card:hover {
-  transform: translateY(-10px);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
-  filter: saturate(1.05);
-}
-
-.hospedaje-side {
-  background-image: url('@/img/ancestral.jpg');
+  background-image: url("https://i0.wp.com/www.lasillavacia.com/wp-content/uploads/2023/10/LaPaya_Portada.jpg?fit=1200%2C700&ssl=1");
   background-size: cover;
   background-position: center;
 }
 
-.eventos-side {
-  background-image: url('@/img/casa okfan.jpg');
+.overlay-kofan {
+  min-height: 100vh;
+  background: rgba(15, 59, 42, 0.85); /* Verde oscuro corporativo con opacidad */
+  display: flex;
+  align-items: center;
+}
+
+.title-kofan {
+  font-family: 'Forum', serif;
+}
+
+.subtitle-kofan, .card-content p {
+  font-family: 'Forum', serif;
+}
+
+.leaf-icon {
+  color: var(--k-apple);
+}
+
+.card-selection {
+  background: var(--k-cream);
+  border-radius: 25px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  height: 100%;
+  border: 1px solid var(--k-border);
+}
+
+.card-selection:hover {
+  transform: translateY(-15px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+}
+
+.card-image {
+  height: 250px;
   background-size: cover;
   background-position: center;
 }
 
-.overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.82)),
-    linear-gradient(135deg, rgba(4, 16, 11, 0.42), rgba(212, 175, 55, 0.08));
-  z-index: 0;
+.hospedaje-bg {
+  background-image: url("@/img/habitacion2.jpg");
 }
-
-.split-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 30px;
-  border: 1px solid rgba(212, 175, 55, 0.18);
-  pointer-events: none;
+.eventos-bg {
+  background-image: url("@/img/eventos3.jpg");
 }
 
 .card-content {
-  position: relative;
-  z-index: 1;
-  color: #fff;
-  max-width: 440px;
+  padding: 2.5rem;
+  text-align: center;
 }
 
-.card-label {
-  display: inline-block;
-  margin-bottom: 0.9rem;
-  padding: 0.36rem 0.9rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  backdrop-filter: blur(12px);
-  font-size: 0.8rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+.card-content h2 {
+  font-family: 'Forum', serif;
+  color: var(--k-forest);
 }
 
-.title {
-  font-size: clamp(2rem, 4vw, 3.35rem);
-  line-height: 1.05;
-  margin: 0 0 0.75rem;
-  font-weight: 800;
-  text-shadow: 0 10px 28px rgba(0, 0, 0, 0.42);
+.btn-kofan {
+  background-color: var(--k-forest);
+  color: var(--k-cream);
+  font-family: 'Handlee', cursive;
+  border: none;
+  transition: background 0.3s;
 }
 
-.subtitle {
-  font-size: 1.05rem;
-  line-height: 1.7;
-  margin-bottom: 1.7rem;
-  color: rgba(255, 255, 255, 0.86);
-  max-width: 34ch;
+.btn-kofan:hover {
+  background-color: var(--k-apple);
+  color: var(--k-forest);
 }
 
-.btn-ingresar {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.95rem 1.45rem;
-  min-height: 48px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #d4af37, #b8912e);
-  color: #081711;
-  font-weight: 800;
-  font-size: 0.98rem;
-  letter-spacing: 0.02em;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-  box-shadow: 0 10px 24px rgba(212, 175, 55, 0.22);
+.badge-kofan {
+  font-family: 'Handlee', cursive;
 }
 
-.split-card:hover .btn-ingresar {
-  transform: translateY(-2px);
-  box-shadow: 0 14px 30px rgba(212, 175, 55, 0.3);
+.inactive-card {
+  filter: grayscale(1);
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
-@media (max-width: 900px) {
-  .cards-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .split-card {
-    min-height: 390px;
-    padding: 2rem;
-  }
-
-  .split-landing {
-    padding: 2rem 1rem;
-  }
+.inactive-card:hover {
+  transform: none;
 }
 </style>
