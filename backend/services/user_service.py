@@ -1,53 +1,74 @@
 from backend.db.client import db
 from backend.core.security import hash_password
 from bson import ObjectId
-
+from pymongo import ReturnDocument
 
 async def create_user_service(user_data):
-    user_dict = user_data.model_dump()
-    user_dict["password"] = hash_password(user_data.password)
-    result = await db.clients.insert_one(user_dict)
+    if not isinstance(user_data, dict):
+        user_data = user_data.model_dump()
+    raw_password = user_data.get("password") or user_data.get("number_document")
+    
+    if not raw_password:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Se requiere contraseña o número de documento")
+    user_data["password"] = hash_password(raw_password)
+    # 🟢 CAMBIO: db.clients -> db.users
+    result = await db.users.insert_one(user_data)
     return str(result.inserted_id)
 
-
 async def update_user_service(user_id: str, update_data: dict):
-    await db.clients.update_one(
+    # 🟢 CAMBIO: db.clients -> db.users
+    return await db.users.find_one_and_update(
         {"_id": ObjectId(user_id)},
-        {"$set": update_data}
+        {"$set": update_data},
+        return_document=ReturnDocument.AFTER
     )
-    return await db.clients.find_one({"_id": ObjectId(user_id)})
-
 
 async def delete_user_service(user_id: str):
-    result = await db.clients.delete_one({"_id": ObjectId(user_id)})
+    # 🟢 CAMBIO: db.clients -> db.users
+    result = await db.users.delete_one({"_id": ObjectId(user_id)})
     return result.deleted_count > 0
 
-
 async def get_user_by_email(email: str):
-    return await db.clients.find_one({"email": email})
-
+    # 🟢 CAMBIO: db.clients -> db.users
+    return await db.users.find_one({"email": email})
 
 async def get_user_by_document(doc: str):
-    # Corregido: el campo en UserCreate es "number_document", no "document_number"
-    return await db.clients.find_one({"number_document": doc})
-
+    # 🟢 CAMBIO: db.clients -> db.users
+    return await db.users.find_one({"number_document": doc})
 
 async def get_user_by_id(user_id: str):
-    return await db.clients.find_one({"_id": ObjectId(user_id)})
-
-
-async def get_all_users_service():
-    users_cursor = db.clients.find()
-    users = await users_cursor.to_list(length=100)
-    for user in users:
-        user["_id"] = str(user["_id"])
-        user.pop("password", None)
-    return users
-
+    # 🟢 CAMBIO: db.clients -> db.users
+    return await db.users.find_one({"_id": ObjectId(user_id)})
 
 async def deactivate_user_service(user_id: str):
-    result = await db.clients.update_one(
+    # 🟢 CAMBIO: db.clients -> db.users
+    result = await db.users.update_one(
         {"_id": ObjectId(user_id)},
         {"$set": {"is_active": False}}
     )
     return result.matched_count > 0
+
+async def toggle_user_status_service(user_id: str):
+    # 🟢 CAMBIO: db.clients -> db.users
+    user = await db.users.find_one({"_id": ObjectId(user_id)})
+    if not user:
+        return None
+    
+    new_status = not user.get("is_active", True)
+    await db.users.update_one(
+        {"_id": ObjectId(user_id)},
+        {"$set": {"is_active": new_status}}
+    )
+    return new_status
+
+async def get_all_users_service(skip: int = 0, limit: int = 50):
+    # 🟢 CAMBIO: db.clients -> db.users
+    cursor = db.users.find().skip(skip).limit(limit)
+    users = await cursor.to_list(length=limit)
+    
+    for user in users:
+        user["_id"] = str(user["_id"])
+        user.pop("password", None) 
+        
+    return users

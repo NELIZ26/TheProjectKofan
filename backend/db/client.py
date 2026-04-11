@@ -3,15 +3,11 @@ from pathlib import Path
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
 
-# 1. Calculamos la ruta exacta de la carpeta 'backend'
-# Path(__file__) es backend/db/client.py
-# .parent.parent nos lleva a la carpeta 'backend'
 BASE_DIR = Path(__file__).resolve().parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
 print(f"📂 Buscando .env en: {ENV_PATH}")
 
-# 2. Obligamos a dotenv a leer ese archivo específico
 load_dotenv(dotenv_path=ENV_PATH)
 
 uri = os.getenv("MONGO_URI") 

@@ -1,32 +1,37 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, status
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form, Depends, status
 from typing import Optional
-from backend.dependencies.auth import required_admin
 from backend.services.gallery_service import get_all_photos, upload_photo, delete_photo
+from backend.dependencies.auth import required_admin, get_current_user
 
-router = APIRouter(prefix="/gallery", tags=["Galería"])
+router = APIRouter(prefix="/gallery", tags=["Gallery"])
 
-
-# PÚBLICO: listar fotos con filtro opcional por categoría
 @router.get("/")
-async def list_photos(categoria: Optional[str] = None):
+async def get_gallery(categoria: Optional[str] = None):
+    # 🟢 1. DELEGAMOS LA BÚSQUEDA AL SERVICIO
     return await get_all_photos(categoria)
 
-
-# ADMIN: subir foto
-@router.post("/", status_code=status.HTTP_201_CREATED)
-async def upload(
+@router.post("/", dependencies=[Depends(required_admin)])
+async def upload_gallery_image(
     file: UploadFile = File(...),
-    titulo: str = Form(...),
-    categoria: str = Form(...),
-    admin=Depends(required_admin),
+    categoria: str = Form("general"),
+    user = Depends(get_current_user) # Extraemos el usuario para saber quién subió la foto
 ):
-    return await upload_photo(file, titulo, categoria, admin["email"])
-
-
-# ADMIN: eliminar foto
-@router.delete("/{photo_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete(photo_id: str, admin=Depends(required_admin)):
-    deleted = await delete_photo(photo_id)
-    if not deleted:
-        raise HTTPException(status_code=404, detail="Foto no encontrada")
-    return None
+    try:
+        # 🟢 2. DELEGAMOS LA SUBIDA Y CREACIÓN AL SERVICIO
+        # Nota: Asumo que el título inicial será el nombre del archivo
+        return await upload_photo(file, titulo=file.filename, categoria=categoria, uploader_email=user["email"])
+    except Exception as e:        
+        raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo subir la imagen: " + str(e)
+            )
+            
+@router.delete("/{image_id}", dependencies=[Depends(required_admin)])
+async def delete_gallery_image(image_id: str):
+    # 🟢 3. DELEGAMOS EL BORRADO (Físico y de BD) AL SERVICIO
+    exito = await delete_photo(image_id)
+    
+    if not exito:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Imagen no encontrada")
+    
+    return {"message": "Imagen y archivo eliminados exitosamente"}

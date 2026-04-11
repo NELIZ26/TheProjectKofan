@@ -19,8 +19,7 @@
         <button @click="$router.back()" class="btn btn-outline-light px-4">
           <font-awesome-icon icon="arrow-left" class="me-2" /> Volver atrás
         </button>
-        <router-link to="/home" class="btn btn-kofan-primary px-4">
-          Ir al Inicio
+        <router-link :to="{ name: 'hospedaje-home' }" class="btn btn-kofan-primary px-4">
         </router-link>
       </div>
     </div>

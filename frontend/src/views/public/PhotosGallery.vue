@@ -46,17 +46,24 @@
     <section v-else class="grid-fotos pb-5">
       <div class="container">
         <div class="masonry-wrapper">
-          <div
-            v-for="foto in fotos"
-            :key="foto.id"
-            class="masonry-item"
-            @click="abrirLightbox(foto)"
-          >
-            <img :src="fotoUrl(foto.url)" :alt="foto.titulo" class="img-fluid rounded-4" />
-            <div class="overlay-info">
-              <span>{{ foto.titulo }}</span>
+          <template v-for="foto in fotos">
+            
+            <div
+              v-if="foto && foto.url"
+              :key="foto.id"
+              class="masonry-item"
+              @click="abrirLightbox(foto)"
+            >
+              <img 
+                :src="fotoUrl(foto.url)" 
+                alt="Momento Kofán" 
+                class="img-fluid rounded-4 shadow-sm" 
+                loading="lazy"
+                @error="$event.target.style.display='none'"
+              />
             </div>
-          </div>
+
+          </template>
         </div>
       </div>
     </section>
@@ -71,9 +78,12 @@
           <font-awesome-icon :icon="['fas', 'chevron-left']" />
         </button>
         <div class="lightbox-content">
-          <img :src="fotoUrl(lightbox.foto.url)" :alt="lightbox.foto.titulo" class="lightbox-img" />
-          <p class="lightbox-titulo">{{ lightbox.foto.titulo }}</p>
-        </div>
+          <img 
+            :src="fotoUrl(lightbox.foto.url)" 
+            alt="Momento Kofán" 
+            class="lightbox-img" 
+          />
+          </div>
         <button class="lightbox-nav lightbox-next" @click="navLightbox(1)">
           <font-awesome-icon :icon="['fas', 'chevron-right']" />
         </button>

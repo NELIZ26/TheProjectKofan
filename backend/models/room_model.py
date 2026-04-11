@@ -2,7 +2,6 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from datetime import datetime
 
-
 class RoomBase(BaseModel):
     name: str
     description: Optional[str] = None
@@ -11,27 +10,29 @@ class RoomBase(BaseModel):
     images: List[str] = []
     main_image: Optional[str] = None
     active: bool = True
-
+    num_cuartos: int = 1
+    tipo_camas: str = ""
+    amenities: List[str] = []
 
 class RoomCreate(RoomBase):
     room_number: str
-    name: str
-    description: Optional[str] = None
-    price: float
     capacity: int
-
+    type: str
 
 class RoomUpdate(BaseModel):
-    id: str  # Lo dejamos porque vimos que tu backend lo exige en el body
-    room_number: Optional[str] = None # Agregamos este que faltaba
+    id: str  
+    room_number: Optional[str] = None 
     name: Optional[str] = None
     description: Optional[str] = None
     price: Optional[float] = None
-    capacity: Optional[int] = None    # Cambiamos 'stock' por 'capacity' para que coincida con tu Vue
+    capacity: Optional[int] = None    
     images: Optional[List[str]] = None
     main_image: Optional[str] = None
     active: Optional[bool] = None
-
+    type: Optional[str] = None
+    num_cuartos: Optional[int] = None
+    tipo_camas: Optional[str] = None
+    amenities: Optional[List[str]] = None
 
 class RoomResponse(RoomBase):
     id: str

@@ -12,6 +12,7 @@ def user_entity(user) -> dict:
         "city": user.get("city"),        # Campo nuevo
         "phone": user.get("phone"),
         "role": user.get("role", "client"),
+        "is_active": user.get("is_active", True),
         "username": user.get("username", user.get("email")) 
     }
 

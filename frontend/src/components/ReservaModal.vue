@@ -1,191 +1,192 @@
 <script setup>
 import { useReservaStore } from "@/stores/reserva";
-import Swal from 'sweetalert2';
+import { useAuthStore } from "@/stores/auth"; 
+import { DatePicker as VDatePicker } from 'v-calendar'; 
+import 'v-calendar/dist/style.css'; 
+import { ref, onMounted, onUnmounted, watch } from 'vue'; 
 
 const store = useReservaStore();
+const auth = useAuthStore(); 
+
+const columnasCalendario = ref(window.innerWidth >= 768 ? 2 : 1);
+
+const actualizarColumnas = () => {
+  columnasCalendario.value = window.innerWidth >= 768 ? 2 : 1;
+};
+
+onMounted(() => window.addEventListener('resize', actualizarColumnas));
+onUnmounted(() => window.removeEventListener('resize', actualizarColumnas));
+
+watch(() => store.isModalOpen, (isOpen) => {
+  if (isOpen && auth.isLogged && auth.user) {
+    store.form.nombreCompleto = auth.user.full_name || "";
+    store.form.correo = auth.user.email || "";
+    store.form.telefono = auth.user.phone || "";
+  }
+});
 
 const handleConfirmarReserva = async () => {
-  const isValid = store.handleSubmit(); 
-  
-  if (isValid) {
-    const f = store.form;
-    const telefonoHotel = "+573224225925";
-    
-    const mensajeWA = `¡Hola Ecohotel Kofán! 🌿%0A` +
-                      `Me gustaría confirmar mi solicitud de reserva:%0A%0A` +
-                      `*Nombre:* ${f.nombres}%0A` +
-                      `*Documento:* ${f.numDocumento}%0A` +
-                      `*Alojamiento:* ${f.habitacion}%0A` +
-                      `*Huéspedes:* ${f.cantidadPersonas}%0A` +
-                      `*Check-In:* ${f.fechaReserva}%0A%0A` +
-                      `Quedo atento a las instrucciones para el pago. ¡Muchas gracias!`;
-
-    await Swal.fire({
-      title: "¡Solicitud Registrada!",
-      text: "Para garantizar tu cupo, ahora te redirigiremos a WhatsApp para coordinar el pago.",
-      icon: "success",
-      confirmButtonColor: "#0f3b2a",
-      confirmButtonText: "Ir a WhatsApp",
-      allowOutsideClick: false
-    });
-
-    // 1. Abrimos WhatsApp
-    window.open(`https://wa.me/${telefonoHotel}?text=${mensajeWA}`, '_blank');
-
-    // 2. LIMPIAMOS EL FORMULARIO (Llamando a la función del store)
-    store.resetForm();
-
-    // 3. Cerramos el modal
-    store.closeModal();
-  }
+  await store.handleSubmit(); 
 };
 </script>
 
 <template>
-  <div
-    class="modal-overlay"
-    :class="{ active: store.isModalOpen }"
-    @click.self="store.closeModal"
-  >
-    <div class="modal-card">
+  <div class="modal-overlay" :class="{ active: store.isModalOpen }" @click.self="store.closeModal">
+    <div class="modal-card modal-lg">
       <button class="btn-close-custom" @click="store.closeModal">
         <font-awesome-icon icon="fa-solid fa-plus" style="transform: rotate(45deg)" />
       </button>
 
-      <div class="modal-body">
+      <div class="modal-body pb-2">
         <div class="text-center mb-4">
           <font-awesome-icon icon="fa-solid fa-leaf" class="verde-kofan mb-2 fs-4" />
-          <h2 class="fw-bold verde-kofan">Reserva tu Experiencia</h2>
-          <p class="text-muted small">
-            Completa tus datos para vivir la magia del Putumayo
-          </p>
-        </div>
-
-        <div class="tabs-kofan mb-4">
-          <button
-            type="button"
-            class="tab-item"
-            :class="{ active: store.personType === 'natural' }"
-            @click="store.setPersonType('natural')"
-          >
-            Persona Natural
-          </button>
-          <button
-            type="button"
-            class="tab-item"
-            :class="{ active: store.personType === 'juridica' }"
-            @click="store.setPersonType('juridica')"
-          >
-            Empresa (Jurídica)
-          </button>
+          <h2 class="fw-bold verde-kofan" v-if="store.habitacionSeleccionada">
+            Reservar: <strong>{{ store.habitacionSeleccionada.name }}</strong>
+          </h2>
         </div>
 
         <form @submit.prevent="handleConfirmarReserva" novalidate>
           <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label-kofan">{{ store.labelNombres }}</label>
-              <input
-                type="text"
-                class="input-kofan"
-                v-model="store.form.nombres"
-                :placeholder="store.placeholderNombres"
-                :class="{ 'is-invalid': store.errors.nombres }"
+            
+            <div class="col-12 mb-3 d-flex flex-column align-items-center">
+              <label class="form-label-kofan mb-2 text-center fw-bold text-success">1. Selecciona tus fechas</label>
+              
+              <div class="calendario-wrapper p-2 bg-light rounded border d-flex justify-content-center" style="width: 100%; max-width: 550px;">
+                <VDatePicker
+                v-model.range="store.selectedDateRange" 
+                is-range
+                :min-date="store.minDate"
+                :disabled-dates="store.disabledDates"
+                color="green"
+                title-position="left"
+                :columns="columnasCalendario"
+                :trim-weeks="true" 
               />
+              </div>
+              
+              <p v-if="store.errors.dates" class="text-danger small text-center mt-2 mb-0">Selecciona una fecha de ingreso y salida.</p>
             </div>
 
-            <div class="col-md-4" v-if="store.personType === 'natural'">
-              <label class="form-label-kofan">Tipo Documento</label>
-              <select
-                class="input-kofan"
-                v-model="store.form.tipoDocumento"
-                :class="{ 'is-invalid': store.errors.tipoDocumento }"
-              >
-                <option value="" disabled>Seleccione...</option>
-                <option value="CC">C.C.</option>
-                <option value="CE">C.E.</option>
-                <option value="PA">Pasaporte</option>
-              </select>
+            <div v-if="store.totalCalculado > 0" class="col-12 my-3 d-flex justify-content-center animate__animated animate__fadeIn">
+              <div class="p-3 rounded-4 shadow-sm position-relative overflow-hidden text-center" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; max-width: 450px; width: 100%;">
+                
+                <div class="position-absolute top-0 start-0 w-100 py-1 small fw-bold text-white" style="background-color: #198754; opacity: 0.9;">
+                  ¡Asegura tu reserva con el 50%!
+                </div>
+
+                <div class="mt-4">
+                  <p class="mb-0 text-muted fw-medium" style="font-size: 0.85rem;">
+                    Total de la estadía: <span class="text-decoration-line-through">{{ store.totalFormateado }}</span>
+                  </p>
+                  <p class="mb-0 mt-1 text-success fw-bold" style="font-size: 0.9rem;">Transferir ahora:</p>
+                  <h3 class="fw-bold mb-1" style="color: #0f3b2a; font-size: 1.8rem;">{{ store.anticipoFormateado }}</h3>
+                  <p class="text-muted mb-3" style="font-size: 0.8rem;">Bancolombia Ahorros N° 123-456789-00</p>
+                </div>
+
+                <div class="bg-white p-2 rounded-3 border text-start d-flex gap-2 shadow-sm align-items-center" style="border-color: #bbf7d0 !important;">
+                  <font-awesome-icon :icon="['fas', 'shield-halved']" class="tone-forest fs-4" />
+                  <span style="font-size: 0.75rem; color: #4a4a4a; line-height: 1.3;">
+                    <strong>Reserva segura:</strong> Por favor adjunta tu comprobante. Una vez lo envíes, bloquearemos tus fechas y verificaremos el pago para confirmarte.
+                  </span>
+                </div>
+
+              </div>
+            </div>
+
+            <div class="col-12 mt-2">
+              <label class="form-label-kofan fw-bold text-success text-center d-block">2. Tus Datos y Comprobante</label>
+            </div>
+
+            <div class="col-md-12">
+              <label class="form-label-kofan">Nombre y Apellido / Razón Social</label>
+              <input type="text" class="input-kofan" v-model="store.form.nombreCompleto" placeholder="Ej: Juan Pérez" :class="{ 'is-invalid': store.errors.nombreCompleto }" />
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label-kofan">Celular (WhatsApp)</label>
+              <input type="tel" class="input-kofan" v-model="store.form.telefono" placeholder="310 123 4567" :class="{ 'is-invalid': store.errors.telefono }" />
             </div>
 
             <div class="col-md-6">
               <label class="form-label-kofan">Correo Electrónico</label>
-              <input
-                type="email"
-                class="input-kofan"
-                v-model="store.form.correo"
-                placeholder="ejemplo@correo.com"
-                :class="{ 'is-invalid': store.errors.correo }"
-              />
+              <input type="email" class="input-kofan" v-model="store.form.correo" placeholder="ejemplo@correo.com" :class="{ 'is-invalid': store.errors.correo }" :disabled="auth.isLogged" />
             </div>
 
-            <div class="col-md-6">
-              <label class="form-label-kofan">{{ store.labelNumDoc }}</label>
-              <input
-                type="number"
-                class="input-kofan"
-                v-model="store.form.numDocumento"
-                :class="{ 'is-invalid': store.errors.numDocumento }"
-              />
+            <div class="col-md-12 mt-3">
+              <label class="form-label-kofan text-success fw-bold"><font-awesome-icon :icon="['fas', 'camera']" class="me-1 tone-forest" /> Adjuntar Comprobante de Pago</label>
+              
+              <div v-if="!store.form.comprobantePreview" 
+                   class="border border-2 rounded-3 p-4 text-center bg-light transition-all hover-shadow" 
+                   style="border-style: dashed !important; border-color: #198754 !important; cursor: pointer;"
+                   @dragover.prevent 
+                   @drop.prevent="store.handleFileUpload"
+                   @click="$refs.fileInput.click()">
+                
+                <font-awesome-icon :icon="['fas', 'cloud-arrow-up']" class="upload-drop-icon tone-forest mb-2" />
+                <h6 class="mb-1 fw-bold text-dark">Haz clic o arrastra tu comprobante aquí</h6>
+                <p class="text-muted small mb-0">Formatos aceptados: JPG, PNG o PDF (Opcional si pagas al llegar)</p>
+                
+                <input type="file" ref="fileInput" class="d-none" @change="store.handleFileUpload" accept="image/png, image/jpeg, application/pdf" />
+              </div>
+
+              <div v-else class="position-relative text-center mt-2 border border-success rounded-3 p-3 bg-white shadow-sm">
+                
+                <img v-if="store.form.comprobantePreview !== 'pdf-icon'" 
+                     :src="store.form.comprobantePreview" 
+                     class="img-fluid rounded border shadow-sm" 
+                     style="max-height: 180px; object-fit: contain;" />
+                
+                <div v-else class="py-4">
+                  <font-awesome-icon :icon="['fas', 'file-pdf']" class="pdf-preview-icon text-danger" />
+                  <h6 class="mt-2 text-dark">{{ store.form.comprobante.name }}</h6>
+                </div>
+
+                <button type="button" 
+                        class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2 rounded-circle shadow" 
+                        style="width: 35px; height: 35px;"
+                        title="Quitar comprobante"
+                        @click.stop="store.removerComprobante">
+                  <font-awesome-icon :icon="['fas', 'trash']" />
+                </button>
+              </div>
+              
+              <p v-if="store.errors.comprobante" class="text-danger small mt-1">Por favor sube el comprobante de pago.</p>
             </div>
 
-            <div class="col-md-4">
-              <label class="form-label-kofan">Teléfono</label>
-              <input
-                type="tel"
-                class="input-kofan"
-                v-model="store.form.telefono"
-                placeholder="300..."
-                :class="{ 'is-invalid': store.errors.telefono }"
-              />
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label-kofan">Huéspedes</label>
-              <select class="input-kofan" v-model="store.form.cantidadPersonas">
-                <option value="1">1 Persona</option>
-                <option value="2">2 Personas</option>
-                <option value="3">3 Personas</option>
-                <option value="4">4 Personas</option>
-                <option value="5+">5+ Personas</option>
-              </select>
-            </div>
-
-            <div class="col-md-4">
-              <label class="form-label-kofan">Alojamiento</label>
-              <select class="input-kofan" v-model="store.form.habitacion">
-                <option value="Cabaña Individual">Cabaña Individual</option>
-                <option value="Cabaña Familiar">Cabaña Familiar</option>
-                <option value="Zona Camping">Zona Camping</option>
-              </select>
-            </div>
-
-            <div class="col-md-12">
-              <label class="form-label-kofan">Fecha de Ingreso (Check-In)</label>
-              <input
-                type="date"
-                class="input-kofan"
-                v-model="store.form.fechaReserva"
-                :min="store.minDate"
-                :class="{ 'is-invalid': store.errors.fechaReserva }"
-              />
-            </div>
-          </div>
+          </div> 
 
           <div class="text-center mt-5">
-            <button type="submit" class="btn-kofan-confirm">
-              <font-awesome-icon icon="fa-solid fa-paper-plane" class="me-2" />
-              Confirmar por WhatsApp
+            <button type="submit" 
+                    class="btn px-4 py-2 rounded-pill shadow-sm transition-all text-white" 
+                    style="background-color: #0f3b2a; border: none; font-weight: 500; letter-spacing: 0.5px; font-size: 0.95rem;"
+                    :disabled="store.isSubmitting"
+                    onmouseover="this.style.opacity='0.85'; this.style.transform='translateY(-1px)'"
+                    onmouseout="this.style.opacity='1'; this.style.transform='translateY(0)'">
+              <font-awesome-icon icon="fa-solid fa-check" class="me-2 opacity-75" />
+              {{ store.isSubmitting ? 'Procesando...' : 'Confirmar y Enviar' }}
             </button>
           </div>
+          
+          <div class="text-center mt-3 mb-2">
+             <a href="https://wa.me/573224225925?text=Hola%20Kof%C3%A1n%2C%20tengo%20una%20duda%20antes%20de%20hacer%20mi%20reserva." 
+                target="_blank" 
+                class="text-decoration-none" 
+                style="color: #1d9e4c; font-weight: 400; font-size: 0.85rem; letter-spacing: 0.3px; transition: opacity 0.2s;"
+                onmouseover="this.style.opacity='0.7'"
+                onmouseout="this.style.opacity='1'">
+               <font-awesome-icon :icon="['fab', 'whatsapp']" class="contact-link-icon align-middle me-1" /> 
+               ¿Tienes dudas? Escríbenos
+             </a>
+          </div>
+
         </form>
-      </div>
-    </div>
+      </div> 
+    </div> 
   </div>
 </template>
 
-
 <style scoped>
-/* Contenedor principal del modal */
+/* 🟢 TUS ESTILOS ORIGINALES INTACTOS */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -204,7 +205,6 @@ const handleConfirmarReserva = async () => {
   visibility: visible;
 }
 
-/* Tarjeta del modal */
 .modal-card {
   background: white;
   width: 95%;
@@ -217,14 +217,8 @@ const handleConfirmarReserva = async () => {
 }
 
 @keyframes slideUp {
-  from {
-    transform: translateY(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 .modal-body {
@@ -233,7 +227,6 @@ const handleConfirmarReserva = async () => {
   overflow-y: auto;
 }
 
-/* Estilos de las Pestañas (Tabs) */
 .tabs-kofan {
   background: #f1f5f2;
   padding: 5px;
@@ -258,7 +251,6 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* Etiquetas y Campos de entrada */
 .form-label-kofan {
   font-size: 0.8rem;
   font-weight: 700;
@@ -285,7 +277,6 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 0 0 4px rgba(46, 204, 113, 0.1);
 }
 
-/* Estado de error */
 .is-invalid {
   border-color: #e74c3c !important;
   background-color: #fff8f8;
@@ -295,7 +286,6 @@ const handleConfirmarReserva = async () => {
   color: #0f3b2a;
 }
 
-/* Botón de cierre superior */
 .btn-close-custom {
   position: absolute;
   top: 20px;
@@ -319,7 +309,6 @@ const handleConfirmarReserva = async () => {
   transform: rotate(90deg);
 }
 
-/* Botón Confirmar */
 .btn-kofan-confirm {
   background: #0f3b2a;
   color: white;
@@ -338,7 +327,41 @@ const handleConfirmarReserva = async () => {
   box-shadow: 0 20px 25px -5px rgba(15, 59, 42, 0.4);
 }
 
-/* Responsive */
+/* Tonos utilitarios para iconografía */
+.tone-forest {
+  color: #0f3b2a;
+}
+
+.upload-drop-icon {
+  font-size: 2.5rem;
+}
+
+.pdf-preview-icon {
+  font-size: 4rem;
+}
+
+.contact-link-icon {
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
+/* 🟢 NUEVOS ESTILOS PARA EL CALENDARIO */
+.calendario-wrapper {
+  overflow: hidden; 
+}
+.calendario-wrapper :deep(.vc-expanded) {
+  width: 100% !important;
+}
+.calendario-wrapper :deep(.vc-container) {
+  border: none !important;
+  background-color: transparent !important;
+}
+.calendario-wrapper :deep(.vc-day-content.vc-disabled) {
+  opacity: 0.4 !important;
+  text-decoration: line-through; 
+  color: #e74c3c; /* Las fechas ocupadas se verán rojizas */
+}
+
 @media (max-width: 768px) {
   .modal-body {
     padding: 1.5rem;
@@ -346,5 +369,23 @@ const handleConfirmarReserva = async () => {
   .btn-kofan-confirm {
     width: 100%;
   }
+}
+.calendario-wrapper :deep(.vc-container) {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  max-width: 600px !important; 
+}
+
+.vc-day.is-not-in-month,
+.vc-day.in-prev-month,
+.vc-day.in-next-month {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  visibility: hidden !important;
+}
+
+/* Evita que los fondos rojos/verdes se salgan de sus casillas */
+.vc-highlight {
+  overflow: hidden !important;
 }
 </style>

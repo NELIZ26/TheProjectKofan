@@ -3,13 +3,54 @@ import uuid
 from pathlib import Path
 
 from bson import ObjectId
+from bson.errors import InvalidId
 from datetime import datetime, timezone
 from backend.db.client import db 
 from backend.schemas.room_schema import room_schema, rooms_schema
-from backend.core.config import UPLOAD_DIR
-from fastapi import UploadFile
 
 collection = db.rooms
+logs_collection = db.room_logs 
+
+# --- HELPER: Validar ObjectId ---
+def is_valid_object_id(id_str: str) -> bool:
+    try:
+        ObjectId(id_str)
+        return True
+    except InvalidId:
+        return False
+
+# --- HELPER: Registrar movimientos ---
+async def log_room_movement(room_id: str, room_name: str, action: str, user_email: str, changes: list = None):
+    log_entry = {
+        "room_id": str(room_id),
+        "room_name": room_name,
+        "action": action,
+        "user": user_email,
+        "changes": changes or [], 
+        "timestamp": datetime.now(timezone.utc)
+    }
+    await logs_collection.insert_one(log_entry)
+
+# --- GET LOGS: Obtener historial para el Dashboard ---
+async def get_room_logs(page: int = 1, limit: int = 10):
+    skip = (page - 1) * limit
+    
+    # Ordenamos por fecha descendente (más nuevos primero)
+    cursor = logs_collection.find().sort("timestamp", -1).skip(skip).limit(limit)
+    logs = await cursor.to_list(length=limit)
+    
+    # Contamos el total para saber cuántas páginas hay
+    total = await logs_collection.count_documents({})
+    
+    for log in logs:
+        log["_id"] = str(log["_id"])
+        
+    return {
+        "data": logs,
+        "total": total,
+        "page": page,
+        "limit": limit
+    }
 
 # --- CREATE ---
 async def create_room(data: dict, user_email: str):
@@ -20,33 +61,34 @@ async def create_room(data: dict, user_email: str):
     data["created_at"] = now
     data["updated_at"] = now
     
-    # Por defecto, una habitación nueva debe estar disponible para el dashboard
     if "is_available" not in data:
         data["is_available"] = True
 
-    # Motor requiere await para insertar
+    if "active" not in data:
+        data["active"] = True
+
     result = await collection.insert_one(data)
-    
-    # Buscamos el objeto recién creado para devolverlo con el esquema
     new_room = await collection.find_one({"_id": result.inserted_id})
+    
+    # Registramos la creación
+    await log_room_movement(result.inserted_id, data.get("name", "Sin nombre"), "CREACIÓN", user_email)
+    
     return room_schema(new_room)
 
 # --- CREATE WITH IMAGES ---
 async def create_room_with_images(data: dict, images: list[str], user_email: str):
     data["images"] = images
-
     if images:
         data["main_image"] = images[0]
-
-    # Llamamos a la función asíncrona de arriba con await
     return await create_room(data, user_email)
 
 # --- GET ONE ---
 async def get_room(room_id: str):
-    # Convertimos el string a ObjectId y esperamos el resultado
+    if not is_valid_object_id(room_id):
+        return None
     room = await collection.find_one({"_id": ObjectId(room_id)})
     if not room:
-        return None # Es mejor retornar None para que el router maneje el 404
+        return None 
     return room_schema(room)
 
 # --- LIST WITH ADVANCED FILTER ---
@@ -54,7 +96,6 @@ async def get_rooms(page: int, limit: int, filters: dict):
     skip = (page - 1) * limit
     query = {}
 
-    # Lógica de filtros (se mantiene igual, es solo construcción de diccionario)
     if filters.get("name"):
         query["name"] = {"$regex": filters["name"], "$options": "i"}
     if filters.get("active") is not None:
@@ -64,15 +105,12 @@ async def get_rooms(page: int, limit: int, filters: dict):
     if filters.get("max_price") is not None:
         query.setdefault("price", {})["$lte"] = filters["max_price"]
 
-    # Motor usa cursores. Para convertirlos a lista usamos to_list()
     cursor = collection.find(query).skip(skip).limit(limit)
     rooms_list = await cursor.to_list(length=limit)
-    
-    # Contamos los documentos de forma asíncrona
     total = await collection.count_documents(query)
 
     return {
-        "data": rooms_schema(rooms_list), # Asegúrate que rooms_schema acepte la lista
+        "data": rooms_schema(rooms_list), 
         "total": total,
         "page": page,
         "limit": limit,
@@ -80,13 +118,45 @@ async def get_rooms(page: int, limit: int, filters: dict):
 
 # --- UPDATE ---
 async def update_room(room_id: str, data: dict, user_email: str):
+    if not is_valid_object_id(room_id):
+        return None
+
+    old_room = await collection.find_one({"_id": ObjectId(room_id)})
+    if not old_room:
+        return None
+
+    changes = []
+    for key, new_value in data.items():
+        # Ignoramos campos que no importa rastrear
+        if key in ["updated_at", "updated_by", "_id", "id", "created_at", "images", "main_image"]:
+            continue
+            
+        old_value = old_room.get(key)
+        
+        # Comparamos listas (ej: amenities)
+        if isinstance(old_value, list) and isinstance(new_value, list):
+            if sorted(old_value) != sorted(new_value):
+                changes.append({"field": key, "old": old_value, "new": new_value})
+        
+        # Comparamos valores normales
+        elif old_value != new_value:
+            changes.append({
+                "field": key,
+                "old": old_value,
+                "new": new_value
+            })
+
+    # Actualizamos la DB
     data["updated_by"] = user_email
     data["updated_at"] = datetime.now(timezone.utc)
-
-    # Actualizamos con await
     await collection.update_one({"_id": ObjectId(room_id)}, {"$set": data})
     
-    # Retornamos la habitación actualizada
+    # Registramos el log
+    if changes:
+        await log_room_movement(room_id, old_room.get("name"), "ACTUALIZACIÓN", user_email, changes)
+    else:
+        await log_room_movement(room_id, old_room.get("name"), "ACTUALIZACIÓN", user_email, [])
+    
     return await get_room(room_id)
 
 # --- REMOVE IMAGE FROM ROOM ---
@@ -100,56 +170,50 @@ async def remove_room_image(room_id: str, url: str, user_email: str):
         images.remove(url)
 
     update_data = {"images": images}
-    # Si borramos la imagen principal, ponemos la siguiente o None
     if room.get("main_image") == url:
         update_data["main_image"] = images[0] if images else None
 
+    # Se llama a update_room, el cual ya tiene su propio registro de ACTUALIZACIÓN
     return await update_room(room_id, update_data, user_email)
 
 # --- DELETE ---
-async def delete_room(room_id: str):
+async def delete_room(room_id: str, user_email: str):
+    if not is_valid_object_id(room_id):
+        return False
+
+    room_before = await collection.find_one({"_id": ObjectId(room_id)})
+    if not room_before:
+        return False
+
     result = await collection.delete_one({"_id": ObjectId(room_id)})
-    if result.deleted_count == 0:
+    
+    # Registramos la eliminación
+    if result.deleted_count > 0:
+        await log_room_movement(room_id, room_before.get("name", "Sin nombre"), "ELIMINACIÓN", user_email)
+        return True
+    return False
+
+# --- ADD IMAGES TO EXISTING ROOM ---
+async def add_room_images_to_db(room_id: str, new_urls: list, user_email: str):
+    if not is_valid_object_id(room_id):
         return False
-    return True
 
-
-
-async def add_room_images_to_db(room_id: str, new_urls: list):
     try:
-        result = await collection.update_one(
-            {"_id": ObjectId(room_id)},
-            {"$push": {"images": {"$each": new_urls}}}
-        )
-        return result.modified_count > 0
-    except Exception as e:
-        print(f"Error al actualizar array en MongoDB: {e}")
+        room = await collection.find_one({"_id": ObjectId(room_id)})
+        update_query = {"$push": {"images": {"$each": new_urls}}}
+        
+        if room and not room.get("main_image") and new_urls:
+            update_query["$set"] = {"main_image": new_urls[0]}
+
+        result = await collection.update_one({"_id": ObjectId(room_id)}, update_query)
+        
+        # Registramos que se agregaron fotos
+        if result.modified_count > 0:
+            await log_room_movement(room_id, room.get("name", "Sin nombre"), "ACTUALIZACIÓN (Fotos)", user_email)
+            return True
+            
         return False
-
-
-# --- FUNCIÓN PARA GUARDAR MÚLTIPLES IMÁGENES ---
-def save_multiple(files: list[UploadFile]) -> list[str]:
-    urls = []
-    for file in files:
-        try:
-            # Generamos el nombre: UUID_NombreOriginal.ext
-            # Esto es lo que tú ya tenías en la base de datos
-            unique_filename = f"{uuid.uuid4()}_{file.filename}"
-            
-            # Usamos el UPLOAD_DIR que viene de tu config
-            # Aseguramos que sea un objeto Path para usar el operador /
-            file_path = Path(UPLOAD_DIR) / unique_filename
-            
-            # Guardamos físicamente
-            with file_path.open("wb") as buffer:
-                shutil.copyfileobj(file.file, buffer)
-            
-            # Devolvemos la URL con el formato que ya usa Kofán
-            urls.append(f"/static/images/{unique_filename}")
-        except Exception as e:
-            print(f"Error al guardar archivo {file.filename}: {e}")
-            
-    return urls
-
-
+    except Exception as e:
+        pass
+        return False
 

@@ -57,21 +57,3 @@ async def delete_user(user_id: str, current_admin = Depends(required_admin)):
         )
     
     return None
-
-#ACONTINUACION - se presenta una variacion a la eliminacion de usuarios, en vez de eliminarlos se desactivan, esto con el fin de no perder su historial de reservas, por ejemplo, y poder reactivarlos en caso de ser necesario. Esto aun no esta implementado en el router, pero es para tenerlo en cuenta para futuras mejoras.---------------------------------
-
-# Dentro de la ruta de login
-#user = await get_user_by_email(form_data.username)
-
-#if not user:
-    #raise HTTPException(status_code=401, detail="Correo no encontrado")
-
-# 🚨 VERIFICACIÓN DE ESTADO:
-# Usamos .get(..., True) por si algún usuario viejo aún no tiene el campo
-#if user.get("is_active", True) is False:
-    #raise HTTPException(
-     #   status_code=status.HTTP_403_FORBIDDEN,
-      #  detail="Tu cuenta ha sido desactivada. Comunícate con el administrador de Kofán Hospedaje."
-   # )
-
-# ... luego sigues con la verificación de la contraseña ...

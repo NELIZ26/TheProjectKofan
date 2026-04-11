@@ -1,40 +1,37 @@
 import { createRouter, createWebHistory } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 
-// --- IMPORTACIONES ESTÁTICAS ---
-import PublicLayout from "@/layouts/PublicLayout.vue";
-import HomeView from "@/views/public/Home.vue";
-import AboutUs from "@/views/public/AboutUs.vue";
-import ContactUs from "@/views/public/ContactUs.vue";
-import PhotoGallery from "@/views/public/PhotosGallery.vue";
-import Catalog from "@/views/public/Catalog.vue";
+const PublicLayout = () => import("@/layouts/PublicLayout.vue");
+const LandingPortal = () => import("@/views/public/LandingPortal.vue");
+const HomeView = () => import("@/views/public/Home.vue");
+const AboutUs = () => import("@/views/public/AboutUs.vue");
+const ContactUs = () => import("@/views/public/ContactUs.vue");
+const PhotoGallery = () => import("@/views/public/PhotosGallery.vue");
+const Catalog = () => import("@/views/public/Catalog.vue");
+const ConfiguracionAdmin = () => import("@/views/admin/config.vue");
 
-// Layouts Privados
-import AppLayout from "@/layouts/AppLayout.vue";
-import AdminLayout from "@/layouts/AdminLayout.vue";
-import AuthLayout from "@/layouts/AuthLayout.vue";
+const AppLayout = () => import("@/layouts/AppLayout.vue");
+const AdminLayout = () => import("@/layouts/AdminLayout.vue");
+const AuthLayout = () => import("@/layouts/AuthLayout.vue");
 
 const routes = [
   // ZONA PÚBLICA
   {
     path: "/",
+    name: "landing-portal",
+    component: LandingPortal, 
+    meta: { hideNav: true }
+  },
+
+  {
+    path: "/hospedaje",
     component: PublicLayout,
     children: [
-      { path: "", name: "home", component: HomeView },
+      { path: "", name: "hospedaje-home", component: HomeView }, // El inicio de hospedaje
       { path: "about", name: "about", component: AboutUs },
       { path: "gallery", name: "gallery", component: PhotoGallery },
       { path: "rooms", name: "rooms", component: Catalog },
       { path: "contact", name: "contact", component: ContactUs },
-      {
-        path: "servicios",
-        name: "servicios",
-        component: () => import("@/views/ServiceSelection.vue"),
-      },
-      {
-        path: "servicios/hospedaje",
-        name: "hospedaje",
-        component: () => import("@/views/public/Catalog.vue"),
-      },
     ],
   },
 
@@ -71,6 +68,13 @@ const routes = [
         name: "account-profile",
         component: () => import("@/views/app/ProfileView.vue"),
       },
+      // 🟢 NUEVA RUTA: CONFIGURACIÓN 🟢
+      {
+        path: "settings",
+        name: "account-settings",
+        component: () => import("@/views/app/SettingsView.vue"),
+      },
+      // -------------------------------
       {
         path: "bookings",
         name: "account-bookings",
@@ -93,7 +97,7 @@ const routes = [
   {
     path: "/admin",
     component: AdminLayout,
-    meta: { requiresAuth: true, isAdmin: true },
+    meta: { requiresAuth: true, isAdmin: true, hideNav: true },
     children: [
       {
         path: "",
@@ -124,6 +128,13 @@ const routes = [
         name: "admin-gallery",
         component: () => import("@/views/admin/GalleryManager.vue"),
       },
+      {
+      path: 'configuracion',
+      name: 'admin-config',
+      component: ConfiguracionAdmin,
+      // Aquí podrías tener tus validaciones de rol, por ejemplo:
+      // meta: { requiresAuth: true, role: 'admin' }
+      }
     ],
   },
 
@@ -131,6 +142,7 @@ const routes = [
   {
     path: "/:pathMatch(.*)*",
     name: "not-found",
+    meta: { hideNav: true },
     component: () => import("@/views/NotFound.vue"),
   },
 ];
@@ -154,7 +166,7 @@ router.beforeEach((to, from, next) => {
 
   // 2. Ruta de admin y no es admin → al home
   if (to.meta.isAdmin && !auth.isAdmin) {
-    return next({ name: "home" });
+    return next({ name: "hospedaje-home" }); // 🟢 Cambié "home" a "hospedaje-home" porque "home" no existía en tus rutas
   }
 
   // 3. Ya logueado intenta entrar al login/register → redirigir según rol

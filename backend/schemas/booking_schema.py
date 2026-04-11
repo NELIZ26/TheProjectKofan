@@ -1,49 +1,87 @@
 from enum import Enum
-
-from pydantic import BaseModel
-from datetime import date
+from pydantic import BaseModel, EmailStr
+from datetime import date, datetime
 from typing import List, Optional
-from pydantic import EmailStr
-from datetime import datetime, time, timezone
-
-# Esquema para los acompañantes (se usará dentro de la reserva)
 
 class EstadoReserva(str, Enum):
     PENDIENTE = "pendiente"
     CONFIRMADA = "confirmada"
+    OCUPADA = "ocupada"
     CANCELADA = "cancelada"
     FINALIZADA = "finalizada"
+
+class UpdateEstadoReserva(BaseModel):
+    estado: EstadoReserva
+    motivo_actualizacion: Optional[str] = None
     
-# 2. Estructura de acompañantes (Se mantiene igual)
+# 1. Estructuras de Listas
 class AcompananteSchema(BaseModel):
     nombre_completo: str
+    tipo_documento: str 
     numero_documento: str
+    parentesco: str
 
-# 3. ESQUEMA BASE: Aquí ponemos lo que AMBOS tipos de reserva necesitan
+class ConsumoExtraSchema(BaseModel):
+    concepto: str 
+    valor: float
+
+# 2. ESQUEMA BASE CON CAMPOS DE AUDITORÍA
 class ReservaBase(BaseModel):
     habitacion_id: str
     fecha_entrada: date
     fecha_salida: date
     monto_total: float
+    
+    # 🟢 Toda reserva nace con estas listas vacías por defecto
     acompanantes: List[AcompananteSchema] = [] 
+    consumos_extras: List[ConsumoExtraSchema] = []
+    
     observaciones: Optional[str] = None
     estado: EstadoReserva = EstadoReserva.PENDIENTE
+    comprobante_url: Optional[str] = None
+    
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    actualizado_por: Optional[str] = None
+    motivo_actualizacion: Optional[str] = None
 
-# 4. PARA USUARIOS LOGUEADOS: No pide datos de contacto (se sacan del Token)
-class ReservaCreate(ReservaBase):
+# 3. PARA USUARIOS LOGUEADOS (Sacamos datos del Token)
+
+
+# 4. PARA INVITADOS (El formulario de tu Vue.js público)
+class ReservaPublicCreate(ReservaBase):
+    tipo_persona: str 
+    cliente_nombre: str 
+    cliente_email: EmailStr 
+    # 🟢 Valores por defecto para que no estalle si el turista no los envía
+    tipo_documento: str = "Pendiente"
+    cliente_documento: str = "0"
+    cliente_celular: str = "" 
+
+class ReservaCreate(ReservaPublicCreate):
     pass 
 
-# 5. PARA CLIENTES PÚBLICOS: ¡Aquí inyectamos el celular y el correo!
-class ReservaPublicCreate(ReservaBase):
-    cliente_nombre: str       # Nombre del invitado
-    cliente_email: EmailStr    # El correo que pediste (validado)
-    cliente_celular: str       # El celular que pediste
-
-# 6. ESQUEMA DE RESPUESTA: Lo que devolvemos al frontend
+# 5. ESQUEMA DE RESPUESTA (Lo que se envía al frontend)
 class ReservaResponse(ReservaBase):
     id: str
-    cliente_id: Optional[str] = None # Puede ser nulo si es invitado
-    # Si es invitado, también devolvemos sus datos de contacto
+    cliente_id: Optional[str] = None 
     cliente_nombre: Optional[str] = None
     cliente_email: Optional[EmailStr] = None
     cliente_celular: Optional[str] = None
+
+# 6. ESQUEMA PARA EL CHECK-IN Y EDICIÓN (ADMIN)
+class UpdateReservaDetalles(BaseModel):
+    cliente_nombre: str
+    cliente_email: str
+    cliente_celular: str
+    tipo_documento: str
+    cliente_documento: str
+    
+    # 🟢 En string para que MongoDB lo acepte sin problemas
+    fecha_entrada: str
+    fecha_salida: str
+    monto_total: float
+    
+    consumos_extras: List[ConsumoExtraSchema] = []
+    acompanantes: List[AcompananteSchema] = []
+

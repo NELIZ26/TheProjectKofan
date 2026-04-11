@@ -1,74 +1,100 @@
 <script setup>
-import { useRouter } from "vue-router";
+import { ref, onMounted, onUnmounted, watch } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import apiClient from "@/api/apiClient";
 
 const router = useRouter();
+const route = useRoute();
 const auth = useAuthStore();
+
+const avisosSinLeer = ref(0);
+
+const revisarNotificaciones = async () => {
+  if (!auth.user) return;
+  try {
+    const response = await apiClient.get('/api/notificaciones/mis-avisos');
+    avisosSinLeer.value = response.data.filter(aviso => aviso.leida === false).length;
+  } catch (error) {
+    console.error("Error al revisar notificaciones:", error);
+  }
+};
 
 const handleLogout = () => {
   auth.logout();
   router.push("/");
 };
+
+onMounted(() => {
+  revisarNotificaciones();
+  // 🟢 LA OREJA: Escuchamos si el usuario hace clic en "Marcar como leídos" en la otra pantalla
+  window.addEventListener('notificaciones-leidas', revisarNotificaciones);
+});
+
+// Es buena práctica "quitar la oreja" cuando el componente se destruye
+onUnmounted(() => {
+  window.removeEventListener('notificaciones-leidas', revisarNotificaciones);
+});
+
+watch(route, () => {
+  revisarNotificaciones();
+});
 </script>
 
 <template>
   <aside class="sidebar-kofan shadow-sm">
-    <div class="user-info text-center p-3 mb-3">
-      <div class="avatar-placeholder mx-auto mb-2">
-        <img src="@/img/login.png" alt="">
-        <!--<font-awesome-icon :icon="['fas', 'users']" class="me-2 text-success" />-->
-        {{ auth.user?.full_name?.charAt(0) }}
-      </div>
-      <h6 class="mb-0 fw-bold">{{ auth.user?.full_name }}</h6>
-      <small class="text-muted">Cliente Kofán</small>
+    <div class="text-center mb-4 mt-2">
+      <h6 class="fw-bold text-muted text-uppercase tracking-wider">Menú Kofán</h6>
+      <hr class="opacity-10 mx-3">
     </div>
 
     <nav class="nav flex-column gap-2">
       <router-link :to="{ name: 'account-profile' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'user-gear']" class="me-2 text-success" /> Datos Personales
+        <font-awesome-icon icon="fa-solid fa-id-card" class="me-3 fs-5 icon-kofan" /> Mi Panel
       </router-link>
       
       <router-link :to="{ name: 'account-bookings' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'calendar-check']" class="me-2 text-success" /> Mis Reservas
+        <font-awesome-icon icon="fa-solid fa-calendar-check" class="me-3 fs-5 icon-kofan" /> Mis Reservas
       </router-link>
       
-      <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan">
-        <font-awesome-icon :icon="['fas', 'bell']" class="me-2 text-success" /> Avisos
+      <router-link :to="{ name: 'account-notifications' }" class="nav-link-kofan d-flex justify-content-between align-items-center">
+        <div>
+          <font-awesome-icon icon="fa-solid fa-bell" class="me-3 fs-5 icon-kofan transition-all" :class="avisosSinLeer > 0 ? 'text-warning' : ''" /> 
+          Todos los Avisos
+        </div>
+        <span v-if="avisosSinLeer > 0" class="badge bg-warning text-dark rounded-pill shadow-sm">
+          {{ avisosSinLeer }}
+        </span>
       </router-link>
 
-      <hr class="my-2 opacity-10">
+      <hr class="my-3 opacity-10">
+
+      <router-link to="/" class="nav-link-kofan">
+        <font-awesome-icon icon="fa-solid fa-house-chimney" class="me-3 fs-5 icon-kofan text-success" /> Continuar Navegando
+      </router-link>
+
+      <router-link :to="{ name: 'account-settings' }" class="nav-link-kofan">
+        <font-awesome-icon icon="fa-solid fa-user-gear" class="me-3 fs-5 icon-kofan" /> Configuración
+      </router-link>
 
       <a href="#" @click.prevent="handleLogout" class="nav-link-kofan logout-link">
-        <font-awesome-icon :icon="['fas', 'right-from-bracket']" class="me-2 text-danger" /> Salir
+        <font-awesome-icon icon="fa-solid fa-right-from-bracket" class="me-3 fs-5 text-danger" /> Salir
       </a>
     </nav>
   </aside>
 </template>
 
 <style scoped>
-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 .sidebar-kofan {
-  background-color: #ffffff;
+  background-color: var(--k-offwhite);
   border-radius: 20px;
   padding: 20px;
-  border: 1px solid #eee;
+  border: 1px solid var(--k-border);
+  min-height: 50vh; /* Para que no se vea tan cortita */
 }
 
-.avatar-placeholder {
-  width: 60px;
-  height: 60px;
-  background-color: #0f3b2a;
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  font-weight: bold;
+.tracking-wider {
+  letter-spacing: 1px;
 }
 
 .nav-link-kofan {
@@ -76,29 +102,31 @@ img {
   align-items: center;
   padding: 12px 15px;
   text-decoration: none;
-  color: #444;
+  color: #555;
   border-radius: 12px;
   transition: all 0.3s ease;
-  font-weight: 500;
+  font-weight: 600;
 }
 
 .nav-link-kofan:hover {
-  background-color: #f0fdf4;
-  color: #0f3b2a;
+  background-color: var(--k-apple-soft);
+  color: var(--k-forest);
 }
 
 /* Estilo para la ruta activa */
+/* Reemplaza el .router-link-active viejo por este */
 .router-link-active {
-  background-color: #0f3b2a !important;
-  color: white !important;
-}
-
-.router-link-active .text-success {
-  color: #2ecc71 !important;
+  background-color: rgba(139, 207, 91, 0.16) !important;
+  color: var(--k-forest) !important;
+  font-weight: 700;
 }
 
 .logout-link:hover {
-  background-color: #fff1f1;
-  color: #dc3545;
+  background-color: var(--k-danger-soft);
+  color: var(--k-danger);
+}
+
+.transition-all {
+  transition: all 0.3s ease;
 }
 </style>

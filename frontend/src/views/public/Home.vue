@@ -3,7 +3,11 @@ import { ref, onMounted } from "vue";
 import { useReservaStore } from "@/stores/reserva";
 import apiClient from "@/api/apiClient";
 
+// 1. Importamos el store de configuración para los datos dinámicos
+import { useConfigStore } from '@/stores/config';
+
 const resStore = useReservaStore();
+const configStore = useConfigStore(); // 2. Inicializamos el store
 
 const fotosPreview = ref([]);
 const baseUrl = import.meta.env.VITE_API_URL || "http://localhost:8000";
@@ -51,15 +55,13 @@ onMounted(async () => {
               x2="110%"
               y2="0%"
             >
-              <stop offset="0%" style="stop-color: #1a5c43; stop-opacity: 1" />
-
+              <stop offset="0%" style="stop-color: var(--k-forest-soft); stop-opacity: 1" />
               <stop
                 offset="100%"
-                style="stop-color: #0f3b2a; stop-opacity: 1"
+                style="stop-color: var(--k-forest); stop-opacity: 1"
               />
             </linearGradient>
           </defs>
-
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
             fill="url(#miGradienteKofan)"
@@ -113,144 +115,26 @@ onMounted(async () => {
           </div>
         </div>
       </div>
-
-      <div class="custom-shape-divider-botto arco-transicion">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path
-            d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#fffdfc"
-          ></path>
-        </svg>
-      </div>
     </section>
 
-    <section class="servicios" id="servicios">
-      <div class="text-center mb-5 w-100 container">
-        <span class="subtitulo-blanco">Comodidad Ancestral</span>
-        <h2 class="titulo-seccion-blanco">Espacios diseñados para el alma</h2>
-      </div>
-
-      <div class="kofan-cards-group">
-        <div class="kofan-card-container">
-          <div class="kofan-card-wrapper">
-            <img
-              class="kofan-card-image preview-item"
-              src="@/img/ancestral.jpg"
-              alt="Hospedaje"
-              @click="$router.push({ name: 'gallery' })"
-            />
-            <div class="kofan-card-content">
-              <h2 class="kofan-card-title">Hospedaje Ancestral</h2>
-              <h3 class="kofan-card-subtitle">Confort Natural</h3>
-              <p class="kofan-card-text">
-                Disfruta de habitaciones diseñadas con materiales locales,
-                ofreciendo una conexión directa con la selva.
-              </p>
-              <a href="#" class="kofan-card-more">Leer más</a>
-              <div class="kofan-card-details">
-                <span class="kofan-detail-item"
-                  ><font-awesome-icon :icon="['fas', 'tag']" />
-                  <em> Desde $120.000</em></span
-                >
-                <span class="kofan-detail-item"
-                  ><font-awesome-icon :icon="['fas', 'bed']" />
-                  <em> Doble/Simple</em></span
-                >
-              </div>
-              <div class="kofan-card-actions">
-                <button class="kofan-btn-primary">Ver Detalles</button>
-                <button class="kofan-btn-icon">
-                  <font-awesome-icon :icon="['fas', 'heart']" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="kofan-card-container">
-          <div class="kofan-card-wrapper">
-            <img
-              class="kofan-card-image preview-item"
-              src="@/img/casa okfan.jpg"
-              alt="Eventos"
-              @click="$router.push({ name: 'gallery' })"
-            />
-            <div class="kofan-card-content">
-              <h2 class="kofan-card-title">Salón de Eventos</h2>
-              <h3 class="kofan-card-subtitle">Espacios Inspiradores</h3>
-              <p class="kofan-card-text">
-                Un salón diseñado para eventos corporativos, bodas o talleres
-                culturales en un entorno único.
-              </p>
-              <a href="#" class="kofan-card-more">Ver disponibilidad</a>
-              <div class="kofan-card-details">
-                <span class="kofan-detail-item"
-                  ><font-awesome-icon :icon="['fas', 'users']" />
-                  <em> Cap: 50 pers</em></span
-                >
-                <span class="kofan-detail-item"
-                  ><font-awesome-icon :icon="['fas', 'wifi']" />
-                  <em> Satelital</em></span
-                >
-              </div>
-              <div class="kofan-card-actions">
-                <button class="kofan-btn-primary">Cotizar Evento</button>
-                <button class="kofan-btn-icon">
-                  <font-awesome-icon :icon="['fas', 'calendar-check']" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="divisor-hacia-blanco">
-        <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
-          <path
-            d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#1a5c43"
-          ></path>
-        </svg>
-      </div>
-    </section>
-
-
-    <!-- SECCIÓN PREVIEW GALERÍA -->
-    <section class="galeria-preview py-5">
+    <section v-if="fotosPreview.length > 0" class="galeria-preview py-5">
       <div class="container">
         <div class="text-center mb-4">
           <span class="subtitulo">Momentos Kofán</span>
           <h2 class="titulo-seccion">Un vistazo a nuestro paraíso</h2>
         </div>
 
-        <div class="preview-grid" v-if="fotosPreview.length > 0">
-          <div v-for="foto in fotosPreview" :key="foto.id" class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img :src="baseUrl + foto.url" :alt="foto.titulo" />
-            <div class="preview-overlay"><span>{{ foto.titulo }}</span></div>
-          </div>
-        </div>
+        <div class="preview-grid">
+          <div 
+            v-for="foto in fotosPreview" 
+            :key="foto.id" 
+            class="preview-item" 
+            @click="$router.push({ name: 'gallery' })"
+          >
+            <img :src="baseUrl + foto.url" :alt="foto.titulo || 'Kofán'" @error="$event.target.style.display='none'" />
 
-        <div class="preview-grid" v-else>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos4.jpg" alt="Atardecer" />
-            <div class="preview-overlay"><span>Atardecer en el Río</span></div>
           </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/ancestral.jpg" alt="Maloka" />
-            <div class="preview-overlay"><span>Maloka Ancestral</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos3.jpg" alt="Fauna" />
-            <div class="preview-overlay"><span>Fauna Local</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos5.jpg" alt="Gastronomía" />
-            <div class="preview-overlay"><span>Gastronomía Amazónica</span></div>
-          </div>
-          <div class="preview-item" @click="$router.push({ name: 'gallery' })">
-            <img src="@/img/eventos6.jpg" alt="Bienestar" />
-            <div class="preview-overlay"><span>Bienestar y Espíritu</span></div>
-          </div>
+
           <div class="preview-item preview-item-cta" @click="$router.push({ name: 'gallery' })">
             <div class="cta-content">
               <font-awesome-icon :icon="['fas', 'images']" class="fs-2 mb-2" />
@@ -281,8 +165,8 @@ onMounted(async () => {
             <ul class="info-list">
               <li>
                 <span class="check">✔</span>
-                <strong>Check-in:&nbsp;</strong> 03:00 pm&nbsp;
-                <strong> Check-out:&nbsp;</strong> 12:00 pm
+                <strong>Check-in: </strong> {{ configStore.data.check_in_time || '03:00 pm' }} 
+                <strong> Check-out: </strong> {{ configStore.data.check_out_time || '12:00 pm' }}
               </li>
               <li>
                 <span class="check">✔</span> Early Check-in sujeto a
@@ -297,7 +181,7 @@ onMounted(async () => {
                 ruidos fuertes.
               </li>
               <li>
-                <span class="check">✔</span> Reserva con el&nbsp;
+                <span class="check">✔</span> Reserva con el 
                 <strong> 25% del valor</strong>.
               </li>
             </ul>
@@ -336,7 +220,7 @@ onMounted(async () => {
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#fffdfc"
+            fill="var(--k-cream)"
           ></path>
         </svg>
       </div>
@@ -347,7 +231,7 @@ onMounted(async () => {
         <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
           <path
             d="M0,0V120H1200V0c-150,80-350,120-600,120S150,80,0,0Z"
-            fill="#1a5c43"
+            fill="var(--k-forest-soft)"
           ></path>
         </svg>
       </div>
@@ -359,14 +243,14 @@ onMounted(async () => {
             Nuestra ubicación en el Putumayo
           </h2>
           <p class="parrafo-ubicacion">
-            Nos encontramos en <strong>Puerto Asís, Putumayo</strong>. Un
+            Nos encontramos en <strong>{{ configStore.data.address || 'Puerto Asís, Putumayo' }}</strong>. Un
             refugio natural donde la selva comienza a contar sus historias.
           </p>
         </div>
 
         <div class="mapa-wrapper shadow-soft">
           <iframe
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15958.521652611322!2d-76.5355120619749!3d0.5560764129741063!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e287e6540874957%3A0x9a11032de2a63510!2sCentro%20Ecoturistico%20Kofan!5e0!3m2!1ses!2sco!4v1762307375610!5m2!1ses!2sco"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3989.431284566359!2d-76.50537872421477!3d0.5055018994892419!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x8e2a1dd0b8ccb649%3A0x6b83f3fc3c2cc0db!2sPuerto%20As%C3%ADs%2C%20Putumayo!5e0!3m2!1ses!2sco!4v1710971000000!5m2!1ses!2sco"
             width="100%"
             height="450"
             style="border: 0"
@@ -377,14 +261,14 @@ onMounted(async () => {
           </iframe>
         </div>
 
-        <div class="detalles-llegada">
-          <div class="item-llegada">
-            <font-awesome-icon icon="fa-solid fa-plane" class="icon-llegada" />
-            <p>A solo 15 minutos del Aeropuerto 3 de Mayo.</p>
+        <div class="detalles-llegada mt-4">
+          <div class="item-llegada text-white d-flex align-items-center justify-content-center mb-2">
+            <font-awesome-icon icon="fa-solid fa-plane" class="icon-llegada me-2" />
+            <p class="mb-0">A solo 15 minutos del Aeropuerto 3 de Mayo.</p>
           </div>
-          <div class="item-llegada">
-            <font-awesome-icon icon="fa-solid fa-car" class="icon-llegada" />
-            <p>Fácil acceso por vía principal con parqueadero privado.</p>
+          <div class="item-llegada text-white d-flex align-items-center justify-content-center">
+            <font-awesome-icon icon="fa-solid fa-car" class="icon-llegada me-2" />
+            <p class="mb-0">Fácil acceso por vía principal con parqueadero privado.</p>
           </div>
         </div>
       </div>
@@ -394,6 +278,20 @@ onMounted(async () => {
 
 <style scoped>
 /* --- GLOBALES Y HOME --- */
+main {
+  background: var(--k-cream);
+  color: var(--k-forest-soft);
+  font-family: "Forum", serif;
+}
+
+button,
+.btn,
+.subtitulo,
+.subtitulo-blanco,
+.btn-whatsapp {
+  font-family: "Handlee", cursive;
+}
+
 #home {
   position: relative;
   display: flex;
@@ -403,7 +301,7 @@ onMounted(async () => {
   gap: 30px;
   min-height: 90vh;
   padding: 110px 50px 100px 50px;
-  background: linear-gradient(135deg, #0f3b2a 0%, #1a5c43 100%);
+  background: linear-gradient(135deg, var(--k-forest) 0%, var(--k-forest-soft) 100%);
   overflow: hidden;
 }
 
@@ -428,7 +326,7 @@ onMounted(async () => {
   /* Controla qué tan pronunciada es la curva */
   transform: rotate(180deg);
   /* Voltea la curva para que quede hacia abajo */
-  background: #fffdfc;
+  background: var(--k-cream);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -453,7 +351,7 @@ onMounted(async () => {
   /* Controla qué tan pronunciada es la curva */
   transform: rotate(180deg);
   /* Voltea la curva para que quede hacia abajo */
-  background: #1a5c43;
+  background: var(--k-forest-soft);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -461,18 +359,31 @@ onMounted(async () => {
   flex: 1;
   color: white;
   animation: slideInLeft 1.2s ease-out;
+  position: relative;
+  z-index: 2;
 }
 
 .home-content h1 {
   font-size: 3.5rem;
-  font-family: "Handlee", cursive;
+  font-family: "Forum", serif;
   font-weight: 700;
+  color: var(--k-cream) !important;
+  line-height: 1.1;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
+}
+
+.home-content p {
+  color: rgba(255, 252, 248, 0.94) !important;
+  max-width: 640px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 .home-image {
   flex: 1;
   display: flex;
   justify-content: center;
+  position: relative;
+  z-index: 1;
 }
 
 .img {
@@ -480,6 +391,39 @@ onMounted(async () => {
   max-height: 500px;
   border-radius: 20px;
   animation: float 6s ease-in-out infinite;
+}
+
+.home-content .btn-primary {
+  background: var(--k-apple);
+  border-color: var(--k-apple);
+  color: var(--k-forest);
+  border-radius: 999px;
+  padding: 0.8rem 1.6rem;
+  box-shadow: 0 10px 24px rgba(139, 207, 91, 0.2);
+}
+
+.home-content .btn-primary:hover {
+  background: var(--k-cream);
+  border-color: var(--k-cream);
+  color: var(--k-forest);
+}
+
+.galeria-preview {
+  background-color: var(--k-cream);
+  /* Fondo suave para contraste */
+  padding: 60px 20px;
+}
+
+.galeria-preview .btn-outline-success {
+  border-color: var(--k-forest-soft);
+  color: var(--k-cream);
+  border-radius: 999px;
+  background: var(--k-forest-soft);
+}
+
+.galeria-preview .btn-outline-success:hover {
+  background: var(--k-apple);
+  color: var(--k-forest);
 }
 
 /* --- SECCIÓN EXPERIENCIAS --- */
@@ -493,14 +437,14 @@ onMounted(async () => {
 .titulo-seccion {
   font-family: "Handlee", cursive;
   font-size: 2.8rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin: 15px 0;
 }
 
 .subtitulo {
   text-transform: uppercase;
   letter-spacing: 2px;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   font-weight: 700;
 }
 
@@ -521,13 +465,13 @@ onMounted(async () => {
 .icono-wrapper {
   width: 80px;
   height: 80px;
-  background-color: #f0f7f4;
+  background-color: var(--k-apple-soft);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
   font-size: 2rem;
 }
 
@@ -540,8 +484,8 @@ onMounted(async () => {
   align-items: center;
   padding: 100px 20px 150px 20px;
   /* Dale mucho espacio abajo para que se vea */
-  background: #1a5c43;
-  color: white;
+  background: var(--k-forest-soft);
+  color: var(--k-cream);
   z-index: 1;
   /* Crea un contexto de apilamiento */
 }
@@ -582,7 +526,7 @@ onMounted(async () => {
 }
 
 .subtitulo-blanco {
-  color: #82a994;
+  color: var(--k-apple-light);
   text-transform: uppercase;
   font-weight: 700;
   letter-spacing: 2px;
@@ -671,8 +615,8 @@ onMounted(async () => {
 
 .kofan-btn-primary {
   flex: 1;
-  background: #1a5c43;
-  color: white;
+  background: var(--k-forest-soft);
+  color: var(--k-cream);
   border: none;
   padding: 10px;
   border-radius: 20px;
@@ -697,8 +641,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 100px 20px 150px 20px;
-  background-color: #fffdfc;
+  padding: 20px 20px 150px 20px;
+  background-color: var(--k-cream);
   /* Fondo suave para contraste */
   z-index: 1;
   /* Crea un contexto de apilamiento para el divisor */
@@ -727,7 +671,7 @@ onMounted(async () => {
   /* Que ocupe todo el contenedor de 100px */
   transform: rotate(180deg);
   /*fill: #4c2b1a; /* El color de la sección de abajo (Información) */
-  background: #1a5c43;
+  background: var(--k-forest-soft);
   /* Asegura que el fondo del SVG sea transparente */
 }
 
@@ -743,7 +687,7 @@ onMounted(async () => {
   background: white;
   padding: 40px;
   border-radius: 30px;
-  border-left: 6px solid #1a5c43;
+  border-left: 6px solid var(--k-forest-soft);
   /* Detalle de marca en el borde */
   box-shadow: 0 15px 35px rgba(0, 0, 0, 0.05);
   display: flex;
@@ -759,13 +703,13 @@ onMounted(async () => {
 
 .info-icon {
   font-size: 1.6rem;
-  color: #1a5c43;
+  color: var(--k-forest-soft);
 }
 
 .info-header h3 {
   font-family: "Handlee", cursive;
   font-size: 1.8rem;
-  color: #0f3b2a;
+  color: var(--k-forest);
   margin: 0;
 }
 
@@ -832,10 +776,10 @@ onMounted(async () => {
 /* --- SECCIÓN UBICACIÓN --- */
 .ubicacion {
   position: relative;
-  background-color: #1a5c43;
+  background-color: var(--k-forest-soft);
   /* Volvemos al verde Kofán */
   padding: 100px 20px;
-  color: white;
+  color: var(--k-cream);
   margin-top: -1px;
   /* Evita grietas visuales */
 }
@@ -897,7 +841,7 @@ onMounted(async () => {
 
 .icon-llegada {
   font-size: 1.5rem;
-  color: #82a994;
+  color: var(--k-apple-light);
 }
 
 .item-llegada p {
@@ -971,7 +915,7 @@ onMounted(async () => {
   }
 
   .kofan-card-title {
-    color: #0f3b2a;
+    color: var(--k-forest);
     margin-bottom: 10px;
   }
 
@@ -986,8 +930,8 @@ onMounted(async () => {
   }
 
   .kofan-btn-icon {
-    background: #eee;
-    color: #1a5c43;
+    background: rgba(15, 59, 42, 0.08);
+    color: var(--k-forest-soft);
   }
 
   .kofan-card-details {
@@ -1079,14 +1023,14 @@ onMounted(async () => {
 .preview-item:hover .preview-overlay { opacity: 1; }
 
 .preview-item-cta {
-  background: #0f3b2a;
+  background: var(--k-forest);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .cta-content {
-  color: #c8e6c9;
+  color: var(--k-apple-soft);
   text-align: center;
   transition: transform 0.3s;
 }
