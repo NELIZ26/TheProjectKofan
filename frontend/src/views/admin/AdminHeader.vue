@@ -72,10 +72,16 @@ const handleLogout = () => {
 
 <style scoped>
 .admin-header {
+  position: sticky;
+  top: 0;
+  z-index: 1025;
   min-height: 78px;
   width: 100%;
+  flex-shrink: 0;
   background: linear-gradient(135deg, var(--k-forest) 0%, var(--k-apple) 62%, var(--k-forest) 100%);
   backdrop-filter: blur(4px);
+  box-shadow: 0 10px 24px rgba(15, 59, 42, 0.12);
+  border-bottom: 1px solid rgba(255, 252, 248, 0.14);
 }
 
 .avatar-circle {

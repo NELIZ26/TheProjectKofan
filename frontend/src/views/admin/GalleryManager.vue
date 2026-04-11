@@ -218,6 +218,17 @@ onMounted(() => cargarFotos());
 
 
 <style scoped>
+.gallery-manager {
+  width: 100%;
+  min-width: 0;
+  max-width: none;
+}
+
+.upload-card,
+.empty-state {
+  width: 100%;
+}
+
 .verde-kofan { color: #0f3b2a; }
 
 .upload-card {
