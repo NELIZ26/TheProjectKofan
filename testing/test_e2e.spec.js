@@ -49,8 +49,9 @@ test('flujo público: usuario entra, ve catálogo, reserva y recibe confirmació
 
   await page.getByRole('button', { name: /Reservar/i }).first().click();
 
-  const diasDisponibles = page.locator('.vc-day-content:not(.is-disabled)');
-  await diasDisponibles.nth(10).click();
+  const diasDisponibles = page.locator('.vc-day-content:not(.vc-disabled)');
+  
+  await diasDisponibles.nth(10).click(); // Clickea el 10mo día disponible hacia el futuro
   await diasDisponibles.nth(12).click();
 
   await page.locator('input[placeholder="Ej: Juan Pérez"]').fill('Nelson Prueba');
@@ -65,5 +66,5 @@ test('flujo público: usuario entra, ve catálogo, reserva y recibe confirmació
 
   await page.getByRole('button', { name: /Confirmar y Enviar/i }).click();
 
-  await expect(page.getByText(/Reserva Solicitada|recibido tu comprobante/i)).toBeVisible();
+  await expect(page.getByRole('heading', { name: '¡Reserva Solicitada!' })).toBeVisible();
 });

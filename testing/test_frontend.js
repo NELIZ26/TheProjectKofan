@@ -6,8 +6,13 @@ import RoomCard from '../frontend/src/components/RoomCard.vue';
 import { useReservaStore } from '../frontend/src/stores/reserva.js';
 
 describe('Suite frontend Ecohotel Kofán', () => {
+  
+  // Este bloque se ejecuta automáticamente antes de CADA 'it'
   beforeEach(() => {
+    // 1. Reiniciamos Pinia para tener un store limpio
     setActivePinia(createPinia());
+    
+    // 2. Inyectamos los colores de la marca en el entorno DOM virtual
     document.documentElement.style.setProperty('--k-apple', '#8BCF5B');
     document.documentElement.style.setProperty('--k-forest', '#0f3b2a');
     document.documentElement.style.setProperty('--k-sky', '#3498db');
@@ -40,7 +45,8 @@ describe('Suite frontend Ecohotel Kofán', () => {
   });
 
   it('calcula correctamente el total y el anticipo de una reserva', () => {
-    const store = useReservaStore();
+    const pinia = createPinia();
+    const store = useReservaStore(pinia);
 
     store.habitacionSeleccionada = { id: 'room-101', price: 120000 };
     store.selectedDateRange = {

@@ -32,7 +32,7 @@ async def test_crud_basico_de_usuario_con_perfil(api_client, admin_headers):
         "full_name": "Recepción Prueba",
         "type_document": "CC",
         "number_document": "123456789",
-        "email": "recepcion@kofan.test",
+        "email": "recepcion@kofan.com",
         "country": "Colombia",
         "city": "Puerto Asís",
         "phone": "3101234567",
@@ -42,13 +42,14 @@ async def test_crud_basico_de_usuario_con_perfil(api_client, admin_headers):
     }
 
     crear = await api_client.post("/users/", json=nuevo_usuario, headers=admin_headers)
+    assert crear.status_code == 201, f"Error de Validación de FastAPI: {crear.json()}"
     assert crear.status_code == 201
     user_id = crear.json()["user_id"]
     assert user_id
 
     login = await api_client.post(
-        "/auth/login",
-        data={"username": nuevo_usuario["email"], "password": nuevo_usuario["password"]},
+    "/auth/login",
+    data={"username": "recepcion@kofan.com", "password": nuevo_usuario["password"]},
     )
     assert login.status_code == 200
     token_data = login.json()
