@@ -261,7 +261,7 @@ export const useReservaStore = defineStore("reserva", () => {
 
   return {
     isModalOpen, isSubmitting, form, errors, selectedDateRange, disabledDates, minDate,
-    habitacionSeleccionada, totalCalculado, totalFormateado,
+    habitacionSeleccionada, totalCalculado, totalFormateado, anticipoCalculado,
     openModal, closeModal, handleSubmit, resetForm, handleFileUpload, removerComprobante, anticipoFormateado
   };
 });
